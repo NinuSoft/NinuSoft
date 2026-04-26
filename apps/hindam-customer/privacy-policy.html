@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سياسة الخصوصية - تطبيق هندام للزبائن</title>
+    <style>
+        :root {
+            --primary: #1B61C9;
+            --primary-light: #4C8DF5;
+            --background: #F2F4F6;
+            --surface: #FFFFFF;
+            --text-main: #191C1E;
+            --text-secondary: #424753;
+            --border: #C2C6D5;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --primary: #4C8DF5;
+                --primary-light: #1B61C9;
+                --background: #111418;
+                --surface: #1A1D22;
+                --text-main: #E3E5E8;
+                --text-secondary: #A6ADBB;
+                --border: #272A30;
+            }
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background);
+            color: var(--text-main);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 30px;
+            background-color: var(--surface);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--primary-light);
+        }
+
+        h1 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            color: var(--primary);
+            margin-top: 30px;
+            font-size: 1.4rem;
+        }
+
+        p {
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+
+        ul {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+        .highlight {
+            background-color: rgba(27, 97, 201, 0.1);
+            padding: 15px;
+            border-right: 4px solid var(--primary);
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+
+        /* تنسيق قسم البريد الإلكتروني الجديد */
+        .contact-email {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background-color: var(--background);
+            border-radius: 8px;
+            border: 1px dashed var(--primary-light);
+        }
+
+        .contact-email a {
+            color: var(--primary);
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .contact-email a:hover {
+            color: var(--primary-light);
+            text-decoration: underline;
+        }
+
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            .container {
+                margin: 15px;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>سياسة الخصوصية</h1>
+            <p>تطبيق "هندام" لتتبع الطلبات (نسخة الزبون)</p>
+            <p><strong>تاريخ التحديث:</strong> أبريل 2026</p>
+        </div>
+
+        <p>نحن في <strong>"هندام"</strong> نلتزم بحماية خصوصيتك. توضح سياسة الخصوصية هذه كيفية تعامل تطبيق الزبون مع المعلومات عند استخدامه. لقد صممنا هذا التطبيق ليكون آمناً ويحترم خصوصيتك لأقصى درجة.</p>
+
+        <div class="highlight">
+            <strong>نقطة هامة:</strong> تطبيق الزبون <strong>لا يطلب</strong> إنشاء حساب، ولا يطلب كلمات مرور، ولا يجمع أي بيانات شخصية لتحديد هويتك (مثل الاسم أو رقم الهاتف) من جهازك.
+        </div>
+
+        <h2>1. الأذونات (Permissions) التي يطلبها التطبيق</h2>
+        <p>لكي يعمل التطبيق بشكل صحيح ويقدم لك خدمة تتبع الطلب، فإنه يطلب الأذونات التالية فقط:</p>
+        <ul>
+            <li><strong>الكاميرا (Camera):</strong> نطلب الوصول إلى الكاميرا <strong>حصرياً</strong> لغرض مسح رمز الاستجابة السريعة (QR Code) المطبوع على فاتورتك. التطبيق لا يقوم بالتقاط صور لك أو تسجيل فيديو، ولا يتم حفظ أي صور في جهازك أو إرسالها إلى خوادمنا. تتم معالجة رمز الـ QR محلياً داخل التطبيق لقراءة رقم الطلب فقط.</li>
+            <li><strong>الإنترنت (Internet/Network State):</strong> يحتاج التطبيق للاتصال بالإنترنت للتواصل مع خوادمنا الآمنة (Supabase) للبحث عن حالة طلبك وعرض تفاصيل الفاتورة.</li>
+        </ul>
+
+        <h2>2. البيانات التي يتم جلبها وعرضها</h2>
+        <p>عند مسح رمز الـ QR أو إدخال رقم الطلب يدوياً، يقوم التطبيق بجلب البيانات التالية من خوادمنا وعرضها لك:</p>
+        <ul>
+            <li>حالة الطلب (قيد التنفيذ، جاهز، إلخ).</li>
+            <li>تفاصيل الخدمات المطلوبة (أنواع الملابس، الكمية، السعر).</li>
+            <li>المبلغ الإجمالي والمبلغ المتبقي.</li>
+            <li>اسم الزبون (كما سجله الكاشير في المشغل).</li>
+            <li>معلومات المشغل (الاسم، الموقع، رقم الهاتف).</li>
+        </ul>
+        <p>هذه البيانات تُعرض لك فقط (Read-only) ولا يتم تعديلها من خلال هذا التطبيق.</p>
+
+        <h2>3. مشاركة البيانات</h2>
+        <p>نحن لا نقوم ببيع أو تأجير أو مشاركة أي بيانات يتم عرضها في التطبيق مع أي أطراف خارجية (Third Parties) لأغراض إعلانية أو تسويقية.</p>
+
+        <h2>4. أمان البيانات</h2>
+        <p>يتم نقل جميع البيانات بين التطبيق وخوادمنا باستخدام بروتوكولات تشفير آمنة وموحدة. نحن نستخدم منصات سحابية موثوقة لحماية البيانات من الوصول غير المصرح به.</p>
+
+        <h2>5. التغييرات على سياسة الخصوصية</h2>
+        <p>قد نقوم بتحديث سياسة الخصوصية هذه من وقت لآخر للتوافق مع التغييرات القانونية أو التحديثات التقنية في التطبيق. ننصحك بمراجعة هذه الصفحة بشكل دوري.</p>
+
+        <h2>6. اتصل بنا</h2>
+        <p>إذا كانت لديك أي أسئلة أو استفسارات حول سياسة الخصوصية هذه، يسعدنا تواصلك معنا عبر البريد الإلكتروني المخصص للدعم الفني:</p>
+        
+        <div class="contact-email">
+            <a href="mailto:support@ninusoft.com">support@ninusoft.com</a>
+        </div>
+
+        <div class="footer">
+            &copy; 2026 جميع الحقوق محفوظة لتطبيق هندام.
+        </div>
+    </div>
+
+</body>
+</html>
