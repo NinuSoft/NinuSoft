@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "category": "Business",
+    "title": "Clinic Management System",
+    "desc": "Complete cloud-based electronic health records, scheduling, and billing solution for modern clinics.",
+    "img": "/project-clinic.png",
+    "details": "This enterprise platform streamlines medical practice workflows. It features live online booking, HIPAA-compliant patient charting, automated SMS reminders, and built-in insurance claim processing.",
+    "tech": ["React", "TypeScript", "Node.js", "PostgreSQL", "Tailwind CSS"],
+    "features": ["HIPAA-compliant records", "Real-time calendar scheduling", "Automated patient SMS/Email alerts", "Invoicing & digital payments"]
+  },
+  {
+    "id": 2,
+    "category": "Retail",
+    "title": "Smart POS System",
+    "desc": "Offline-first cloud point of sale system with inventory forecasting and multi-store analytics.",
+    "img": "/project-pos.png",
+    "details": "A hybrid mobile/web POS designed for retail stores and busy restaurants. Operates seamlessly offline and automatically syncs data when connected, backed by rich forecasting algorithms.",
+    "tech": ["React Native", "Tailwind CSS", "GraphQL", "PouchDB", "CouchDB"],
+    "features": ["Offline sales mode", "Inventory prediction AI", "Multi-store synchronization", "Detailed performance reporting"]
+  },
+  {
+    "id": 3,
+    "category": "Logistics",
+    "title": "Delivery Platform",
+    "desc": "Real-time driver dispatching, route optimization, and live package tracking for delivery networks.",
+    "img": "/project-delivery.png",
+    "details": "An end-to-end logistics platform consisting of a dispatch panel, driver apps, and a customer tracking interface. Solves last-mile routing challenges efficiently.",
+    "tech": ["React", "Flutter", "Golang", "Redis", "Google Maps API"],
+    "features": ["AI route optimization", "Live GPS tracking & notifications", "Proof of delivery (signatures/photos)", "Analytics dashboard"]
+  },
+  {
+    "id": 4,
+    "category": "AI & Automation",
+    "title": "Bilingual Chatbot (Arabic/English)",
+    "desc": "AI assistant utilizing LLMs to automate customer queries in conversational Arabic and English.",
+    "img": "/project-clinic.png",
+    "details": "Built to handle dialects (including Iraqi Arabic) and English queries, resolving up to 80% of customer support requests without human agent intervention.",
+    "tech": ["Next.js", "Python", "FastAPI", "Gemini API", "Pinecone"],
+    "features": ["Arabic/English bilingual support", "Sentiment analysis routing", "Easy CRM integrations", "Live hand-off to human support"]
+  },
+  {
+    "id": 5,
+    "category": "Business",
+    "title": "Enterprise ERP Portal",
+    "desc": "An integrated suite for human resources, procurement, payroll, and asset management.",
+    "img": "/project-pos.png",
+    "details": "A comprehensive enterprise resource planning dashboard built to handle complex financial calculations, approval workflows, and employee performance tracking.",
+    "tech": ["React", "Node.js", "Express", "MongoDB", "Chart.js"],
+    "features": ["Secure multi-role hierarchy", "Automated payroll payroll", "Procurement approvals", "Data exports (PDF/XLSX)"]
+  },
+  {
+    "id": 6,
+    "category": "Logistics",
+    "title": "Warehouse Management System",
+    "desc": "Barcode-scanning web app for managing inbound and outbound stock control dynamically.",
+    "img": "/project-delivery.png",
+    "details": "Optimizes warehouse operations by introducing barcode verification, stock location mapping, and real-time inventory adjustments.",
+    "tech": ["React", "NestJS", "PostgreSQL", "Socket.io", "Zebra SDK"],
+    "features": ["Barcode and QR scanning support", "Dynamic slot bin tracking", "Low stock alerts", "Real-time socket updates"]
+  }
+]
