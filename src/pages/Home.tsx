@@ -1,15 +1,19 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Headphones, Settings, Shield, Users2, Monitor, Globe, Smartphone, Bot, Cloud, Target, TrendingUp, Cpu, Lock, Zap, Handshake, Search, ClipboardList, PenTool, Code2, Rocket, Mail, Phone, MapPin, ExternalLink, Menu } from "lucide-react";
+import { ArrowRight, Headphones, Settings, Shield, Users2, Monitor, Globe, Smartphone, Bot, Cloud, Target, TrendingUp, Cpu, Lock, Zap, Handshake, Search, ClipboardList, PenTool, Code2, Rocket, Mail, Phone, MapPin, ExternalLink, Menu, ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { FaFacebook as Facebook, FaLinkedin as Linkedin, FaInstagram as Instagram, FaGithub as Github, FaTelegram as Telegram } from "react-icons/fa6";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import PROJECTS_DATA from "@/data/projects.json";
+import useEmblaCarousel from "embla-carousel-react";
+import en from "@/data/locales/en.json";
+import ar from "@/data/locales/ar.json";
+
+const translations = { en, ar };
 
 interface Project {
   id: number;
@@ -20,30 +24,73 @@ interface Project {
   details: string;
   tech: string[];
   features: string[];
+  storeLink?: string;
+  websiteLink?: string;
 }
-
-const PROJECTS = PROJECTS_DATA as Project[];
 
 const logoLarge = "/logo.png";
 
 const NAV_LINKS = [
-  { label: "Home", href: "#home" },
-  { label: "Services", href: "#services" },
-  { label: "Solutions", href: "#solutions" },
-  { label: "Projects", href: "#projects" },
-  { label: "About Us", href: "#about" },
-  { label: "Contact", href: "#contact" },
+  { key: "home", href: "#home" },
+  { key: "services", href: "#services" },
+  { key: "solutions", href: "#solutions" },
+  { key: "projects", href: "#projects" },
+  { key: "about", href: "#about" },
+  { key: "contact", href: "#contact" },
+];
+
+const SERVICES_LIST = [
+  { key: "customSoftware", href: "#services" },
+  { key: "webApps", href: "#services" },
+  { key: "mobileApps", href: "#services" },
+  { key: "aiSolutions", href: "#services" },
+  { key: "cloud", href: "#services" }
 ];
 
 export default function Home() {
+  const [lang, setLang] = useState<"en" | "ar">(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("preferred_lang");
+      if (saved === "ar" || saved === "en") return saved;
+    }
+    return "en";
+  });
+  const t = translations[lang];
+  const PROJECTS = t.projects as Project[];
+
+
+
   const [activeSlide, setActiveSlide] = useState(0);
   const [activeSection, setActiveSection] = useState("home");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [selectedProjectForModal, setSelectedProjectForModal] = useState<typeof PROJECTS[0] | null>(null);
+  const [selectedProjectForModal, setSelectedProjectForModal] = useState<Project | null>(null);
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [width, setWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1024);
   const { toast } = useToast();
+
+  const [contactProjectType, setContactProjectType] = useState("web");
+
+  const openContactWithService = (serviceType: string = "web") => {
+    setContactProjectType(serviceType);
+    setIsContactOpen(true);
+  };
+
+  const openContactWithProject = (project: Project) => {
+    let type = "web";
+    const cat = project.category.toLowerCase();
+    if (cat === "retail" || cat === "التجزئة") type = "mobile";
+    else if (cat === "business" || cat === "الأعمال") type = "software";
+    openContactWithService(type);
+  };
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("preferred_lang", lang);
+    }
+    document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+    document.documentElement.lang = lang;
+  }, [lang]);
 
   React.useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
@@ -58,26 +105,36 @@ export default function Home() {
     setIsSubmitting(false);
     setIsContactOpen(false);
     toast({
-      title: "Message Sent!",
-      description: "Thank you for reaching out. We will get back to you shortly.",
+      title: t.contact.successTitle,
+      description: t.contact.successDesc,
     });
+  };
+
+  const categories = ["All", ...Array.from(new Set(PROJECTS.map((p) => p.category).filter(Boolean)))];
+
+  const getCategoryLabel = (cat: string) => {
+    if (cat === "All") return lang === "ar" ? "الكل" : "All";
+    return cat;
   };
 
   const filteredProjects = selectedCategory === "All"
     ? PROJECTS
     : PROJECTS.filter((p) => p.category === selectedCategory);
 
-  const itemsPerPage = width < 768 ? 1 : width < 1024 ? 2 : 3;
-  const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    align: "start",
+    direction: lang === "ar" ? "rtl" : "ltr"
+  });
+
+  const scrollPrev = React.useCallback(() => { if (emblaApi) emblaApi.scrollPrev(); }, [emblaApi]);
+  const scrollNext = React.useCallback(() => { if (emblaApi) emblaApi.scrollNext(); }, [emblaApi]);
 
   React.useEffect(() => {
-    setActiveSlide(0);
-  }, [selectedCategory, itemsPerPage]);
-
-  const visibleProjects = filteredProjects.slice(
-    activeSlide * itemsPerPage,
-    (activeSlide + 1) * itemsPerPage
-  );
+    if (emblaApi) {
+      emblaApi.reInit({ direction: lang === "ar" ? "rtl" : "ltr" });
+      emblaApi.scrollTo(0, false);
+    }
+  }, [emblaApi, selectedCategory, lang]);
 
   React.useEffect(() => {
     const ids = ["home", "services", "solutions", "projects", "about", "contact"];
@@ -108,21 +165,27 @@ export default function Home() {
       <nav className="flex items-center justify-between px-6 py-4 lg:px-12 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="flex items-center gap-3">
           <img src="/logo.png" alt="NinuSoft Logo" className="h-9 w-auto object-contain" />
-          <span className="text-xl font-bold tracking-tight text-white">NinuSoft</span>
+          <span className="text-xl font-bold tracking-tight text-white">
+            {lang === "en" ? (
+              <>Ninu<span className="text-primary">Soft</span></>
+            ) : (
+              <>نينو<span className="text-primary">سوفت</span></>
+            )}
+          </span>
         </div>
 
         <div className="hidden md:flex items-center gap-8 text-sm font-medium">
-          {NAV_LINKS.map(({ label, href }) => {
+          {NAV_LINKS.map(({ key, href }) => {
             const id = href.replace("#", "");
             const isActive = activeSection === id;
             return (
               <a
-                key={label}
+                key={key}
                 href={href}
                 data-testid={`nav-link-${id}`}
                 className={`transition-colors relative pb-0.5 ${isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
               >
-                {label}
+                {t.nav[key as keyof typeof t.nav]}
                 {isActive && (
                   <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-primary rounded-full" />
                 )}
@@ -131,13 +194,23 @@ export default function Home() {
           })}
         </div>
 
-        <Button
-          onClick={() => setIsContactOpen(true)}
-          className="hidden md:flex gap-2 rounded-full font-semibold px-6 shadow-lg shadow-primary/20"
-        >
-          Get Started
-          <ArrowRight className="w-4 h-4" />
-        </Button>
+        <div className="hidden md:flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setLang(lang === "en" ? "ar" : "en")}
+            className="text-white border border-white/10 hover:bg-white/10 rounded-full px-3 py-1.5 text-xs font-semibold"
+          >
+            {lang === "en" ? "العربية" : "English"}
+          </Button>
+          <Button
+            onClick={() => openContactWithService("web")}
+            className="gap-2 rounded-full font-semibold px-6 shadow-lg shadow-primary/20"
+          >
+            {t.nav.getStarted}
+            <ArrowRight className={`w-4 h-4 ${lang === "ar" ? "rotate-180" : ""}`} />
+          </Button>
+        </div>
 
         {/* Mobile Navigation Menu */}
         <Sheet>
@@ -146,36 +219,55 @@ export default function Home() {
               <Menu className="w-6 h-6" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="bg-background/95 backdrop-blur border-border/50 p-6 flex flex-col justify-between w-[300px]">
+          <SheetContent side={lang === "ar" ? "left" : "right"} className="bg-background/95 backdrop-blur border-border/50 p-6 flex flex-col justify-between w-[300px]">
             <div className="flex flex-col gap-8 mt-8">
               <div className="flex items-center gap-3">
                 <img src="/logo.png" alt="NinuSoft Logo" className="h-9 w-auto object-contain" />
-                <span className="text-xl font-bold tracking-tight text-white">Ninu<span className="text-primary">Soft</span></span>
+                <span className="text-xl font-bold tracking-tight text-white">
+                  {lang === "en" ? (
+                    <>Ninu<span className="text-primary">Soft</span></>
+                  ) : (
+                    <>نينو<span className="text-primary">سوفت</span></>
+                  )}
+                </span>
               </div>
               <div className="flex flex-col gap-4 text-base font-medium">
-                {NAV_LINKS.map(({ label, href }) => {
+                {NAV_LINKS.map(({ key, href }) => {
                   const id = href.replace("#", "");
                   const isActive = activeSection === id;
                   return (
-                    <SheetClose asChild key={label}>
+                    <SheetClose asChild key={key}>
                       <a
                         href={href}
                         className={`transition-colors py-2 border-b border-border/10 ${isActive ? "text-primary font-semibold" : "text-muted-foreground hover:text-foreground"}`}
                       >
-                        {label}
+                        {t.nav[key as keyof typeof t.nav]}
                       </a>
                     </SheetClose>
                   );
                 })}
               </div>
+
+              <div className="flex items-center justify-between border-t border-border/20 pt-4 mt-2">
+                <span className="text-sm font-medium text-muted-foreground">{lang === "en" ? "Language" : "اللغة"}</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setLang(lang === "en" ? "ar" : "en")}
+                  className="border-white/20 text-white hover:bg-white/10"
+                >
+                  {lang === "en" ? "العربية" : "English"}
+                </Button>
+              </div>
             </div>
+
             <SheetClose asChild>
               <Button
-                onClick={() => setIsContactOpen(true)}
+                onClick={() => openContactWithService("web")}
                 className="w-full gap-2 rounded-full font-semibold px-6 py-5 shadow-lg shadow-primary/20"
               >
-                Get Started
-                <ArrowRight className="w-4 h-4" />
+                {t.nav.getStarted}
+                <ArrowRight className={`w-4 h-4 ${lang === "ar" ? "rotate-180" : ""}`} />
               </Button>
             </SheetClose>
           </SheetContent>
@@ -183,45 +275,50 @@ export default function Home() {
       </nav>
 
       {/* 2. HERO SECTION */}
-      <main id="home" className="flex-1 w-full relative overflow-hidden min-h-[calc(100vh-73px)] flex">
+      <main id="home" className="flex-1 w-full relative overflow-hidden min-h-[calc(100vh-73px)] flex flex-col lg:flex-row">
 
         {/* LEFT — content area, solid dark background */}
-        <div className="relative z-10 w-full lg:w-[55%] flex items-center bg-background px-6 lg:px-16 py-16 md:py-24 shrink-0">
+        <div className="relative z-10 w-full lg:w-[55%] flex items-center bg-background px-6 lg:px-16 py-12 sm:py-16 md:py-24 shrink-0">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
             transition={{ duration: 0.7 }}
-            className="flex flex-col items-start w-full max-w-xl"
+            className="flex flex-col items-start w-full max-w-xl text-start"
           >
             {/* Logo + Name side by side */}
-            <div className="flex items-center gap-5 mb-6">
+            <div className="flex items-center gap-4 sm:gap-5 mb-6">
               <img
                 src={logoLarge}
                 alt="NinuSoft Logo"
-                className="h-[110px] md:h-[130px] w-auto object-contain drop-shadow-[0_0_20px_rgba(201,163,58,0.25)]"
+                className="h-[70px] sm:h-[100px] md:h-[130px] w-auto object-contain drop-shadow-[0_0_20px_rgba(201,163,58,0.25)]"
               />
-              <h1 className="text-6xl md:text-7xl lg:text-7xl font-extrabold tracking-tight leading-none">
-                <span className="text-white">Ninu</span><span className="text-primary">Soft</span>
+              <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-7xl font-extrabold tracking-tight leading-none">
+                {lang === "en" ? (
+                  <><span className="text-white">Ninu</span><span className="text-primary">Soft</span></>
+                ) : (
+                  <><span className="text-white">نينو</span><span className="text-primary">سوفت</span></>
+                )}
               </h1>
             </div>
 
-            <h2 className="text-sm md:text-base font-bold tracking-[0.3em] text-muted-foreground mb-6 uppercase">
-              Software Solutions From Nineveh
+            <h2 className="text-xs sm:text-sm md:text-base font-bold tracking-[0.15em] sm:tracking-[0.2em] text-muted-foreground mb-6 uppercase">
+              {t.hero.sub}
             </h2>
 
-            <p className="text-lg text-muted-foreground mb-10 max-w-[480px] leading-relaxed">
-              We build powerful, scalable and intelligent software solutions that help businesses grow, automate and succeed in the digital world.
+            <p className="text-base sm:text-lg text-muted-foreground mb-10 max-w-[480px] leading-relaxed">
+              {t.hero.desc}
             </p>
 
-            <div className="flex flex-wrap items-center gap-4 mb-10">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mb-10 w-full sm:w-auto">
               <Button
-                onClick={() => setIsContactOpen(true)}
+                onClick={() => openContactWithService("web")}
                 size="lg"
-                className="rounded-full font-semibold px-8 h-14 shadow-xl shadow-primary/30 gap-2"
+                className="w-full sm:w-auto rounded-full font-semibold px-8 h-12 sm:h-14 shadow-xl shadow-primary/30 gap-2"
                 data-testid="button-get-started"
               >
-                Get Started
-                <ArrowRight className="w-5 h-5" />
+                {t.nav.getStarted}
+                <ArrowRight className={`w-5 h-5 ${lang === "ar" ? "rotate-180" : ""}`} />
               </Button>
               <Button
                 onClick={() => {
@@ -230,32 +327,33 @@ export default function Home() {
                 }}
                 size="lg"
                 variant="outline"
-                className="rounded-full font-semibold px-8 h-14 border-white/30 text-white hover:bg-white/10 gap-2"
+                className="w-full sm:w-auto rounded-full font-semibold px-8 h-12 sm:h-14 border-white/30 text-white hover:bg-white/10 gap-2"
                 data-testid="button-view-services"
               >
-                View Services
-                <ArrowRight className="w-5 h-5" />
+                {t.hero.viewServices}
+                <ArrowRight className={`w-5 h-5 ${lang === "ar" ? "rotate-180" : ""}`} />
               </Button>
             </div>
 
-            <div className="flex items-center gap-3 text-muted-foreground text-sm font-medium bg-secondary/50 py-3 px-5 rounded-full border border-border/50">
-              <Shield className="w-5 h-5 text-primary" />
-              Trusted by businesses across Iraq and beyond
+            <div className="flex items-center gap-2 sm:gap-3 text-muted-foreground text-xs sm:text-sm font-medium bg-secondary/50 py-2.5 px-4 sm:py-3 sm:px-5 rounded-full border border-border/50 max-w-full">
+              <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-primary shrink-0" />
+              <span className="truncate sm:whitespace-normal">{t.stats.hero}</span>
             </div>
           </motion.div>
         </div>
 
-        {/* RIGHT — Ishtar Gate image, right side only */}
+        {/* RIGHT — Ishtar Gate image, right side on desktop, stacked on mobile */}
         <motion.div
-          initial={{ opacity: 0, x: 30 }}
-          animate={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
           transition={{ duration: 0.9, delay: 0.2 }}
-          className="hidden lg:block lg:w-[45%] relative shrink-0"
+          className="w-full lg:w-[45%] h-[300px] sm:h-[450px] lg:h-auto relative shrink-0 overflow-hidden"
         >
-          {/* Gradient fade on left edge to blend with content */}
-          <div className="absolute inset-y-0 left-0 w-32 z-10 bg-gradient-to-r from-background to-transparent" />
+          {/* Gradient fade on top/left edge to blend with content */}
+          <div className="absolute inset-x-0 top-0 h-24 lg:inset-y-0 lg:left-0 lg:w-32 lg:h-auto z-10 bg-gradient-to-b lg:bg-gradient-to-r from-background to-transparent" />
           {/* Gradient fade on bottom edge */}
-          <div className="absolute inset-x-0 bottom-0 h-32 z-10 bg-gradient-to-t from-background to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-24 lg:h-32 z-10 bg-gradient-to-t from-background to-transparent" />
           <img
             src="/hero-gate.webp"
             alt="Ishtar Gate — Ancient Nineveh"
@@ -267,38 +365,38 @@ export default function Home() {
 
       {/* 3. STATS BAR */}
       <div className="w-full border-t border-border/50 bg-card/50 backdrop-blur-sm mt-auto">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12 py-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 divide-x-0 md:divide-x divide-border/50">
-            <div className="flex flex-col items-center justify-center text-center px-4">
-              <div className="flex items-center gap-3 mb-2">
-                <Shield className="w-6 h-6 text-muted-foreground" />
-                <span className="text-3xl font-bold text-primary">50+</span>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-6 sm:py-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 divide-x-0 md:divide-x divide-border/50">
+            <div className="flex flex-col items-center justify-center text-center px-2 sm:px-4">
+              <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground" />
+                <span className="text-2xl sm:text-3xl font-bold text-primary">50+</span>
               </div>
-              <span className="text-sm font-medium text-muted-foreground">Projects Completed</span>
+              <span className="text-xs sm:text-sm font-medium text-muted-foreground">{t.stats.projects}</span>
             </div>
 
-            <div className="flex flex-col items-center justify-center text-center px-4">
-              <div className="flex items-center gap-3 mb-2">
-                <Users2 className="w-6 h-6 text-muted-foreground" />
-                <span className="text-3xl font-bold text-primary">30+</span>
+            <div className="flex flex-col items-center justify-center text-center px-2 sm:px-4">
+              <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                <Users2 className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground" />
+                <span className="text-2xl sm:text-3xl font-bold text-primary">30+</span>
               </div>
-              <span className="text-sm font-medium text-muted-foreground">Happy Clients</span>
+              <span className="text-xs sm:text-sm font-medium text-muted-foreground">{t.stats.clients}</span>
             </div>
 
-            <div className="flex flex-col items-center justify-center text-center px-4">
-              <div className="flex items-center gap-3 mb-2">
-                <Settings className="w-6 h-6 text-muted-foreground" />
-                <span className="text-3xl font-bold text-primary">5+</span>
+            <div className="flex flex-col items-center justify-center text-center px-2 sm:px-4">
+              <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                <Settings className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground" />
+                <span className="text-2xl sm:text-3xl font-bold text-primary">5+</span>
               </div>
-              <span className="text-sm font-medium text-muted-foreground">Years Experience</span>
+              <span className="text-xs sm:text-sm font-medium text-muted-foreground">{t.stats.experience}</span>
             </div>
 
-            <div className="flex flex-col items-center justify-center text-center px-4">
-              <div className="flex items-center gap-3 mb-2">
-                <Headphones className="w-6 h-6 text-muted-foreground" />
-                <span className="text-3xl font-bold text-primary">24/7</span>
+            <div className="flex flex-col items-center justify-center text-center px-2 sm:px-4">
+              <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                <Headphones className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground" />
+                <span className="text-2xl sm:text-3xl font-bold text-primary">24/7</span>
               </div>
-              <span className="text-sm font-medium text-muted-foreground">Support Available</span>
+              <span className="text-xs sm:text-sm font-medium text-muted-foreground">{t.stats.support}</span>
             </div>
           </div>
         </div>
@@ -309,31 +407,35 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           {/* Top Area */}
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8 mb-16">
-            <div className="max-w-2xl">
-              <span className="text-primary font-bold tracking-[0.2em] text-sm uppercase mb-4 block">Our Services</span>
+            <div className="max-w-2xl text-start">
+              <span className="text-primary font-bold tracking-[0.2em] text-sm uppercase mb-4 block">{t.services.title}</span>
               <h2 className="text-3xl md:text-4xl font-extrabold text-white leading-tight">
-                Complete Software Solutions For Your Business
+                {t.services.subtitle}
               </h2>
             </div>
-            <div className="max-w-md flex flex-col items-start lg:items-end">
-              <p className="text-muted-foreground text-lg mb-6 lg:text-right">
-                We offer end-to-end software services to help you build, scale and transform your business.
+            <div className="max-w-md flex flex-col items-start lg:items-end text-start lg:text-end">
+              <p className="text-muted-foreground text-lg mb-6">
+                {t.services.desc}
               </p>
-              <Button variant="outline" className="border-primary text-primary hover:bg-primary/10 gap-2 rounded-full h-12 px-6">
-                Explore All Services
-                <ArrowRight className="w-4 h-4" />
+              <Button
+                onClick={() => openContactWithService("web")}
+                variant="outline"
+                className="border-primary text-primary hover:bg-primary/10 gap-2 rounded-full h-12 px-6"
+              >
+                {t.services.exploreServices}
+                <ArrowRight className={`w-4 h-4 ${lang === "ar" ? "rotate-180" : ""}`} />
               </Button>
             </div>
           </div>
 
           {/* Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
             {[
-              { icon: Monitor, title: "Custom Software Development", desc: "Tailored software solutions built to your unique business needs and requirements." },
-              { icon: Globe, title: "Web Applications", desc: "Modern, responsive and high performance web applications." },
-              { icon: Smartphone, title: "Mobile App Development", desc: "Native and cross-platform apps for iOS and Android." },
-              { icon: Bot, title: "AI Solutions & Automation", desc: "Robust AI tools and automation to supercharge your business." },
-              { icon: Cloud, title: "Cloud & System Integration", desc: "Cloud solutions, architecture, and enterprise system integrations." }
+              { icon: Monitor, title: t.services.customSoftware, desc: t.services.customSoftwareDesc, type: "software" },
+              { icon: Globe, title: t.services.webApps, desc: t.services.webAppsDesc, type: "web" },
+              { icon: Smartphone, title: t.services.mobileApps, desc: t.services.mobileAppsDesc, type: "mobile" },
+              { icon: Bot, title: t.services.aiSolutions, desc: t.services.aiSolutionsDesc, type: "ai" },
+              { icon: Cloud, title: t.services.cloud, desc: t.services.cloudDesc, type: "other" }
             ].map((service, i) => (
               <motion.div
                 key={i}
@@ -341,14 +443,15 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-100px" }}
                 transition={{ delay: i * 0.1, duration: 0.5 }}
-                className="bg-card border border-border/50 hover:border-primary/50 transition-colors p-6 rounded-xl flex flex-col group cursor-pointer"
+                onClick={() => openContactWithService(service.type)}
+                className="bg-card border border-border/50 hover:border-primary/50 transition-all duration-300 p-6 rounded-xl flex flex-col group cursor-pointer text-start"
               >
                 <div className="w-12 h-12 rounded-lg border border-primary/30 bg-primary/5 flex items-center justify-center mb-6 text-primary group-hover:bg-primary/10 transition-colors">
                   <service.icon className="w-6 h-6" />
                 </div>
                 <h3 className="text-lg font-bold text-white mb-3">{service.title}</h3>
                 <p className="text-sm text-muted-foreground flex-1 mb-6">{service.desc}</p>
-                <ArrowRight className="w-5 h-5 text-primary opacity-70 group-hover:opacity-100 transition-opacity mt-auto" />
+                <ArrowRight className={`w-5 h-5 text-primary opacity-70 group-hover:opacity-100 transition-all mt-auto ${lang === "ar" ? "rotate-180" : ""}`} />
               </motion.div>
             ))}
           </div>
@@ -361,31 +464,31 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center">
             {/* Left Image */}
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.6 }}
-              className="lg:col-span-5 w-full aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl shadow-black/40 border border-border/50"
+              className="lg:col-span-5 w-full aspect-[16/10] sm:aspect-[4/3] lg:aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl shadow-black/40 border border-border/50"
             >
               <img src="/office-why.png" alt="NinuSoft Office" className="w-full h-full object-cover" />
             </motion.div>
 
             {/* Right Content */}
-            <div className="lg:col-span-7">
-              <span className="text-primary font-bold tracking-[0.2em] text-sm uppercase mb-4 block">Why Choose NinuSoft?</span>
+            <div className="lg:col-span-7 text-start">
+              <span className="text-primary font-bold tracking-[0.2em] text-sm uppercase mb-4 block">{t.why.title}</span>
               <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-6">
-                We Build Solutions That Drive Real Results
+                {t.why.subtitle}
               </h2>
               <div className="w-20 h-1 bg-primary mb-12 rounded-full"></div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-10">
                 {[
-                  { icon: Target, title: "Business Focused", desc: "We align our technology strategy with your business goals." },
-                  { icon: TrendingUp, title: "Scalable Solutions", desc: "Built to grow seamlessly alongside your enterprise." },
-                  { icon: Cpu, title: "Modern Technology", desc: "Using the latest frameworks and proven architectures." },
-                  { icon: Lock, title: "Secure & Reliable", desc: "Enterprise-grade security and robust infrastructure." },
-                  { icon: Zap, title: "Fast Delivery", desc: "Agile methodologies ensuring rapid time-to-market." },
-                  { icon: Handshake, title: "Long-Term Partner", desc: "Dedicated support and continuous evolution of your product." }
+                  { icon: Target, title: t.why.features.businessFocused, desc: t.why.features.businessFocusedDesc },
+                  { icon: TrendingUp, title: t.why.features.scalable, desc: t.why.features.scalableDesc },
+                  { icon: Cpu, title: t.why.features.modernTech, desc: t.why.features.modernTechDesc },
+                  { icon: Lock, title: t.why.features.secure, desc: t.why.features.secureDesc },
+                  { icon: Zap, title: t.why.features.fastDelivery, desc: t.why.features.fastDeliveryDesc },
+                  { icon: Handshake, title: t.why.features.longTerm, desc: t.why.features.longTermDesc }
                 ].map((feature, i) => (
                   <motion.div
                     key={i}
@@ -393,7 +496,7 @@ export default function Home() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: "-100px" }}
                     transition={{ delay: i * 0.1, duration: 0.5 }}
-                    className="flex gap-4"
+                    className="flex gap-4 text-start"
                   >
                     <div className="flex-shrink-0 mt-1">
                       <feature.icon className="w-6 h-6 text-primary" />
@@ -416,89 +519,102 @@ export default function Home() {
           {/* Top Row */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
             <div>
-              <span className="text-primary font-bold tracking-[0.2em] text-sm uppercase mb-4 block">Our Projects</span>
+              <span className="text-primary font-bold tracking-[0.2em] text-sm uppercase mb-4 block">
+                {t.projectsSection.title}
+              </span>
               <h2 className="text-3xl md:text-4xl font-extrabold text-white">
-                Some Of Our Recent Work
+                {t.projectsSection.subtitle}
               </h2>
             </div>
-            <Button variant="outline" className="border-primary text-primary hover:bg-primary/10 gap-2 rounded-full px-6">
-              View All Projects
-              <ArrowRight className="w-4 h-4" />
-            </Button>
           </div>
 
           {/* Category Filter */}
           <div className="flex flex-wrap items-center justify-center gap-2 mb-10">
-            {["All", "Business", "Retail", "Logistics", "AI & Automation"].map((cat) => (
+            {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => {
                   setSelectedCategory(cat);
-                  setActiveSlide(0);
                 }}
                 className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300 border ${selectedCategory === cat
                   ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20 scale-105"
                   : "bg-card text-muted-foreground border-border/50 hover:border-primary/50 hover:text-white"
                   }`}
               >
-                {cat}
+                {getCategoryLabel(cat)}
               </button>
             ))}
           </div>
 
-          {/* Cards Grid */}
-          <div className="relative min-h-[460px] w-full">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={`${selectedCategory}-${activeSlide}`}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.3 }}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-              >
-                {visibleProjects.map((project) => (
-                  <motion.div
+          {/* Embla Carousel Viewport */}
+          <div className="relative w-full">
+            <div className="overflow-hidden cursor-grab active:cursor-grabbing rounded-xl" ref={emblaRef}>
+              <div className="flex -ml-6">
+                {filteredProjects.map((project) => (
+                  <div
                     key={project.id}
-                    layoutId={`project-${project.id}`}
-                    onClick={() => setSelectedProjectForModal(project)}
-                    className="bg-card border border-border/50 rounded-xl overflow-hidden hover:border-primary/50 transition-all duration-300 group cursor-pointer flex flex-col h-full shadow-md hover:shadow-xl hover:shadow-primary/5"
+                    className="flex-[0_0_100%] min-w-0 pl-6 sm:flex-[0_0_50%] lg:flex-[0_0_33.333%]"
                   >
-                    <div className="w-full aspect-[16/10] overflow-hidden bg-muted relative">
-                      <img src={project.img} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                        <span className="text-white text-xs font-semibold bg-primary px-3 py-1 rounded-full">
-                          View details
-                        </span>
+                    <motion.div
+                      layoutId={`project-${project.id}`}
+                      onClick={() => setSelectedProjectForModal(project)}
+                      className="bg-card border border-border/50 rounded-xl overflow-hidden hover:border-primary/50 transition-all duration-300 group cursor-pointer flex flex-col h-full shadow-md hover:shadow-xl hover:shadow-primary/5"
+                    >
+                      <div className="w-full aspect-[16/10] overflow-hidden bg-muted/40 flex items-center justify-center relative">
+                        <img
+                          src={project.img}
+                          alt={project.title}
+                          className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                          <span className="text-white text-xs font-semibold bg-primary px-3 py-1 rounded-full">
+                            {t.projectsSection.viewDetails}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                    <div className="p-6 flex flex-col flex-1">
-                      <span className="text-primary text-xs font-bold uppercase tracking-wider mb-2">{project.category}</span>
-                      <h3 className="text-xl font-bold text-white mb-2">{project.title}</h3>
-                      <p className="text-muted-foreground text-sm mb-6 flex-1 leading-relaxed">{project.desc}</p>
-                      <div className="flex items-center text-primary font-medium text-sm mt-auto gap-2 group-hover:gap-3 transition-all">
-                        View details <ArrowRight className="w-4 h-4" />
+                      <div className="p-6 flex flex-col flex-1">
+                        {project.category && (
+                          <span className="text-primary text-xs font-bold uppercase tracking-wider mb-2">
+                            {project.category}
+                          </span>
+                        )}
+                        <h3 className="text-xl font-bold text-white mb-2">{project.title}</h3>
+                        <p className="text-muted-foreground text-sm mb-6 flex-1 leading-relaxed">{project.desc}</p>
+                        <div className="flex items-center text-primary font-medium text-sm mt-auto gap-2 group-hover:gap-3 transition-all">
+                          {t.projectsSection.viewDetails}{" "}
+                          <ArrowRight className={`w-4 h-4 ${lang === "ar" ? "rotate-180" : ""}`} />
+                        </div>
                       </div>
-                    </div>
-                  </motion.div>
+                    </motion.div>
+                  </div>
                 ))}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center items-center gap-2 mt-8">
-              {Array.from({ length: totalPages }).map((_, dot) => (
-                <button
-                  key={dot}
-                  onClick={() => setActiveSlide(dot)}
-                  className={`w-3 h-3 rounded-full transition-colors ${activeSlide === dot ? 'bg-primary' : 'border border-primary/40 bg-transparent hover:border-primary'}`}
-                  aria-label={`Go to slide ${dot + 1}`}
-                />
-              ))}
+              </div>
             </div>
-          )}
+
+            {/* Slider Navigation Arrows - Only show if there are items to scroll */}
+            {filteredProjects.length > 1 && (
+              <div className="flex justify-end gap-3 mt-8">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={scrollPrev}
+                  className="rounded-full border-border/50 text-white hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+                  aria-label="Previous slide"
+                >
+                  <ChevronLeft className={`w-5 h-5 ${lang === "ar" ? "rotate-180" : ""}`} />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={scrollNext}
+                  className="rounded-full border-border/50 text-white hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+                  aria-label="Next slide"
+                >
+                  <ChevronRight className={`w-5 h-5 ${lang === "ar" ? "rotate-180" : ""}`} />
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
@@ -507,9 +623,9 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           {/* Top */}
           <div className="flex flex-col items-center text-center mb-16">
-            <span className="text-primary font-bold tracking-[0.2em] text-sm uppercase mb-4 block">Our Process</span>
+            <span className="text-primary font-bold tracking-[0.2em] text-sm uppercase mb-4 block">{t.process.title}</span>
             <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-6">
-              How We Work
+              {t.process.subtitle}
             </h2>
             <div className="w-16 h-1 bg-primary rounded-full"></div>
           </div>
@@ -517,14 +633,14 @@ export default function Home() {
           {/* Steps */}
           <div className="flex flex-col lg:flex-row items-center lg:items-start justify-between gap-6 lg:gap-2">
             {[
-              { icon: Search, num: "01", title: "Discover", desc: "We analyze your situation and understand your business needs." },
-              { icon: ClipboardList, num: "02", title: "Plan", desc: "We develop a clear roadmap and strategy for your project." },
-              { icon: PenTool, num: "03", title: "Design", desc: "We design modern and user-friendly experiences." },
-              { icon: Code2, num: "04", title: "Develop", desc: "We build your solution with best-in-class skills." },
-              { icon: Rocket, num: "05", title: "Deliver", desc: "We test, deliver and support your finished product." }
+              { icon: Search, num: "01", title: t.process.steps.discover, desc: t.process.steps.discoverDesc },
+              { icon: ClipboardList, num: "02", title: t.process.steps.plan, desc: t.process.steps.planDesc },
+              { icon: PenTool, num: "03", title: t.process.steps.design, desc: t.process.steps.designDesc },
+              { icon: Code2, num: "04", title: t.process.steps.develop, desc: t.process.steps.developDesc },
+              { icon: Rocket, num: "05", title: t.process.steps.deliver, desc: t.process.steps.deliverDesc }
             ].map((step, i) => (
               <React.Fragment key={i}>
-                <div className="flex flex-col items-center text-center max-w-[200px] group">
+                <div className="flex flex-col items-center text-center w-full max-w-[280px] lg:max-w-[200px] group">
                   <div className="w-16 h-16 rounded-full border border-primary/30 bg-primary/5 flex items-center justify-center text-primary mb-6 group-hover:bg-primary/10 transition-colors">
                     <step.icon className="w-7 h-7" />
                   </div>
@@ -543,40 +659,100 @@ export default function Home() {
         </div>
       </section>
 
+      {/* CLIENT TESTIMONIALS */}
+      <section className="w-full bg-background py-20 lg:py-28 border-t border-border/50">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+          {/* Section Top */}
+          <div className="flex flex-col items-center text-center mb-16">
+            <span className="text-primary font-bold tracking-[0.2em] text-sm uppercase mb-4 block">
+              {t.testimonials.title}
+            </span>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-6">
+              {t.testimonials.subtitle}
+            </h2>
+            <div className="w-16 h-1 bg-primary rounded-full"></div>
+          </div>
+
+          {/* Testimonial Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {t.testimonials.list.map((review: any, idx: number) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.4, delay: idx * 0.15 }}
+                className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 flex flex-col justify-between hover:border-primary/40 transition-all duration-300 shadow-md relative"
+              >
+                {/* Gold Quote Mark Deco */}
+                <span className={`absolute top-4 ${lang === "ar" ? "left-6" : "right-6"} text-primary/10 text-6xl font-serif select-none pointer-events-none`}>
+                  “
+                </span>
+
+
+                <div className="space-y-4">
+                  {/* Rating Stars */}
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: review.rating }).map((_, i) => (
+                      <Star key={i} className="w-4 h-4 fill-primary text-primary" />
+                    ))}
+                  </div>
+                  {/* Quote text */}
+                  <p className="text-muted-foreground text-sm sm:text-base italic leading-relaxed text-start">
+                    “{review.quote}”
+                  </p>
+                </div>
+
+                {/* Reviewer Details */}
+                <div className="flex items-center gap-3.5 mt-8 pt-4 border-t border-border/20">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-extrabold uppercase font-mono text-sm shrink-0">
+                    {review.name.charAt(0)}
+                  </div>
+                  <div className="text-start">
+                    <span className="text-sm font-bold text-white block">{review.name}</span>
+                    <span className="text-xs text-muted-foreground block">{review.role}</span>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* 8. CTA BANNER */}
       <section id="contact" className="w-full bg-background pb-20 lg:pb-28">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.6 }}
-            className="w-full rounded-2xl bg-gradient-to-r from-card to-card/60 border border-primary/20 p-12 md:p-16 flex flex-col md:flex-row items-center justify-between gap-12"
+            className="w-full rounded-2xl bg-gradient-to-r from-card to-card/60 border border-primary/20 p-6 sm:p-12 md:p-16 flex flex-col md:flex-row items-center justify-between gap-8 md:gap-12"
           >
             {/* Left */}
-            <div className="md:w-[55%] flex flex-col items-start text-left">
-              <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4 leading-tight">
-                Ready To Start Your Project?
+            <div className="w-full md:w-[55%] flex flex-col items-center md:items-start text-center md:text-start">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-4 leading-tight">
+                {t.cta.title}
               </h2>
-              <p className="text-muted-foreground text-lg mb-8">
-                Let's build something amazing together.
+              <p className="text-muted-foreground text-base sm:text-lg mb-8">
+                {t.cta.subtitle}
               </p>
               <Button
-                onClick={() => setIsContactOpen(true)}
+                onClick={() => openContactWithService("web")}
                 size="lg"
-                className="rounded-lg font-bold px-8 h-14 gap-2 text-primary-foreground bg-primary hover:bg-primary/90"
+                className="w-full sm:w-auto rounded-lg font-bold px-8 h-12 sm:h-14 gap-2 text-primary-foreground bg-primary hover:bg-primary/90"
               >
-                Get In Touch
-                <ArrowRight className="w-5 h-5" />
+                {t.cta.button}
+                <ArrowRight className={`w-5 h-5 ${lang === "ar" ? "rotate-180" : ""}`} />
               </Button>
             </div>
 
             {/* Right */}
-            <div className="md:w-[45%] flex justify-center md:justify-end">
+            <div className="w-full md:w-[45%] flex justify-center md:justify-end">
               <img
                 src="/cta-gate.png"
                 alt="Nineveh Gate CTA"
-                className="max-h-[350px] object-contain drop-shadow-[0_0_15px_rgba(201,163,58,0.2)]"
+                className="max-h-[220px] sm:max-h-[300px] md:max-h-[350px] object-contain drop-shadow-[0_0_15px_rgba(201,163,58,0.2)]"
               />
             </div>
           </motion.div>
@@ -586,17 +762,23 @@ export default function Home() {
       {/* FOOTER */}
       <footer className="w-full border-t border-border/50 bg-card/60 backdrop-blur-sm">
         {/* Main footer content */}
-        <div className="max-w-7xl mx-auto px-6 lg:px-12 py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-10 sm:py-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-12">
           {/* Col 1: Brand */}
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-5 items-center sm:items-start text-center sm:text-left">
             <div className="flex items-center gap-3">
-              <img src={logoLarge} alt="NinuSoft Logo" className="h-10 w-auto object-contain" />
-              <span className="text-xl font-bold text-white">Ninu<span className="text-primary">Soft</span></span>
+              <img src="/logo.png" alt="NinuSoft Logo" className="h-10 w-auto object-contain" />
+              <span className="text-xl font-bold text-white">
+                {lang === "en" ? (
+                  <>Ninu<span className="text-primary">Soft</span></>
+                ) : (
+                  <>نينو<span className="text-primary">سوفت</span></>
+                )}
+              </span>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Software solutions from Nineveh. We help businesses transform and grow with technology.
+              {t.footer.brandDesc}
             </p>
-            <div className="flex items-center gap-4 mt-1">
+            <div className="flex items-center justify-center sm:justify-start gap-4 mt-1">
               <a href="https://facebook.com/ninusoft" target="_blank" rel="noopener noreferrer" aria-label="Facebook" data-testid="link-facebook" className="text-muted-foreground hover:text-primary transition-colors">
                 <Facebook className="w-5 h-5" />
               </a>
@@ -616,35 +798,35 @@ export default function Home() {
           </div>
 
           {/* Col 2: Quick Links */}
-          <div className="flex flex-col gap-4">
-            <h4 className="text-white font-semibold text-base">Quick Links</h4>
-            <nav className="flex flex-col gap-3">
-              {["Home", "Services", "Solutions", "Projects", "About Us", "Contact"].map((item) => (
-                <a key={item} href="#" data-testid={`footer-link-${item.toLowerCase().replace(" ", "-")}`}
+          <div className="flex flex-col gap-4 items-center sm:items-start text-center sm:text-start">
+            <h4 className="text-white font-semibold text-base">{t.footer.quickLinks}</h4>
+            <nav className="flex flex-col gap-3 items-center sm:items-start">
+              {NAV_LINKS.map(({ key, href }) => (
+                <a key={key} href={href} data-testid={`footer-link-${key}`}
                   className="text-sm text-muted-foreground hover:text-primary transition-colors w-fit">
-                  {item}
+                  {t.nav[key as keyof typeof t.nav]}
                 </a>
               ))}
             </nav>
           </div>
 
           {/* Col 3: Services */}
-          <div className="flex flex-col gap-4">
-            <h4 className="text-white font-semibold text-base">Services</h4>
-            <nav className="flex flex-col gap-3">
-              {["Custom Software", "Web Applications", "Mobile Apps", "AI Solutions", "Cloud & Integration"].map((item) => (
-                <a key={item} href="#" data-testid={`footer-service-${item.toLowerCase().replace(/\s+/g, "-")}`}
+          <div className="flex flex-col gap-4 items-center sm:items-start text-center sm:text-start">
+            <h4 className="text-white font-semibold text-base">{t.footer.services}</h4>
+            <nav className="flex flex-col gap-3 items-center sm:items-start">
+              {SERVICES_LIST.map(({ key, href }) => (
+                <a key={key} href={href} data-testid={`footer-service-${key}`}
                   className="text-sm text-muted-foreground hover:text-primary transition-colors w-fit">
-                  {item}
+                  {t.services[key as keyof typeof t.services]}
                 </a>
               ))}
             </nav>
           </div>
 
           {/* Col 4: Contact Us */}
-          <div className="flex flex-col gap-4">
-            <h4 className="text-white font-semibold text-base">Contact Us</h4>
-            <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 items-center sm:items-start text-center sm:text-start">
+            <h4 className="text-white font-semibold text-base">{t.footer.contactUs}</h4>
+            <div className="flex flex-col gap-4 items-center sm:items-start">
               <a href="mailto:info@ninusoft.com" data-testid="footer-contact-email"
                 className="flex items-center gap-3 text-sm text-muted-foreground hover:text-primary transition-colors group">
                 <Mail className="w-4 h-4 text-primary shrink-0" />
@@ -653,11 +835,11 @@ export default function Home() {
               <a href="tel:+9647750977509" data-testid="footer-contact-phone"
                 className="flex items-center gap-3 text-sm text-muted-foreground hover:text-primary transition-colors">
                 <Phone className="w-4 h-4 text-primary shrink-0" />
-                +964 77 509 77 509
+                <span dir="ltr">+964 77 509 77 509</span>
               </a>
               <div className="flex items-center gap-3 text-sm text-muted-foreground">
                 <MapPin className="w-4 h-4 text-primary shrink-0" />
-                Mosul, Iraq
+                {t.footer.location}
               </div>
               <a href="https://ninusoft.com" target="_blank" rel="noopener noreferrer" data-testid="footer-contact-website"
                 className="flex items-center gap-3 text-sm text-muted-foreground hover:text-primary transition-colors">
@@ -672,14 +854,14 @@ export default function Home() {
         <div className="border-t border-border/50">
           <div className="max-w-7xl mx-auto px-6 lg:px-12 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
-              © 2026 NinuSoft. All rights reserved.
+              {t.footer.copyright}
             </p>
             <div className="flex items-center gap-6">
               <a href="#" data-testid="footer-privacy-policy" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                Privacy Policy
+                {t.footer.privacy}
               </a>
               <a href="#" data-testid="footer-terms-of-service" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                Terms of Service
+                {t.footer.terms}
               </a>
             </div>
           </div>
@@ -688,57 +870,61 @@ export default function Home() {
 
       {/* Contact Form Dialog */}
       <Dialog open={isContactOpen} onOpenChange={setIsContactOpen}>
-        <DialogContent className="max-w-lg bg-card border border-border/50 text-white rounded-2xl p-6 md:p-8">
-          <DialogTitle className="text-2xl font-extrabold text-white mb-2">
-            Let's build something amazing
+        <DialogContent className="max-w-lg w-[calc(100%-2rem)] max-h-[90vh] overflow-y-auto bg-card border border-border/50 text-white rounded-2xl p-6 md:p-8">
+          <DialogTitle className="text-2xl font-extrabold text-white mb-2 text-start">
+            {t.contact.title}
           </DialogTitle>
-          <p className="text-muted-foreground text-sm mb-6">
-            Fill out the form below and our team will get back to you within 24 hours.
-          </p>
+          <DialogDescription className="text-muted-foreground text-sm mb-6 text-start">
+            {t.contact.subtitle}
+          </DialogDescription>
           <form onSubmit={handleContactSubmit} className="space-y-4">
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="name" className="text-sm font-semibold text-muted-foreground">Full Name</label>
+            <div className="flex flex-col gap-1.5 text-start">
+              <label htmlFor="name" className="text-sm font-semibold text-muted-foreground">{t.contact.name}</label>
               <Input
                 id="name"
                 name="name"
                 required
-                placeholder="Enter your name"
+                placeholder={t.contact.placeholderName}
                 className="bg-background border-border/50 text-white h-11 focus-visible:ring-primary"
               />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="email" className="text-sm font-semibold text-muted-foreground">Email Address</label>
+            <div className="flex flex-col gap-1.5 text-start">
+              <label htmlFor="email" className="text-sm font-semibold text-muted-foreground">{t.contact.email}</label>
               <Input
                 id="email"
                 name="email"
                 type="email"
                 required
-                placeholder="you@example.com"
+                placeholder={t.contact.placeholderEmail}
                 className="bg-background border-border/50 text-white h-11 focus-visible:ring-primary"
               />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="projectType" className="text-sm font-semibold text-muted-foreground">Project Type</label>
-              <Select name="projectType" defaultValue="web">
+            <div className="flex flex-col gap-1.5 text-start">
+              <label htmlFor="projectType" className="text-sm font-semibold text-muted-foreground">{t.contact.projectType}</label>
+              <Select
+                name="projectType"
+                value={contactProjectType}
+                onValueChange={setContactProjectType}
+              >
                 <SelectTrigger className="bg-background border-border/50 text-white h-11 focus:ring-primary">
-                  <SelectValue placeholder="Select project type" />
+                  <SelectValue placeholder={t.contact.selectPlaceholder} />
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border/50 text-white">
-                  <SelectItem value="software">Custom Software</SelectItem>
-                  <SelectItem value="web">Web Application</SelectItem>
-                  <SelectItem value="mobile">Mobile App</SelectItem>
-                  <SelectItem value="ai">AI Solutions & Automation</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="software">{t.contact.optionSoftware}</SelectItem>
+                  <SelectItem value="web">{t.contact.optionWeb}</SelectItem>
+                  <SelectItem value="mobile">{t.contact.optionMobile}</SelectItem>
+                  <SelectItem value="ai">{t.contact.optionAi}</SelectItem>
+                  <SelectItem value="other">{t.contact.optionOther}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="message" className="text-sm font-semibold text-muted-foreground">Message</label>
+            <div className="flex flex-col gap-1.5 text-start">
+              <label htmlFor="message" className="text-sm font-semibold text-muted-foreground">{t.contact.message}</label>
               <Textarea
                 id="message"
                 name="message"
                 required
-                placeholder="Tell us about your project..."
+                placeholder={t.contact.placeholderMessage}
                 rows={4}
                 className="bg-background border-border/50 text-white focus-visible:ring-primary resize-none"
               />
@@ -751,16 +937,139 @@ export default function Home() {
               {isSubmitting ? (
                 <>
                   <span className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                  Sending...
+                  {t.contact.buttonSending}
                 </>
               ) : (
                 <>
-                  Send Message
-                  <ArrowRight className="w-4 h-4" />
+                  {t.contact.buttonSend}
+                  <ArrowRight className={`w-4 h-4 ${lang === "ar" ? "rotate-180" : ""}`} />
                 </>
               )}
             </Button>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Project Details Dialog */}
+      <Dialog open={selectedProjectForModal !== null} onOpenChange={(open) => { if (!open) setSelectedProjectForModal(null); }}>
+        <DialogContent className="max-w-2xl w-[calc(100%-2rem)] max-h-[90vh] overflow-y-auto bg-card border border-border/50 text-white rounded-2xl p-6 md:p-8">
+          {selectedProjectForModal && (
+            <div className="flex flex-col gap-6">
+              {/* Project Image */}
+              <div className="w-full aspect-[16/10] rounded-xl overflow-hidden bg-muted/40 border border-border/50 flex items-center justify-center">
+                <img
+                  src={selectedProjectForModal.img}
+                  alt={selectedProjectForModal.title}
+                  className="w-full h-full object-contain p-4"
+                />
+              </div>
+
+              {/* Title & Category */}
+              <div>
+                {selectedProjectForModal.category && (
+                  <span className="text-primary text-xs font-bold uppercase tracking-wider mb-1 block">
+                    {selectedProjectForModal.category}
+                  </span>
+                )}
+                <DialogTitle className="text-2xl md:text-3xl font-extrabold text-white">
+                  {selectedProjectForModal.title}
+                </DialogTitle>
+              </div>
+
+              {/* Details & Description */}
+              <div className="space-y-4">
+                <DialogDescription className="text-muted-foreground text-sm md:text-base leading-relaxed text-start">
+                  {selectedProjectForModal.details || selectedProjectForModal.desc}
+                </DialogDescription>
+              </div>
+
+              {/* Technologies */}
+              <div>
+                <h4 className="text-white font-bold text-sm mb-3 text-start">{t.projectDetails.technologies}</h4>
+                <div className="flex flex-wrap gap-2 justify-start">
+                  {selectedProjectForModal.tech.map((t) => (
+                    <span
+                      key={t}
+                      className="px-3 py-1 rounded-full text-xs font-semibold bg-secondary text-secondary-foreground border border-border"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Key Features */}
+              {selectedProjectForModal.features && selectedProjectForModal.features.length > 0 && (
+                <div>
+                  <h4 className="text-white font-bold text-sm mb-3 text-start">{t.projectDetails.features}</h4>
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-muted-foreground text-start">
+                    {selectedProjectForModal.features.map((f, idx) => (
+                      <li key={idx} className="flex items-start gap-2.5">
+                        <span className="w-5 h-5 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0 mt-0.5">
+                          ✓
+                        </span>
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* CTA */}
+              <div className="flex justify-end gap-3 pt-4 border-t border-border/30 flex-wrap">
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedProjectForModal(null)}
+                  className="rounded-lg border-white/10 text-white hover:bg-white/10"
+                >
+                  {t.projectDetails.close}
+                </Button>
+                {selectedProjectForModal.websiteLink && (
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="rounded-lg border-primary text-primary hover:bg-primary/10 gap-2"
+                  >
+                    <a
+                      href={selectedProjectForModal.websiteLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Globe className="w-4 h-4" />
+                      {t.projectDetails.visitWebsite}
+                    </a>
+                  </Button>
+                )}
+                {selectedProjectForModal.storeLink && (
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="rounded-lg border-primary text-primary hover:bg-primary/10 gap-2"
+                  >
+                    <a
+                      href={selectedProjectForModal.storeLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      {t.projectDetails.viewStore}
+                    </a>
+                  </Button>
+                )}
+                <Button
+                  onClick={() => {
+                    if (selectedProjectForModal) {
+                      openContactWithProject(selectedProjectForModal);
+                    }
+                    setSelectedProjectForModal(null);
+                  }}
+                  className="rounded-lg font-bold gap-2 text-primary-foreground bg-primary hover:bg-primary/90"
+                >
+                  {t.projectDetails.inquire}
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
