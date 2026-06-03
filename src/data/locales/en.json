@@ -1,0 +1,195 @@
+{
+  "brandName": "NinuSoft",
+  "nav": {
+    "home": "Home",
+    "services": "Services",
+    "solutions": "Solutions",
+    "projects": "Projects",
+    "about": "About Us",
+    "contact": "Contact",
+    "getStarted": "Get Started"
+  },
+  "hero": {
+    "sub": "Software Solutions From Nineveh",
+    "desc": "We build powerful, scalable, and intelligent software solutions that help businesses grow, automate, and succeed in the digital world.",
+    "viewServices": "View Services"
+  },
+  "stats": {
+    "hero": "Trusted by businesses across Iraq and beyond",
+    "projects": "Projects Completed",
+    "clients": "Happy Clients",
+    "experience": "Years Experience",
+    "support": "Support Available"
+  },
+  "services": {
+    "title": "Our Services",
+    "subtitle": "Complete Software Solutions For Your Business",
+    "desc": "We offer end-to-end software services to help you build, scale, and transform your business.",
+    "exploreServices": "Explore All Services",
+    "customSoftware": "Custom Software Development",
+    "customSoftwareDesc": "Tailored software solutions built to your unique business needs and requirements.",
+    "webApps": "Web Applications",
+    "webAppsDesc": "Modern, responsive, and high-performance web applications.",
+    "mobileApps": "Mobile App Development",
+    "mobileAppsDesc": "Native and cross-platform apps for iOS and Android.",
+    "aiSolutions": "AI Solutions & Automation",
+    "aiSolutionsDesc": "Robust AI tools and automation to supercharge your business.",
+    "cloud": "Cloud & System Integration",
+    "cloudDesc": "Cloud solutions, architecture, and enterprise system integrations."
+  },
+  "why": {
+    "title": "Why Choose NinuSoft?",
+    "subtitle": "We Build Solutions That Drive Real Results",
+    "features": {
+      "businessFocused": "Business Focused",
+      "businessFocusedDesc": "We align our technology strategy with your business goals.",
+      "scalable": "Scalable Solutions",
+      "scalableDesc": "Built to grow seamlessly alongside your enterprise.",
+      "modernTech": "Modern Technology",
+      "modernTechDesc": "Using the latest frameworks and proven architectures.",
+      "secure": "Secure & Reliable",
+      "secureDesc": "Enterprise-grade security and robust infrastructure.",
+      "fastDelivery": "Fast Delivery",
+      "fastDeliveryDesc": "Agile methodologies ensuring rapid time-to-market.",
+      "longTerm": "Long-Term Partner",
+      "longTermDesc": "Dedicated support and continuous evolution of your product."
+    }
+  },
+  "projects": [
+    {
+      "id": 1,
+      "category": "Retail",
+      "title": "Hindam Customer App",
+      "desc": "Privacy-first native Android app for real-time tailoring and laundry order tracking via QR code scanning, without signing in.",
+      "img": "/customer-app-dark.png",
+      "details": "A consumer-focused native Android app designed with a strict Clean Architecture and MVI/MVVM flow. Utilizes Jetpack Compose for a highly responsive, localized interface. Customers can scan the QR code printed on their physical receipt to instantly monitor their order status (Pending, In Progress, Ready, Delivered), review comprehensive payment details (total, paid, and remaining balance), and access operator contact details and location. The app is completely privacy-first, requiring no sign-in, account creation, or password input.",
+      "tech": ["Kotlin", "Jetpack Compose", "Room DB", "Supabase", "Koin", "Ktor / Ktorfit", "Kotlinx Datetime"],
+      "features": [
+        "Zero-friction tracking: Scan receipt QR code or enter Order ID manually",
+        "Real-time status updates (Pending, In Progress, Ready for collection, Delivered)",
+        "Comprehensive invoice view (services, quantity, pricing, paid, and remaining balance)",
+        "Quick access to shop details (name, contact number, and location)",
+        "No login required: Privacy-first design with no sign-in or data collection",
+        "Highly responsive Material 3 UI with smooth shimmer/skeleton loading states"
+      ],
+      "storeLink": "https://play.google.com/store/apps/details?id=com.ninusoft.hindam.customer",
+      "websiteLink": "https://hindam.ninusoft.com"
+    },
+    {
+      "id": 2,
+      "category": "Business",
+      "title": "Hindam Manager App",
+      "desc": "Offline-first shop management app for tailors and dry cleaners with Bluetooth thermal printing, customer measurement history, and cloud sync.",
+      "img": "/manager-app-dark.png",
+      "details": "An enterprise-grade native Android shop management app built using Kotlin and Jetpack Compose under Clean Architecture guidelines. Operates fully offline using Room DB and synchronizes securely with Supabase. Enables managers and staff to create orders, manage customer profiles along with detailed measurement history, handle support tickets, and print physical receipts via Bluetooth thermal printers (supporting both 58mm and 80mm layouts). Includes a setup wizard to customize workflows for tailoring, laundry, or combined services, and features automated Play Store publishing via Gradle Play Publisher (GPP).",
+      "tech": ["Kotlin", "Jetpack Compose", "Room DB", "Supabase", "Koin", "Ktor / Ktorfit", "Bluetooth Thermal Printer SDK"],
+      "features": [
+        "Offline-first capability: Create orders and add clients without an internet connection",
+        "Seamless cloud sync: Automatic database synchronization once connection is restored",
+        "Bluetooth thermal printing: Direct pairing to print receipts with tracking QR codes",
+        "Customer profiles: Organize contact logs and custom measurement history",
+        "Flexible shop customization: Set up workflows for tailoring, dry-cleaning, or both",
+        "Automated CI/CD: Release pipelines via GPP with localized release notes"
+      ],
+      "storeLink": "https://play.google.com/store/apps/details?id=com.ninusoft.hindam.manager",
+      "websiteLink": "https://hindam.ninusoft.com"
+    }
+  ],
+  "projectsSection": {
+    "title": "Our Projects",
+    "subtitle": "Some Of Our Recent Work",
+    "viewDetails": "View Details"
+  },
+  "projectDetails": {
+    "visitWebsite": "Visit Website",
+    "viewStore": "View on Play Store",
+    "close": "Close",
+    "inquire": "Inquire About This Project",
+    "technologies": "Technologies Used",
+    "features": "Key Features"
+  },
+  "process": {
+    "title": "Our Process",
+    "subtitle": "How We Work",
+    "steps": {
+      "discover": "Discover",
+      "discoverDesc": "We analyze your situation and understand your business needs.",
+      "plan": "Plan",
+      "planDesc": "We develop a clear roadmap and strategy for your project.",
+      "design": "Design",
+      "designDesc": "We design modern and user-friendly experiences.",
+      "develop": "Develop",
+      "developDesc": "We build your solution with best-in-class skills.",
+      "deliver": "Deliver",
+      "deliverDesc": "We test, deliver, and support your finished product."
+    }
+  },
+  "cta": {
+    "title": "Ready To Start Your Project?",
+    "subtitle": "Let's build something amazing together.",
+    "button": "Get In Touch"
+  },
+  "testimonials": {
+    "title": "Client Reviews",
+    "subtitle": "What Our Partners Say About Us",
+    "list": [
+      {
+        "name": "Ahmad Al-Sudani",
+        "role": "Owner, Al-Mansour Tailoring",
+        "rating": 5,
+        "quote": "Hindam Manager changed how we operate. We print QR receipts and clients never call to ask 'is my order ready?' anymore. Truly premium!"
+      },
+      {
+        "name": "Yousif Mosul",
+        "role": "Manager, CleanExpress Dry Cleaning",
+        "rating": 5,
+        "quote": "The offline-first feature is a lifesaver in Mosul. Internet goes down, but we register customer measurements and print receipts offline. It syncs later."
+      }
+    ]
+  },
+  "calculator": {
+    "title": "ROI & Cost Savings Calculator",
+    "subtitle": "See how much time and money you save with Hindam Manager App",
+    "intro": "Estimate the business impact of upgrading from paper invoices to digital QR receipts and automated tracking.",
+    "weeklyOrders": "Weekly Orders Volume",
+    "timeSaved": "Time Saved Per Order",
+    "paperCosts": "Monthly Paper & Ink Costs",
+    "hoursSaved": "Staff Time Saved",
+    "moneySaved": "Estimated Monthly Savings",
+    "callsReduced": "Status Inquiry Calls Reduced",
+    "hoursLabel": "Hours / Month",
+    "moneyLabel": "$ / Month",
+    "callsLabel": "Reduction"
+  },
+  "contact": {
+    "title": "Let's build something amazing",
+    "subtitle": "Fill out the form below and our team will get back to you within 24 hours.",
+    "name": "Full Name",
+    "email": "Email Address",
+    "projectType": "Project Type",
+    "message": "Message",
+    "placeholderName": "Enter your name",
+    "placeholderEmail": "you@example.com",
+    "placeholderMessage": "Tell us about your project...",
+    "buttonSend": "Send Message",
+    "buttonSending": "Sending...",
+    "successTitle": "Message Sent!",
+    "successDesc": "Thank you for reaching out. We will get back to you shortly.",
+    "optionSoftware": "Custom Software",
+    "optionWeb": "Web Application",
+    "optionMobile": "Mobile App",
+    "optionAi": "AI Solutions & Automation",
+    "optionOther": "Other",
+    "selectPlaceholder": "Select project type"
+  },
+  "footer": {
+    "brandDesc": "Software solutions from Nineveh. We help businesses transform and grow with technology.",
+    "quickLinks": "Quick Links",
+    "services": "Services",
+    "contactUs": "Contact Us",
+    "location": "Mosul, Iraq",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "copyright": "© 2026 NinuSoft. All rights reserved."
+  }
+}
