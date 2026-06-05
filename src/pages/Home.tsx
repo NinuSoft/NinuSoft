@@ -123,6 +123,7 @@ export default function Home() {
     const formData = new FormData(form);
     const name = formData.get("name") as string;
     const email = formData.get("email") as string;
+    const phone = formData.get("phone") as string;
     const message = formData.get("message") as string;
 
     const endpoint = "https://contact-api.ninusoft.workers.dev/";
@@ -136,6 +137,7 @@ export default function Home() {
         body: JSON.stringify({
           name,
           email,
+          phone,
           projectType: contactProjectType,
           message,
         }),
@@ -964,6 +966,16 @@ export default function Home() {
                 type="email"
                 required
                 placeholder={t.contact.placeholderEmail}
+                className="bg-background border-border/50 text-white h-11 focus-visible:ring-primary"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5 text-start">
+              <label htmlFor="phone" className="text-sm font-semibold text-muted-foreground">{t.contact.phone}</label>
+              <Input
+                id="phone"
+                name="phone"
+                type="tel"
+                placeholder={t.contact.placeholderPhone}
                 className="bg-background border-border/50 text-white h-11 focus-visible:ring-primary"
               />
             </div>
