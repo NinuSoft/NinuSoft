@@ -224,7 +224,7 @@
   color: var(--gold);
 }
 
-.ns-brand p {
+#ns-intro .ns-brand p {
   font-size: 0.72rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
