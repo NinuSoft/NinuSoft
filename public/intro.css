@@ -98,11 +98,13 @@
   width: 100%; height: 100%;
   object-fit: contain;
   display: block;
+  /* Optically center the asymmetrical wing logo by shifting it slightly left */
+  transform: translateX(-10%);
   transition: filter 0.5s ease, transform 0.5s ease;
 }
 .ns-done .ns-logo {
   filter: drop-shadow(0 0 28px hsl(43,75%,49%,.85)) drop-shadow(0 0 60px hsl(43,75%,49%,.4));
-  transform: scale(1.07);
+  transform: translateX(-10%) scale(1.07);
 }
 
 /* ── Corner brackets ────────────────────────────────────────────────────── */
