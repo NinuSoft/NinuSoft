@@ -118,13 +118,52 @@ export default function Home() {
   const handleContactSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsSubmitting(false);
-    setIsContactOpen(false);
-    toast({
-      title: t.contact.successTitle,
-      description: t.contact.successDesc,
-    });
+
+    const form = e.currentTarget as HTMLFormElement;
+    const formData = new FormData(form);
+    const name = formData.get("name") as string;
+    const email = formData.get("email") as string;
+    const message = formData.get("message") as string;
+
+    const endpoint = "https://contact-api.ninusoft.workers.dev/";
+
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          projectType: contactProjectType,
+          message,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        toast({
+          title: t.contact.successTitle,
+          description: t.contact.successDesc,
+        });
+        form.reset();
+        setIsContactOpen(false);
+      } else {
+        throw new Error(data.error || "Failed to send message");
+      }
+    } catch (error) {
+      toast({
+        title: lang === "ar" ? "خطأ" : "Error",
+        description: lang === "ar"
+          ? "فشل إرسال الرسالة. يرجى المحاولة مرة أخرى."
+          : "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const categories = ["All", ...Array.from(new Set(PROJECTS.map((p) => p.category).filter(Boolean)))];

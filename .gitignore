@@ -47,3 +47,10 @@ attached_assets/
 # Replit
 .cache/
 .local/
+
+# local env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
