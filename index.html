@@ -23,14 +23,66 @@
     content="NinuSoft builds powerful, scalable, and intelligent software, web applications, mobile apps, and AI automation solutions." />
   <meta name="twitter:image" content="/opengraph.png" />
   <link rel="icon" type="image/png" href="/logo.png" />
+
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Preload Intro Screen script to download in parallel while CSS blocks paint -->
+  <link rel="preload" as="script" href="/intro.js" />
+
+  <!-- Intro screen styles — loaded before any JS so overlay paints instantly -->
+  <link rel="stylesheet" href="/intro.css">
 </head>
 
-<body>
+<body class="ns-loading" style="background: #050b14;">
+
+  <!-- Intro overlay — rendered at byte 0, before the React bundle loads -->
+  <div id="ns-intro" role="dialog" aria-label="NinuSoft loading" aria-live="polite" style="display: none;">
+    <div class="ns-glow ns-glow-1"></div>
+    <div class="ns-glow ns-glow-2"></div>
+
+    <div class="ns-stage">
+      <!-- Logo + scan -->
+      <div class="ns-logo-wrap" id="ns-logo-wrap">
+        <div class="ns-bracket ns-tl"></div>
+        <div class="ns-bracket ns-tr"></div>
+        <div class="ns-bracket ns-bl"></div>
+        <div class="ns-bracket ns-br"></div>
+        <div id="ns-scan-glow"></div>
+        <div id="ns-scan"></div>
+        <img src="/logo.png" alt="NinuSoft logo" class="ns-logo" id="ns-logo" />
+      </div>
+
+      <!-- Brand name -->
+      <div class="ns-brand">
+        <h1>Ninu<span>Soft</span></h1>
+        <p>Software Solutions from Nineveh</p>
+      </div>
+
+      <!-- Status -->
+      <div id="ns-status">
+        <span class="ns-dot ns-dot-idle" id="ns-dot"></span>
+        <span id="ns-status-text">Initializing&hellip;</span>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="ns-bar-track">
+        <div id="ns-bar-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- React app root -->
   <div id="root"></div>
+
+  <!-- React bundle (Vite module) -->
   <script type="module" src="/src/main.tsx"></script>
+
+  <!-- Intro controller — runs synchronously after overlay HTML is parsed -->
+  <script src="/intro.js"></script>
+
 </body>
 
 </html>

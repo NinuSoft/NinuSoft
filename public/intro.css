@@ -1,0 +1,222 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   NinuSoft — Instant Intro Screen Styles
+   Served as a static asset from /public/intro.css
+   Loaded in <head> before any JS so styles are ready at byte 0.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Reset / base ──────────────────────────────────────────────────────── */
+#ns-intro, #ns-intro *, #ns-intro *::before, #ns-intro *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+#ns-intro {
+  --gold:   hsl(43, 75%, 49%);
+  --gold60: hsl(43, 75%, 60%);
+  --bg:     hsl(220, 30%, 5%);
+  --dim:    hsl(215, 20%, 35%);
+  --dimmer: hsl(215, 20%, 18%);
+}
+
+/* ── Overlay container ──────────────────────────────────────────────────── */
+#ns-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
+  /* Fade-out transition — .ns-exit class added by intro.js */
+  transition: opacity 0.65s ease, visibility 0.65s ease;
+}
+#ns-intro.ns-exit {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* ── Grid lines ─────────────────────────────────────────────────────────── */
+#ns-intro::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right,  rgba(201,163,58,.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(201,163,58,.06) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+/* ── Ambient glow ───────────────────────────────────────────────────────── */
+.ns-glow {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.ns-glow-1 {
+  width: 520px; height: 520px;
+  top: 30%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(201,163,58,.13) 0%, transparent 70%);
+}
+.ns-glow-2 {
+  width: 280px; height: 280px;
+  bottom: 20%; right: 20%;
+  background: radial-gradient(circle, rgba(201,163,58,.06) 0%, transparent 70%);
+}
+
+/* ── Stage ──────────────────────────────────────────────────────────────── */
+.ns-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  z-index: 1;
+  animation: ns-fade-in 0.5s ease forwards;
+}
+@keyframes ns-fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Logo wrapper ───────────────────────────────────────────────────────── */
+.ns-logo-wrap {
+  position: relative;
+  width: 160px; height: 160px;
+}
+@media (min-width: 480px) {
+  .ns-logo-wrap { width: 200px; height: 200px; }
+}
+
+.ns-logo {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  display: block;
+  transition: filter 0.5s ease, transform 0.5s ease;
+}
+.ns-done .ns-logo {
+  filter: drop-shadow(0 0 28px hsl(43,75%,49%,.85)) drop-shadow(0 0 60px hsl(43,75%,49%,.4));
+  transform: scale(1.07);
+}
+
+/* ── Corner brackets ────────────────────────────────────────────────────── */
+.ns-bracket {
+  position: absolute;
+  width: 20px; height: 20px;
+  border-color: var(--dimmer);
+  border-style: solid;
+  transition: border-color 0.4s ease, box-shadow 0.4s ease;
+  pointer-events: none;
+}
+.ns-done .ns-bracket {
+  border-color: var(--gold);
+  box-shadow: 0 0 6px var(--gold);
+}
+.ns-tl { top:0; left:0;   border-width: 2px 0 0 2px; border-radius: 4px 0 0 0; }
+.ns-tr { top:0; right:0;  border-width: 2px 2px 0 0; border-radius: 0 4px 0 0; }
+.ns-bl { bottom:0; left:0;  border-width: 0 0 2px 2px; border-radius: 0 0 0 4px; }
+.ns-br { bottom:0; right:0; border-width: 0 2px 2px 0; border-radius: 0 0 4px 0; }
+
+/* ── Scan line ──────────────────────────────────────────────────────────── */
+#ns-scan {
+  position: absolute;
+  left: 0; right: 0;
+  height: 2px;
+  top: 0%;                        /* driven by intro.js */
+  background: linear-gradient(to right, transparent, var(--gold), transparent);
+  box-shadow: 0 0 12px 2px hsl(43,75%,49%,.7), 0 0 30px 6px hsl(43,75%,49%,.3);
+  opacity: 0;
+  pointer-events: none;
+  will-change: top;
+}
+
+/* ── Scan glow overlay ──────────────────────────────────────────────────── */
+#ns-scan-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: 1rem;
+  opacity: 0;
+}
+
+/* ── Brand text ─────────────────────────────────────────────────────────── */
+.ns-brand {
+  text-align: center;
+  animation: ns-fade-in 0.5s ease 0.35s both;
+}
+.ns-brand h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #fff;
+  line-height: 1;
+}
+@media (min-width: 480px) { .ns-brand h1 { font-size: 2.4rem; } }
+.ns-brand h1 span { color: var(--gold); }
+.ns-brand p {
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-top: 0.5rem;
+}
+
+/* ── Status text ────────────────────────────────────────────────────────── */
+#ns-status {
+  font-size: 0.72rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--dim);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 1.2em;
+  animation: ns-fade-in 0.5s ease 0.65s both;
+}
+.ns-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--gold);
+  flex-shrink: 0;
+}
+.ns-dot-idle { animation: ns-pulse 1.8s ease-in-out infinite; }
+.ns-dot-scan { animation: ns-ping  0.8s ease-in-out infinite; }
+@keyframes ns-pulse {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50%     { opacity: .4; transform: scale(.8); }
+}
+@keyframes ns-ping {
+  0%   { transform: scale(1); opacity: 1; }
+  70%  { transform: scale(2); opacity: 0; }
+  100% { transform: scale(1); opacity: 0; }
+}
+
+/* ── Progress bar ───────────────────────────────────────────────────────── */
+.ns-bar-track {
+  width: 200px; height: 2px;
+  background: var(--dimmer);
+  border-radius: 99px;
+  overflow: hidden;
+  animation: ns-fade-in 0.5s ease 0.65s both;
+}
+@media (min-width: 480px) { .ns-bar-track { width: 260px; } }
+#ns-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--gold);
+  box-shadow: 0 0 8px hsl(43,75%,49%,.6);
+  border-radius: 99px;
+  will-change: width;
+  transition: width 16ms linear;
+}
+
+/* ── Hide root content while intro shows (prevents flash) ───────────────── */
+body.ns-loading #root {
+  visibility: hidden;
+}
