@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Headphones, Settings, Shield, Users2, Monitor, Globe, Smartphone, Bot, Cloud, Target, TrendingUp, Cpu, Lock, Zap, Handshake, Search, ClipboardList, PenTool, Code2, Rocket, Mail, Phone, MapPin, ExternalLink, Menu, ChevronLeft, ChevronRight, Star } from "lucide-react";
-import { FaFacebook as Facebook, FaLinkedin as Linkedin, FaInstagram as Instagram, FaGithub as Github, FaTelegram as Telegram } from "react-icons/fa6";
-import { motion } from "framer-motion";
+import { ArrowRight, Headphones, Settings, Shield, Users2, Monitor, Globe, Smartphone, Bot, Cloud, Target, TrendingUp, Cpu, Lock, Zap, Handshake, Search, ClipboardList, PenTool, Code2, Rocket, Mail, Phone, MapPin, ExternalLink, Menu, ChevronLeft, ChevronRight, Star, CheckCircle2 } from "@/components/Icons";
+import { Facebook, Linkedin, Instagram, Github, Telegram, WhatsApp } from "@/components/Icons";
+import { motion, AnimatePresence } from "framer-motion";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import useEmblaCarousel from "embla-carousel-react";
 import en from "@/data/locales/en.json";
 import ar from "@/data/locales/ar.json";
+import IntroScreen from "@/components/IntroScreen";
 
 const translations = { en, ar };
 
@@ -58,7 +59,15 @@ export default function Home() {
   const t = translations[lang];
   const PROJECTS = t.projects as Project[];
 
+  // Intro screen visibility state
+  const [showIntro, setShowIntro] = useState(() => {
+    return !!document.getElementById("ns-intro");
+  });
 
+  const handleIntroDone = () => {
+    sessionStorage.setItem("intro_seen", "1");
+    setShowIntro(false);
+  };
 
   const [activeSlide, setActiveSlide] = useState(0);
   const [activeSection, setActiveSection] = useState("home");
@@ -154,6 +163,8 @@ export default function Home() {
 
   return (
     <div className="min-h-[100dvh] w-full flex flex-col bg-background text-foreground selection:bg-primary/30 font-sans relative">
+      {/* Animated Intro Screen */}
+      <IntroScreen onComplete={handleIntroDone} />
       {/* Premium Background Visuals - Wrapped to isolate layout bounds and prevent horizontal scroll */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:32px_32px]" />
@@ -350,8 +361,10 @@ export default function Home() {
           transition={{ duration: 0.9, delay: 0.2 }}
           className="w-full lg:w-[45%] h-[300px] sm:h-[450px] lg:h-auto relative shrink-0 overflow-hidden"
         >
-          {/* Gradient fade on top/left edge to blend with content */}
-          <div className="absolute inset-x-0 top-0 h-24 lg:inset-y-0 lg:left-0 lg:w-32 lg:h-auto z-10 bg-gradient-to-b lg:bg-gradient-to-r from-background to-transparent" />
+          {/* Gradient fade on top/left (or top/right in Arabic) edge to blend with content */}
+          <div className={`absolute inset-x-0 top-0 h-24 lg:inset-y-0 lg:w-32 lg:h-auto z-10 bg-gradient-to-b from-background to-transparent ${
+            lang === "ar" ? "lg:right-0 lg:bg-gradient-to-l" : "lg:left-0 lg:bg-gradient-to-r"
+          }`} />
           {/* Gradient fade on bottom edge */}
           <div className="absolute inset-x-0 bottom-0 h-24 lg:h-32 z-10 bg-gradient-to-t from-background to-transparent" />
           <img
@@ -470,7 +483,7 @@ export default function Home() {
               transition={{ duration: 0.6 }}
               className="lg:col-span-5 w-full aspect-[16/10] sm:aspect-[4/3] lg:aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl shadow-black/40 border border-border/50"
             >
-              <img src="/office-why.png" alt="NinuSoft Office" className="w-full h-full object-cover" />
+              <img src="/office-why.png" alt="NinuSoft Office" className="w-full h-full object-cover" loading="lazy" />
             </motion.div>
 
             {/* Right Content */}
@@ -565,6 +578,7 @@ export default function Home() {
                           src={project.img}
                           alt={project.title}
                           className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500"
+                          loading="lazy"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
                           <span className="text-white text-xs font-semibold bg-primary px-3 py-1 rounded-full">
@@ -650,7 +664,7 @@ export default function Home() {
                 </div>
                 {i < 4 && (
                   <div className="hidden lg:flex flex-col items-center mt-8 text-primary/40 text-lg">
-                    →→
+                    {lang === "ar" ? "←←" : "→→"}
                   </div>
                 )}
               </React.Fragment>
@@ -730,7 +744,7 @@ export default function Home() {
             className="w-full rounded-2xl bg-gradient-to-r from-card to-card/60 border border-primary/20 p-6 sm:p-12 md:p-16 flex flex-col md:flex-row items-center justify-between gap-8 md:gap-12"
           >
             {/* Left */}
-            <div className="w-full md:w-[55%] flex flex-col items-center md:items-start text-center md:text-start">
+            <div className="w-full md:w-[45%] flex flex-col items-center md:items-start text-center md:text-start">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white mb-4 leading-tight">
                 {t.cta.title}
               </h2>
@@ -748,11 +762,12 @@ export default function Home() {
             </div>
 
             {/* Right */}
-            <div className="w-full md:w-[45%] flex justify-center md:justify-end">
+            <div className="w-full md:w-[55%] flex justify-center md:justify-end">
               <img
                 src="/cta-gate.png"
                 alt="Nineveh Gate CTA"
-                className="max-h-[220px] sm:max-h-[300px] md:max-h-[350px] object-contain drop-shadow-[0_0_15px_rgba(201,163,58,0.2)]"
+                className="w-full h-auto max-w-[480px] md:max-w-none object-contain drop-shadow-[0_0_20px_rgba(201,163,58,0.25)]"
+                loading="lazy"
               />
             </div>
           </motion.div>
@@ -868,6 +883,37 @@ export default function Home() {
         </div>
       </footer>
 
+      {/* ── WhatsApp Floating Button ─────────────────────────────────── */}
+      <AnimatePresence>
+        {!showIntro && (
+          <motion.a
+            key="whatsapp-fab"
+            href="https://wa.me/9647750977509"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Chat on WhatsApp"
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.4 }}
+            whileHover={{ scale: 1.12 }}
+            whileTap={{ scale: 0.95 }}
+            className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full shadow-2xl"
+            style={{
+              background: "linear-gradient(135deg, #25d366 0%, #128c4e 100%)",
+              boxShadow: "0 4px 24px rgba(37,211,102,0.45), 0 2px 8px rgba(0,0,0,0.3)",
+            }}
+          >
+            {/* Pulse ring */}
+            <span
+              className="absolute inset-0 rounded-full animate-ping opacity-30"
+              style={{ backgroundColor: "#25d366" }}
+            />
+            <WhatsApp className="w-7 h-7 text-white relative z-10" />
+          </motion.a>
+        )}
+      </AnimatePresence>
+
       {/* Contact Form Dialog */}
       <Dialog open={isContactOpen} onOpenChange={setIsContactOpen}>
         <DialogContent className="max-w-lg w-[calc(100%-2rem)] max-h-[90vh] overflow-y-auto bg-card border border-border/50 text-white rounded-2xl p-6 md:p-8">
@@ -950,123 +996,137 @@ export default function Home() {
         </DialogContent>
       </Dialog>
 
-      {/* Project Details Dialog */}
+      {/* ── Project Details Dialog (richer modal) ───────────────────── */}
       <Dialog open={selectedProjectForModal !== null} onOpenChange={(open) => { if (!open) setSelectedProjectForModal(null); }}>
-        <DialogContent className="max-w-2xl w-[calc(100%-2rem)] max-h-[90vh] overflow-y-auto bg-card border border-border/50 text-white rounded-2xl p-6 md:p-8">
+        <DialogContent className="max-w-2xl w-[calc(100%-2rem)] max-h-[90vh] overflow-y-auto bg-card border border-border/50 text-white rounded-2xl p-0">
           {selectedProjectForModal && (
-            <div className="flex flex-col gap-6">
-              {/* Project Image */}
-              <div className="w-full aspect-[16/10] rounded-xl overflow-hidden bg-muted/40 border border-border/50 flex items-center justify-center">
+            <div className="flex flex-col">
+
+              {/* ── Hero image strip ───────────────────────────────────── */}
+              <div className="w-full aspect-[16/9] overflow-hidden bg-muted/40 border-b border-border/40 relative rounded-t-2xl flex items-center justify-center">
                 <img
                   src={selectedProjectForModal.img}
                   alt={selectedProjectForModal.title}
-                  className="w-full h-full object-contain p-4"
+                  className="w-full h-full object-contain p-6"
+                  loading="lazy"
                 />
-              </div>
-
-              {/* Title & Category */}
-              <div>
+                {/* Category badge pinned top-right */}
                 {selectedProjectForModal.category && (
-                  <span className="text-primary text-xs font-bold uppercase tracking-wider mb-1 block">
+                  <span className="absolute top-4 right-4 bg-primary text-primary-foreground text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full shadow-lg">
                     {selectedProjectForModal.category}
                   </span>
                 )}
-                <DialogTitle className="text-2xl md:text-3xl font-extrabold text-white">
-                  {selectedProjectForModal.title}
-                </DialogTitle>
               </div>
 
-              {/* Details & Description */}
-              <div className="space-y-4">
+              {/* ── Body ───────────────────────────────────────────────── */}
+              <div className="flex flex-col gap-6 p-6 md:p-8">
+
+                {/* Title + meta badges row */}
+                <div className="flex flex-col gap-3 text-start">
+                  <DialogTitle className="text-2xl md:text-3xl font-extrabold text-white leading-tight">
+                    {selectedProjectForModal.title}
+                  </DialogTitle>
+                  {/* Tech stack chips */}
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedProjectForModal.tech.map((tech) => (
+                      <span
+                        key={tech}
+                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border"
+                        style={{
+                          background: "hsl(43 75% 49% / 0.08)",
+                          borderColor: "hsl(43 75% 49% / 0.25)",
+                          color: "hsl(43 75% 60%)",
+                        }}
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Description */}
                 <DialogDescription className="text-muted-foreground text-sm md:text-base leading-relaxed text-start">
                   {selectedProjectForModal.details || selectedProjectForModal.desc}
                 </DialogDescription>
-              </div>
 
-              {/* Technologies */}
-              <div>
-                <h4 className="text-white font-bold text-sm mb-3 text-start">{t.projectDetails.technologies}</h4>
-                <div className="flex flex-wrap gap-2 justify-start">
-                  {selectedProjectForModal.tech.map((t) => (
-                    <span
-                      key={t}
-                      className="px-3 py-1 rounded-full text-xs font-semibold bg-secondary text-secondary-foreground border border-border"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Key Features */}
-              {selectedProjectForModal.features && selectedProjectForModal.features.length > 0 && (
-                <div>
-                  <h4 className="text-white font-bold text-sm mb-3 text-start">{t.projectDetails.features}</h4>
-                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-muted-foreground text-start">
-                    {selectedProjectForModal.features.map((f, idx) => (
-                      <li key={idx} className="flex items-start gap-2.5">
-                        <span className="w-5 h-5 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0 mt-0.5">
-                          ✓
-                        </span>
-                        <span>{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* CTA */}
-              <div className="flex justify-end gap-3 pt-4 border-t border-border/30 flex-wrap">
-                <Button
-                  variant="outline"
-                  onClick={() => setSelectedProjectForModal(null)}
-                  className="rounded-lg border-white/10 text-white hover:bg-white/10"
-                >
-                  {t.projectDetails.close}
-                </Button>
-                {selectedProjectForModal.websiteLink && (
-                  <Button
-                    asChild
-                    variant="outline"
-                    className="rounded-lg border-primary text-primary hover:bg-primary/10 gap-2"
-                  >
-                    <a
-                      href={selectedProjectForModal.websiteLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <Globe className="w-4 h-4" />
-                      {t.projectDetails.visitWebsite}
-                    </a>
-                  </Button>
+                {/* Key Deliverables / Features grid */}
+                {selectedProjectForModal.features && selectedProjectForModal.features.length > 0 && (
+                  <div className="rounded-xl border border-border/40 overflow-hidden">
+                    {/* Header */}
+                    <div className="px-5 py-3 border-b border-border/40 flex items-center gap-2"
+                      style={{ background: "hsl(43 75% 49% / 0.06)" }}>
+                      <CheckCircle2 className="w-4 h-4" style={{ color: "hsl(43 75% 49%)" }} />
+                      <span className="text-sm font-bold text-white">{t.projectDetails.features}</span>
+                    </div>
+                    {/* Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2">
+                      {selectedProjectForModal.features.map((f, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-start gap-3 px-5 py-3.5 text-start text-sm text-muted-foreground border-b border-border/20 last:border-b-0 sm:[&:nth-last-child(2)]:border-b-0"
+                          style={{ borderRight: idx % 2 === 0 ? "1px solid hsl(215 25% 18% / 0.6)" : undefined }}
+                        >
+                          <span
+                            className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-[10px] font-bold"
+                            style={{
+                              background: "hsl(43 75% 49% / 0.12)",
+                              color: "hsl(43 75% 49%)",
+                              border: "1px solid hsl(43 75% 49% / 0.3)",
+                            }}
+                          >
+                            ✓
+                          </span>
+                          <span>{f}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
-                {selectedProjectForModal.storeLink && (
+
+                {/* CTA buttons */}
+                <div className="flex justify-end gap-3 pt-2 flex-wrap">
                   <Button
-                    asChild
                     variant="outline"
-                    className="rounded-lg border-primary text-primary hover:bg-primary/10 gap-2"
+                    onClick={() => setSelectedProjectForModal(null)}
+                    className="rounded-lg border-white/10 text-white hover:bg-white/10"
                   >
-                    <a
-                      href={selectedProjectForModal.storeLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      {t.projectDetails.viewStore}
-                    </a>
+                    {t.projectDetails.close}
                   </Button>
-                )}
-                <Button
-                  onClick={() => {
-                    if (selectedProjectForModal) {
-                      openContactWithProject(selectedProjectForModal);
-                    }
-                    setSelectedProjectForModal(null);
-                  }}
-                  className="rounded-lg font-bold gap-2 text-primary-foreground bg-primary hover:bg-primary/90"
-                >
-                  {t.projectDetails.inquire}
-                </Button>
+                  {selectedProjectForModal.websiteLink && (
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="rounded-lg border-primary text-primary hover:bg-primary/10 gap-2"
+                    >
+                      <a href={selectedProjectForModal.websiteLink} target="_blank" rel="noopener noreferrer">
+                        <Globe className="w-4 h-4" />
+                        {t.projectDetails.visitWebsite}
+                      </a>
+                    </Button>
+                  )}
+                  {selectedProjectForModal.storeLink && (
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="rounded-lg border-primary text-primary hover:bg-primary/10 gap-2"
+                    >
+                      <a href={selectedProjectForModal.storeLink} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="w-4 h-4" />
+                        {t.projectDetails.viewStore}
+                      </a>
+                    </Button>
+                  )}
+                  <Button
+                    onClick={() => {
+                      if (selectedProjectForModal) openContactWithProject(selectedProjectForModal);
+                      setSelectedProjectForModal(null);
+                    }}
+                    className="rounded-lg font-bold gap-2 text-primary-foreground bg-primary hover:bg-primary/90"
+                  >
+                    {t.projectDetails.inquire}
+                    <ArrowRight className={`w-4 h-4 ${lang === "ar" ? "rotate-180" : ""}`} />
+                  </Button>
+                </div>
               </div>
             </div>
           )}
