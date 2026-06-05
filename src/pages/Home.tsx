@@ -7,6 +7,10 @@ import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/s
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import PhoneInput, { getCountryCallingCode } from "react-phone-number-input";
+import arLabels from "react-phone-number-input/locale/ar.json";
+import enLabels from "react-phone-number-input/locale/en.json";
+import "react-phone-number-input/style.css";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import useEmblaCarousel from "embla-carousel-react";
@@ -56,6 +60,46 @@ const SERVICES_LIST = [
   { key: "cloud", href: "#services" }
 ];
 
+const CountrySelect = ({
+  value,
+  onChange,
+  options,
+  iconComponent: Icon,
+}: {
+  value?: string;
+  onChange: (value?: string) => void;
+  options: { value?: string; label: string }[];
+  iconComponent: React.ComponentType<{ country: string }>;
+}) => {
+  return (
+    <Select
+      value={value || "IQ"}
+      onValueChange={onChange}
+      dir="ltr"
+    >
+      <SelectTrigger className="border-0 shadow-none bg-transparent focus:ring-0 w-[42px] h-full shrink-0 px-0 hover:bg-white/5 transition-colors rounded-none flex items-center justify-center">
+        <SelectValue>
+          {value && <Icon country={value} />}
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent className="bg-card border-border/50 text-white max-h-72" dir="ltr">
+        {options.map(({ value: countryCode, label }: any) => {
+          if (!countryCode) return null;
+          return (
+            <SelectItem key={countryCode} value={countryCode}>
+              <span className="flex items-center gap-2">
+                <Icon country={countryCode} />
+                <span className="text-sm">{label || countryCode}</span>
+                <span className="text-muted-foreground text-xs font-mono">+{getCountryCallingCode(countryCode)}</span>
+              </span>
+            </SelectItem>
+          );
+        })}
+      </SelectContent>
+    </Select>
+  );
+};
+
 export default function Home() {
   const [lang, setLang] = useState<"en" | "ar">(() => {
     if (typeof window !== "undefined") {
@@ -87,6 +131,7 @@ export default function Home() {
   const { toast } = useToast();
 
   const [contactProjectType, setContactProjectType] = useState("web");
+  const [phone, setPhone] = useState<string | undefined>("");
 
   const openContactWithService = (serviceType: string = "web") => {
     setContactProjectType(serviceType);
@@ -123,7 +168,6 @@ export default function Home() {
     const formData = new FormData(form);
     const name = formData.get("name") as string;
     const email = formData.get("email") as string;
-    const phone = formData.get("phone") as string;
     const message = formData.get("message") as string;
 
     const endpoint = "https://contact-api.ninusoft.workers.dev/";
@@ -137,7 +181,7 @@ export default function Home() {
         body: JSON.stringify({
           name,
           email,
-          phone,
+          phone: phone || "",
           projectType: contactProjectType,
           message,
         }),
@@ -151,6 +195,7 @@ export default function Home() {
           description: t.contact.successDesc,
         });
         form.reset();
+        setPhone("");
         setIsContactOpen(false);
       } else {
         throw new Error(data.error || "Failed to send message");
@@ -965,19 +1010,23 @@ export default function Home() {
                 name="email"
                 type="email"
                 required
+                dir="ltr"
                 placeholder={t.contact.placeholderEmail}
-                className="bg-background border-border/50 text-white h-11 focus-visible:ring-primary"
+                className="bg-background border-border/50 text-white h-11 focus-visible:ring-primary text-left"
               />
             </div>
             <div className="flex flex-col gap-1.5 text-start">
               <label htmlFor="phone" className="text-sm font-semibold text-muted-foreground">{t.contact.phone}</label>
-              <Input
-                id="phone"
-                name="phone"
-                type="tel"
-                placeholder={t.contact.placeholderPhone}
-                className="bg-background border-border/50 text-white h-11 focus-visible:ring-primary"
-              />
+              <div dir="ltr">
+                <PhoneInput
+                  placeholder={t.contact.placeholderPhone}
+                  value={phone}
+                  onChange={setPhone}
+                  defaultCountry="IQ"
+                  labels={lang === "ar" ? arLabels : enLabels}
+                  countrySelectComponent={CountrySelect}
+                />
+              </div>
             </div>
             <div className="flex flex-col gap-1.5 text-start">
               <label htmlFor="projectType" className="text-sm font-semibold text-muted-foreground">{t.contact.projectType}</label>
