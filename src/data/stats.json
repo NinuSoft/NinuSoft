@@ -1,0 +1,22 @@
+[
+  {
+    "key": "projects",
+    "value": "2+",
+    "icon": "Shield"
+  },
+  {
+    "key": "clients",
+    "value": "30+",
+    "icon": "Users2"
+  },
+  {
+    "key": "experience",
+    "value": "5+",
+    "icon": "Settings"
+  },
+  {
+    "key": "support",
+    "value": "24/7",
+    "icon": "Headphones"
+  }
+]

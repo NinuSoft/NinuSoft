@@ -13,8 +13,16 @@ import useEmblaCarousel from "embla-carousel-react";
 import en from "@/data/locales/en.json";
 import ar from "@/data/locales/ar.json";
 import IntroScreen from "@/components/IntroScreen";
+import stats from "@/data/stats.json";
 
 const translations = { en, ar };
+
+const STAT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  Shield,
+  Users2,
+  Settings,
+  Headphones,
+};
 
 interface Project {
   id: number;
@@ -69,7 +77,7 @@ export default function Home() {
     setShowIntro(false);
   };
 
-  const [activeSlide, setActiveSlide] = useState(0);
+  const [, setActiveSlide] = useState(0);
   const [activeSection, setActiveSection] = useState("home");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedProjectForModal, setSelectedProjectForModal] = useState<Project | null>(null);
@@ -362,15 +370,15 @@ export default function Home() {
           className="w-full lg:w-[45%] h-[300px] sm:h-[450px] lg:h-auto relative shrink-0 overflow-hidden"
         >
           {/* Gradient fade on top/left (or top/right in Arabic) edge to blend with content */}
-          <div className={`absolute inset-x-0 top-0 h-24 lg:inset-y-0 lg:w-32 lg:h-auto z-10 bg-gradient-to-b from-background to-transparent ${
-            lang === "ar" ? "lg:right-0 lg:bg-gradient-to-l" : "lg:left-0 lg:bg-gradient-to-r"
-          }`} />
+          <div className={`absolute inset-x-0 top-0 h-24 lg:inset-y-0 lg:w-32 lg:h-auto z-10 bg-gradient-to-b from-background to-transparent ${lang === "ar" ? "lg:right-0 lg:bg-gradient-to-l" : "lg:left-0 lg:bg-gradient-to-r"
+            }`} />
           {/* Gradient fade on bottom edge */}
           <div className="absolute inset-x-0 bottom-0 h-24 lg:h-32 z-10 bg-gradient-to-t from-background to-transparent" />
           <img
             src="/hero-gate.webp"
             alt="Ishtar Gate — Ancient Nineveh"
-            className="w-full h-full object-cover object-left"
+            className={`w-full h-full object-cover ${lang === "ar" ? "scale-x-[-1] object-right" : "object-left"
+              }`}
           />
         </motion.div>
 
@@ -380,37 +388,20 @@ export default function Home() {
       <div className="w-full border-t border-border/50 bg-card/50 backdrop-blur-sm mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-6 sm:py-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 divide-x-0 md:divide-x divide-border/50">
-            <div className="flex flex-col items-center justify-center text-center px-2 sm:px-4">
-              <div className="flex items-center gap-2 sm:gap-3 mb-2">
-                <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground" />
-                <span className="text-2xl sm:text-3xl font-bold text-primary">50+</span>
-              </div>
-              <span className="text-xs sm:text-sm font-medium text-muted-foreground">{t.stats.projects}</span>
-            </div>
-
-            <div className="flex flex-col items-center justify-center text-center px-2 sm:px-4">
-              <div className="flex items-center gap-2 sm:gap-3 mb-2">
-                <Users2 className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground" />
-                <span className="text-2xl sm:text-3xl font-bold text-primary">30+</span>
-              </div>
-              <span className="text-xs sm:text-sm font-medium text-muted-foreground">{t.stats.clients}</span>
-            </div>
-
-            <div className="flex flex-col items-center justify-center text-center px-2 sm:px-4">
-              <div className="flex items-center gap-2 sm:gap-3 mb-2">
-                <Settings className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground" />
-                <span className="text-2xl sm:text-3xl font-bold text-primary">5+</span>
-              </div>
-              <span className="text-xs sm:text-sm font-medium text-muted-foreground">{t.stats.experience}</span>
-            </div>
-
-            <div className="flex flex-col items-center justify-center text-center px-2 sm:px-4">
-              <div className="flex items-center gap-2 sm:gap-3 mb-2">
-                <Headphones className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground" />
-                <span className="text-2xl sm:text-3xl font-bold text-primary">24/7</span>
-              </div>
-              <span className="text-xs sm:text-sm font-medium text-muted-foreground">{t.stats.support}</span>
-            </div>
+            {stats.map((stat) => {
+              const Icon = STAT_ICONS[stat.icon];
+              return (
+                <div key={stat.key} className="flex flex-col items-center justify-center text-center px-2 sm:px-4">
+                  <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                    {Icon && <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground" />}
+                    <span className="text-2xl sm:text-3xl font-bold text-primary">{stat.value}</span>
+                  </div>
+                  <span className="text-xs sm:text-sm font-medium text-muted-foreground">
+                    {t.stats[stat.key as keyof typeof t.stats]}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -871,14 +862,6 @@ export default function Home() {
             <p className="text-sm text-muted-foreground">
               {t.footer.copyright}
             </p>
-            <div className="flex items-center gap-6">
-              <a href="#" data-testid="footer-privacy-policy" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                {t.footer.privacy}
-              </a>
-              <a href="#" data-testid="footer-terms-of-service" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                {t.footer.terms}
-              </a>
-            </div>
           </div>
         </div>
       </footer>
@@ -951,6 +934,7 @@ export default function Home() {
                 name="projectType"
                 value={contactProjectType}
                 onValueChange={setContactProjectType}
+                dir={lang === "ar" ? "rtl" : "ltr"}
               >
                 <SelectTrigger className="bg-background border-border/50 text-white h-11 focus:ring-primary">
                   <SelectValue placeholder={t.contact.selectPlaceholder} />
