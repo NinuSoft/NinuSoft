@@ -54,9 +54,12 @@ The "Contact Us" dialog on the home page gathers user details (name, email, phon
 `public/` is copied as-is into the build output. App-specific static pages (such as privacy policies) reside under `public/apps/<app-name>/` (e.g., [apps/](./public/apps/)) and are reachable at `https://ninusoft.com/apps/<app-name>/...` once deployed.
 
 Currently, the following app privacy policies are available:
-- **Balance Recharger**: [privacy-policy.html](./public/apps/balance-recharger/privacy-policy.html) (reachable at [ninusoft.com/apps/balance-recharger/privacy-policy.html](https://ninusoft.com/apps/balance-recharger/privacy-policy.html))
-- **Hindam Customer**: [privacy-policy.html](./public/apps/hindam-customer/privacy-policy.html) (reachable at [ninusoft.com/apps/hindam-customer/privacy-policy.html](https://ninusoft.com/apps/hindam-customer/privacy-policy.html))
-- **Hindam Manager**: [privacy-policy.html](./public/apps/hindam-manager/privacy-policy.html) (reachable at [ninusoft.com/apps/hindam-manager/privacy-policy.html](https://ninusoft.com/apps/hindam-manager/privacy-policy.html))
+
+| App Name | Source File | Deployed URL |
+| :--- | :--- | :--- |
+| **Balance Recharger** | [privacy-policy.html](./public/apps/balance-recharger/privacy-policy.html) | [Open Link](https://ninusoft.com/apps/balance-recharger/privacy-policy.html) |
+| **Hindam Customer** | [privacy-policy.html](./public/apps/hindam-customer/privacy-policy.html) | [Open Link](https://ninusoft.com/apps/hindam-customer/privacy-policy.html) |
+| **Hindam Manager** | [privacy-policy.html](./public/apps/hindam-manager/privacy-policy.html) | [Open Link](https://ninusoft.com/apps/hindam-manager/privacy-policy.html) |
 
 ## Deployment
 
