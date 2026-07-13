@@ -5,19 +5,17 @@ import { Facebook, Linkedin, Instagram, Github, Telegram, WhatsApp } from "@/com
 import { motion, AnimatePresence } from "framer-motion";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import PhoneInput, { getCountryCallingCode } from "react-phone-number-input";
-import arLabels from "react-phone-number-input/locale/ar.json";
-import enLabels from "react-phone-number-input/locale/en.json";
-import "react-phone-number-input/style.css";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import useEmblaCarousel from "embla-carousel-react";
 import en from "@/data/locales/en.json";
 import ar from "@/data/locales/ar.json";
 import IntroScreen from "@/components/IntroScreen";
 import stats from "@/data/stats.json";
+
+// Form fields only (no Dialog wrapper) — the Dialog shell below is eager so
+// it opens instantly; only the heavy phone-input form fields are lazy-loaded.
+const ContactFormFields = React.lazy(() => import("@/components/ContactDialog"));
+const ProjectDetailsDialog = React.lazy(() => import("@/components/ProjectDetailsDialog"));
 
 const translations = { en, ar };
 
@@ -28,7 +26,7 @@ const STAT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = 
   Settings,
 };
 
-interface Project {
+export interface Project {
   id: number;
   group: "product" | "experience" | "enterprise" | "opensource";
   category: string;
@@ -73,45 +71,20 @@ const SERVICES_LIST = [
   { key: "cloud", href: "#services" }
 ];
 
-const CountrySelect = ({
-  value,
-  onChange,
-  options,
-  iconComponent: Icon,
-}: {
-  value?: string;
-  onChange: (value?: string) => void;
-  options: { value?: string; label: string }[];
-  iconComponent: React.ComponentType<{ country: string }>;
-}) => {
-  return (
-    <Select
-      value={value || "IQ"}
-      onValueChange={onChange}
-      dir="ltr"
-    >
-      <SelectTrigger className="border-0 shadow-none bg-transparent focus:ring-0 w-[42px] h-full shrink-0 px-0 hover:bg-white/5 transition-colors rounded-none flex items-center justify-center">
-        <SelectValue>
-          {value && <Icon country={value} />}
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent className="bg-card border-border/50 text-white max-h-72" dir="ltr">
-        {options.map(({ value: countryCode, label }: any) => {
-          if (!countryCode) return null;
-          return (
-            <SelectItem key={countryCode} value={countryCode}>
-              <span className="flex items-center gap-2">
-                <Icon country={countryCode} />
-                <span className="text-sm">{label || countryCode}</span>
-                <span className="text-muted-foreground text-xs font-mono">+{getCountryCallingCode(countryCode)}</span>
-              </span>
-            </SelectItem>
-          );
-        })}
-      </SelectContent>
-    </Select>
-  );
-};
+// Shown briefly while the phone-input-heavy form fields chunk downloads,
+// so the dialog never looks blank/frozen after opening.
+const ContactFormSkeleton = () => (
+  <div className="space-y-4 animate-pulse" aria-hidden="true">
+    {[0, 1, 2, 3].map((i) => (
+      <div key={i} className="space-y-1.5">
+        <div className="h-3 w-20 rounded bg-white/10" />
+        <div className="h-11 rounded-lg bg-white/5 border border-border/50" />
+      </div>
+    ))}
+    <div className="h-24 rounded-lg bg-white/5 border border-border/50" />
+    <div className="h-12 rounded-lg bg-primary/20 mt-2" />
+  </div>
+);
 
 export default function Home() {
   const [lang, setLang] = useState<"en" | "ar">(() => {
@@ -147,9 +120,15 @@ export default function Home() {
   const [contactProjectType, setContactProjectType] = useState("web");
   const [phone, setPhone] = useState<string | undefined>("");
 
+  // Gate the lazy-loaded dialog chunks so they aren't fetched until the user
+  // actually interacts, instead of on initial page load.
+  const [contactDialogMounted, setContactDialogMounted] = useState(false);
+  const [projectDialogMounted, setProjectDialogMounted] = useState(false);
+
   const openContactWithService = (serviceType: string = "web") => {
     setContactProjectType(serviceType);
     setIsContactOpen(true);
+    setContactDialogMounted(true);
   };
 
   const openContactWithProject = (project: Project) => {
@@ -166,12 +145,42 @@ export default function Home() {
     }
     document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
     document.documentElement.lang = lang;
+
+    document.title = t.meta.title;
+    const setMeta = (selector: string, content: string) => {
+      const el = document.querySelector(selector);
+      if (el) el.setAttribute("content", content);
+    };
+    setMeta('meta[name="description"]', t.meta.description);
+    setMeta('meta[property="og:title"]', t.meta.title);
+    setMeta('meta[property="og:description"]', t.meta.description);
+    setMeta('meta[property="og:locale"]', lang === "ar" ? "ar_IQ" : "en_US");
+    setMeta('meta[name="twitter:title"]', t.meta.title);
+    setMeta('meta[name="twitter:description"]', t.meta.description);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lang]);
 
   React.useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Prefetch the lazy dialog chunks once the browser is idle after first
+  // paint, so they're already cached by the time a user actually clicks a
+  // CTA — keeps the initial bundle small without a click-to-open delay.
+  React.useEffect(() => {
+    const prefetch = () => {
+      import("@/components/ContactDialog");
+      import("@/components/ProjectDetailsDialog");
+    };
+    const ric = (window as any).requestIdleCallback as ((cb: () => void) => number) | undefined;
+    if (ric) {
+      const id = ric(prefetch);
+      return () => (window as any).cancelIdleCallback?.(id);
+    }
+    const timer = window.setTimeout(prefetch, 2000);
+    return () => window.clearTimeout(timer);
   }, []);
 
   const handleContactSubmit = async (e: React.SyntheticEvent) => {
@@ -660,7 +669,7 @@ export default function Home() {
               transition={{ duration: 0.6 }}
               className="lg:col-span-5 w-full aspect-[16/10] sm:aspect-[4/3] lg:aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl shadow-black/40 border border-border/50"
             >
-              <img src="/office-why.png" alt="NinuSoft Office" className="w-full h-full object-cover" loading="lazy" />
+              <img src="/office-why.webp" alt="NinuSoft Office" width={1024} height={1024} className="w-full h-full object-cover" loading="lazy" />
             </motion.div>
 
             {/* Right Content */}
@@ -725,9 +734,11 @@ export default function Home() {
             <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center sm:items-start gap-8">
               <div className="shrink-0">
                 <img
-                  src="/founder-ahmed-mones.png"
+                  src="/founder-ahmed-mones.webp"
                   alt={t.about.founder.name}
                   loading="lazy"
+                  width={1012}
+                  height={1350}
                   className="w-48 sm:w-56 aspect-[3/4] rounded-2xl object-cover border-2 border-primary/30 shadow-xl shadow-primary/10 drop-shadow-[0_0_24px_rgba(201,163,58,0.2)]"
                   onError={(e) => {
                     const img = e.currentTarget;
@@ -861,7 +872,7 @@ export default function Home() {
                   >
                     <motion.div
                       layoutId={`project-${project.id}`}
-                      onClick={() => setSelectedProjectForModal(project)}
+                      onClick={() => { setSelectedProjectForModal(project); setProjectDialogMounted(true); }}
                       className="bg-card border border-border/50 rounded-xl overflow-hidden hover:border-primary/50 transition-all duration-300 group cursor-pointer flex flex-col h-full shadow-md hover:shadow-xl hover:shadow-primary/5"
                     >
                       <div className="w-full aspect-[16/10] overflow-hidden bg-muted/40 flex items-center justify-center relative">
@@ -1081,8 +1092,10 @@ export default function Home() {
             {/* Right */}
             <div className="w-full md:w-[55%] flex justify-center md:justify-end">
               <img
-                src="/cta-gate.png"
+                src="/cta-gate.webp"
                 alt="Nineveh Gate CTA"
+                width={1865}
+                height={822}
                 className="w-full h-auto max-w-[480px] md:max-w-none object-contain drop-shadow-[0_0_20px_rgba(201,163,58,0.25)]"
                 loading="lazy"
               />
@@ -1223,7 +1236,8 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      {/* Contact Form Dialog */}
+      {/* Contact Form Dialog — shell is eager so it opens instantly; only the
+          heavy phone-input form fields are code-split and lazy-loaded. */}
       <Dialog open={isContactOpen} onOpenChange={setIsContactOpen}>
         <DialogContent className="max-w-lg w-[calc(100%-2rem)] max-h-[90vh] overflow-y-auto bg-card border border-border/50 text-white rounded-2xl p-6 md:p-8">
           <DialogTitle className="text-2xl font-extrabold text-white mb-2 text-start">
@@ -1232,270 +1246,38 @@ export default function Home() {
           <DialogDescription className="text-muted-foreground text-sm mb-6 text-start">
             {t.contact.subtitle}
           </DialogDescription>
-          <form onSubmit={handleContactSubmit} className="space-y-4">
-            <div className="flex flex-col gap-1.5 text-start">
-              <label htmlFor="name" className="text-sm font-semibold text-muted-foreground">{t.contact.name}</label>
-              <Input
-                id="name"
-                name="name"
-                required
-                placeholder={t.contact.placeholderName}
-                className="bg-background border-border/50 text-white h-11 focus-visible:ring-primary"
+          {contactDialogMounted && (
+            <React.Suspense fallback={<ContactFormSkeleton />}>
+              <ContactFormFields
+                t={t}
+                lang={lang}
+                contactProjectType={contactProjectType}
+                setContactProjectType={setContactProjectType}
+                phone={phone}
+                setPhone={setPhone}
+                isSubmitting={isSubmitting}
+                onSubmit={handleContactSubmit}
               />
-            </div>
-            <div className="flex flex-col gap-1.5 text-start">
-              <label htmlFor="email" className="text-sm font-semibold text-muted-foreground">{t.contact.email}</label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                required
-                dir="ltr"
-                placeholder={t.contact.placeholderEmail}
-                className="bg-background border-border/50 text-white h-11 focus-visible:ring-primary text-left"
-              />
-            </div>
-            <div className="flex flex-col gap-1.5 text-start">
-              <label htmlFor="phone" className="text-sm font-semibold text-muted-foreground">{t.contact.phone}</label>
-              <div dir="ltr">
-                <PhoneInput
-                  placeholder={t.contact.placeholderPhone}
-                  value={phone}
-                  onChange={setPhone}
-                  defaultCountry="IQ"
-                  labels={lang === "ar" ? arLabels : enLabels}
-                  countrySelectComponent={CountrySelect}
-                />
-              </div>
-            </div>
-            <div className="flex flex-col gap-1.5 text-start">
-              <label htmlFor="projectType" className="text-sm font-semibold text-muted-foreground">{t.contact.projectType}</label>
-              <Select
-                name="projectType"
-                value={contactProjectType}
-                onValueChange={setContactProjectType}
-                dir={lang === "ar" ? "rtl" : "ltr"}
-              >
-                <SelectTrigger className="bg-background border-border/50 text-white h-11 focus:ring-primary">
-                  <SelectValue placeholder={t.contact.selectPlaceholder} />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border/50 text-white">
-                  <SelectItem value="software">{t.contact.optionSoftware}</SelectItem>
-                  <SelectItem value="web">{t.contact.optionWeb}</SelectItem>
-                  <SelectItem value="mobile">{t.contact.optionMobile}</SelectItem>
-                  <SelectItem value="ai">{t.contact.optionAi}</SelectItem>
-                  <SelectItem value="other">{t.contact.optionOther}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex flex-col gap-1.5 text-start">
-              <label htmlFor="message" className="text-sm font-semibold text-muted-foreground">{t.contact.message}</label>
-              <Textarea
-                id="message"
-                name="message"
-                required
-                placeholder={t.contact.placeholderMessage}
-                rows={4}
-                className="bg-background border-border/50 text-white focus-visible:ring-primary resize-none"
-              />
-            </div>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full h-12 rounded-lg font-bold gap-2 text-primary-foreground bg-primary hover:bg-primary/90 mt-2"
-            >
-              {isSubmitting ? (
-                <>
-                  <span className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                  {t.contact.buttonSending}
-                </>
-              ) : (
-                <>
-                  {t.contact.buttonSend}
-                  <ArrowRight className={`w-4 h-4 ${lang === "ar" ? "rotate-180" : ""}`} />
-                </>
-              )}
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Project Details Dialog (richer modal) ───────────────────── */}
-      <Dialog open={selectedProjectForModal !== null} onOpenChange={(open) => { if (!open) setSelectedProjectForModal(null); }}>
-        <DialogContent className="max-w-2xl w-[calc(100%-2rem)] max-h-[90vh] overflow-y-auto bg-card border border-border/50 text-white rounded-2xl p-0">
-          {selectedProjectForModal && (
-            <div className="flex flex-col">
-
-              {/* ── Hero image strip ───────────────────────────────────── */}
-              <div className="w-full aspect-[16/9] overflow-hidden bg-muted/40 border-b border-border/40 relative rounded-t-2xl flex items-center justify-center">
-                <img
-                  src={selectedProjectForModal.img}
-                  alt={selectedProjectForModal.title}
-                  className="w-full h-full object-contain p-6"
-                  loading="lazy"
-                />
-                {/* Category badge pinned top-right */}
-                {selectedProjectForModal.category && (
-                  <span className="absolute top-4 right-4 bg-primary text-primary-foreground text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full shadow-lg">
-                    {selectedProjectForModal.category}
-                  </span>
-                )}
-              </div>
-
-              {/* ── Body ───────────────────────────────────────────────── */}
-              <div className="flex flex-col gap-6 p-6 md:p-8">
-
-                {/* Title + meta badges row */}
-                <div className="flex flex-col gap-3 text-start">
-                  <DialogTitle className="text-2xl md:text-3xl font-extrabold text-white leading-tight">
-                    {selectedProjectForModal.title}
-                  </DialogTitle>
-                  {selectedProjectForModal.org && (
-                    <span className="text-xs font-semibold text-muted-foreground">{selectedProjectForModal.org}</span>
-                  )}
-                  {/* Tech stack chips */}
-                  <div className="flex flex-wrap gap-1.5">
-                    {selectedProjectForModal.tech.map((tech) => (
-                      <span
-                        key={tech}
-                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border"
-                        style={{
-                          background: "hsl(43 75% 49% / 0.08)",
-                          borderColor: "hsl(43 75% 49% / 0.25)",
-                          color: "hsl(43 75% 60%)",
-                        }}
-                      >
-                        {tech}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Challenge / Solution / Impact */}
-                {(selectedProjectForModal.challenge || selectedProjectForModal.solution || selectedProjectForModal.impact) && (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {selectedProjectForModal.challenge && (
-                      <div className="text-start">
-                        <span className="text-primary text-[11px] font-bold uppercase tracking-wider block mb-1.5">{t.projectDetails.challenge}</span>
-                        <p className="text-xs text-muted-foreground leading-relaxed">{selectedProjectForModal.challenge}</p>
-                      </div>
-                    )}
-                    {selectedProjectForModal.solution && (
-                      <div className="text-start">
-                        <span className="text-primary text-[11px] font-bold uppercase tracking-wider block mb-1.5">{t.projectDetails.solution}</span>
-                        <p className="text-xs text-muted-foreground leading-relaxed">{selectedProjectForModal.solution}</p>
-                      </div>
-                    )}
-                    {selectedProjectForModal.impact && (
-                      <div className="text-start">
-                        <span className="text-primary text-[11px] font-bold uppercase tracking-wider block mb-1.5">{t.projectDetails.impact}</span>
-                        <p className="text-xs text-muted-foreground leading-relaxed">{selectedProjectForModal.impact}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Description */}
-                <DialogDescription className="text-muted-foreground text-sm md:text-base leading-relaxed text-start">
-                  {selectedProjectForModal.details || selectedProjectForModal.desc}
-                </DialogDescription>
-
-                {/* Key Deliverables / Features grid */}
-                {selectedProjectForModal.features && selectedProjectForModal.features.length > 0 && (
-                  <div className="rounded-xl border border-border/40 overflow-hidden">
-                    {/* Header */}
-                    <div className="px-5 py-3 border-b border-border/40 flex items-center gap-2"
-                      style={{ background: "hsl(43 75% 49% / 0.06)" }}>
-                      <CheckCircle2 className="w-4 h-4" style={{ color: "hsl(43 75% 49%)" }} />
-                      <span className="text-sm font-bold text-white">{t.projectDetails.features}</span>
-                    </div>
-                    {/* Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2">
-                      {selectedProjectForModal.features.map((f, idx) => (
-                        <div
-                          key={idx}
-                          className="flex items-start gap-3 px-5 py-3.5 text-start text-sm text-muted-foreground border-b border-border/20 last:border-b-0 sm:[&:nth-last-child(2)]:border-b-0"
-                          style={{ borderRight: idx % 2 === 0 ? "1px solid hsl(215 25% 18% / 0.6)" : undefined }}
-                        >
-                          <span
-                            className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-[10px] font-bold"
-                            style={{
-                              background: "hsl(43 75% 49% / 0.12)",
-                              color: "hsl(43 75% 49%)",
-                              border: "1px solid hsl(43 75% 49% / 0.3)",
-                            }}
-                          >
-                            ✓
-                          </span>
-                          <span>{f}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* CTA buttons */}
-                <div className="flex justify-end gap-3 pt-2 flex-wrap">
-                  <Button
-                    variant="outline"
-                    onClick={() => setSelectedProjectForModal(null)}
-                    className="rounded-lg border-white/10 text-white hover:bg-white/10"
-                  >
-                    {t.projectDetails.close}
-                  </Button>
-                  {selectedProjectForModal.websiteLink && (
-                    <Button
-                      asChild
-                      variant="outline"
-                      className="rounded-lg border-primary text-primary hover:bg-primary/10 gap-2"
-                    >
-                      <a href={selectedProjectForModal.websiteLink} target="_blank" rel="noopener noreferrer">
-                        <Globe className="w-4 h-4" />
-                        {t.projectDetails.visitWebsite}
-                      </a>
-                    </Button>
-                  )}
-                  {selectedProjectForModal.storeLink && (
-                    <Button
-                      asChild
-                      variant="outline"
-                      className="rounded-lg border-primary text-primary hover:bg-primary/10 gap-2"
-                    >
-                      <a href={selectedProjectForModal.storeLink} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="w-4 h-4" />
-                        {t.projectDetails.viewStore}
-                      </a>
-                    </Button>
-                  )}
-                  {selectedProjectForModal.links?.map((link) => (
-                    <Button
-                      key={link.url}
-                      asChild
-                      variant="outline"
-                      className="rounded-lg border-primary text-primary hover:bg-primary/10 gap-2"
-                    >
-                      <a href={link.url} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="w-4 h-4" />
-                        {link.label}
-                      </a>
-                    </Button>
-                  ))}
-                  <Button
-                    onClick={() => {
-                      if (selectedProjectForModal) openContactWithProject(selectedProjectForModal);
-                      setSelectedProjectForModal(null);
-                    }}
-                    className="rounded-lg font-bold gap-2 text-primary-foreground bg-primary hover:bg-primary/90"
-                  >
-                    {t.projectDetails.inquire}
-                    <ArrowRight className={`w-4 h-4 ${lang === "ar" ? "rotate-180" : ""}`} />
-                  </Button>
-                </div>
-              </div>
-            </div>
+            </React.Suspense>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Project Details Dialog (code-split: only loads once a project card is opened) */}
+      {projectDialogMounted && (
+        <React.Suspense fallback={null}>
+          <ProjectDetailsDialog
+            t={t}
+            lang={lang}
+            project={selectedProjectForModal}
+            onClose={() => setSelectedProjectForModal(null)}
+            onInquire={(project) => {
+              openContactWithProject(project);
+              setSelectedProjectForModal(null);
+            }}
+          />
+        </React.Suspense>
+      )}
     </div>
   );
 }
