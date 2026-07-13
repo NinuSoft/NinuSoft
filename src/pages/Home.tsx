@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Headphones, Settings, Shield, Users2, Monitor, Globe, Smartphone, Bot, Cloud, Target, TrendingUp, Cpu, Lock, Zap, Handshake, Search, ClipboardList, PenTool, Code2, Rocket, Mail, Phone, MapPin, ExternalLink, Menu, ChevronLeft, ChevronRight, Star, CheckCircle2 } from "@/components/Icons";
+import { ArrowRight, Settings, Shield, Users2, Monitor, Globe, Smartphone, Bot, Cloud, Target, TrendingUp, Cpu, Lock, Zap, Handshake, Search, ClipboardList, PenTool, Code2, Rocket, Mail, Phone, MapPin, ExternalLink, Menu, ChevronLeft, ChevronRight, Star, CheckCircle2 } from "@/components/Icons";
 import { Facebook, Linkedin, Instagram, Github, Telegram, WhatsApp } from "@/components/Icons";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
@@ -24,21 +24,27 @@ const translations = { en, ar };
 const STAT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Shield,
   Users2,
+  Code2,
   Settings,
-  Headphones,
 };
 
 interface Project {
   id: number;
+  group: "product" | "experience" | "enterprise" | "opensource";
   category: string;
   title: string;
   desc: string;
   img: string;
+  org: string;
   details: string;
+  challenge?: string;
+  solution?: string;
+  impact?: string;
   tech: string[];
   features: string[];
   storeLink?: string;
   websiteLink?: string;
+  links?: { label: string; url: string }[];
 }
 
 const logoLarge = "/logo.png";
@@ -140,9 +146,9 @@ export default function Home() {
 
   const openContactWithProject = (project: Project) => {
     let type = "web";
-    const cat = project.category.toLowerCase();
-    if (cat === "retail" || cat === "التجزئة") type = "mobile";
-    else if (cat === "business" || cat === "الأعمال") type = "software";
+    if (project.group === "product") type = "mobile";
+    else if (project.group === "enterprise") type = "software";
+    else if (project.group === "opensource") type = "other";
     openContactWithService(type);
   };
 
@@ -213,16 +219,16 @@ export default function Home() {
     }
   };
 
-  const categories = ["All", ...Array.from(new Set(PROJECTS.map((p) => p.category).filter(Boolean)))];
+  const GROUP_ORDER = ["All", "product", "experience", "enterprise", "opensource"] as const;
+  const categories = GROUP_ORDER.filter((g) => g === "All" || PROJECTS.some((p) => p.group === g));
 
   const getCategoryLabel = (cat: string) => {
-    if (cat === "All") return lang === "ar" ? "الكل" : "All";
-    return cat;
+    return t.projectGroups[cat === "All" ? "all" : (cat as keyof typeof t.projectGroups)];
   };
 
   const filteredProjects = selectedCategory === "All"
     ? PROJECTS
-    : PROJECTS.filter((p) => p.category === selectedCategory);
+    : PROJECTS.filter((p) => p.group === selectedCategory);
 
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: "start",
@@ -246,7 +252,16 @@ export default function Home() {
       const el = document.getElementById(id);
       if (!el) return;
       const obs = new IntersectionObserver(
-        ([entry]) => { if (entry.isIntersecting) setActiveSection(id); },
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            setActiveSection(id);
+            const newHash = id === "home" ? "" : `#${id}`;
+            const newUrl = `${window.location.pathname}${window.location.search}${newHash}`;
+            if (window.location.hash !== newHash) {
+              window.history.replaceState(null, "", newUrl);
+            }
+          }
+        },
         { threshold: 0.3, rootMargin: "-60px 0px -40% 0px" }
       );
       obs.observe(el);
@@ -492,6 +507,43 @@ export default function Home() {
         </div>
       </div>
 
+      {/* 3b. TRUSTED EXPERIENCE */}
+      <section className="w-full bg-background py-16 lg:py-20 border-t border-border/50">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+          <div className="flex flex-col items-center text-center mb-10">
+            <span className="text-primary font-bold tracking-[0.2em] text-sm uppercase mb-4 block">
+              {t.trusted.title}
+            </span>
+            <h2 className="text-2xl md:text-3xl font-extrabold text-white mb-5 max-w-2xl">
+              {t.trusted.subtitle}
+            </h2>
+            <p className="text-muted-foreground text-sm max-w-2xl leading-relaxed">
+              {t.trusted.disclaimer}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {t.trusted.orgs.map((org: any, i: number) => (
+              <motion.div
+                key={org.name}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ delay: i * 0.08, duration: 0.5 }}
+                className="bg-card border border-border/50 hover:border-primary/40 transition-all duration-300 rounded-xl p-6 flex flex-col text-start"
+              >
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <h3 className="text-white font-bold text-base leading-snug">{org.name}</h3>
+                  <span className="text-[11px] font-mono text-muted-foreground shrink-0 whitespace-nowrap">{org.period}</span>
+                </div>
+                <span className="text-primary text-xs font-bold uppercase tracking-wider mb-3">{org.role}</span>
+                <p className="text-sm text-muted-foreground leading-relaxed">{org.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* 4. OUR SERVICES */}
       <section id="services" className="w-full bg-background py-20 lg:py-28 border-t border-border/50">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
@@ -603,6 +655,120 @@ export default function Home() {
         </div>
       </section>
 
+      {/* 5b. ABOUT / FOUNDER */}
+      <section id="about" className="w-full bg-card/30 py-20 lg:py-28 border-t border-border/50">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+          <div className="flex flex-col items-center text-center mb-14 max-w-3xl mx-auto">
+            <span className="text-primary font-bold tracking-[0.2em] text-sm uppercase mb-4 block">{t.about.kicker}</span>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-6">{t.about.title}</h2>
+            <div className="w-16 h-1 bg-primary rounded-full mb-8"></div>
+            <h3 className="text-white font-bold text-lg mb-3">{t.about.storyTitle}</h3>
+            <p className="text-muted-foreground leading-relaxed">{t.about.story}</p>
+          </div>
+
+          {/* Founder Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6 }}
+            className="w-full bg-card border border-border/50 rounded-2xl p-6 sm:p-10 shadow-xl shadow-black/20"
+          >
+            <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center sm:items-start gap-8">
+              <div className="shrink-0">
+                <img
+                  src="/founder-ahmed-mones.png"
+                  alt={t.about.founder.name}
+                  loading="lazy"
+                  className="w-48 sm:w-56 aspect-[3/4] rounded-2xl object-cover border-2 border-primary/30 shadow-xl shadow-primary/10 drop-shadow-[0_0_24px_rgba(201,163,58,0.2)]"
+                  onError={(e) => {
+                    const img = e.currentTarget;
+                    img.style.display = "none";
+                    const fallback = img.nextElementSibling as HTMLElement | null;
+                    if (fallback) fallback.style.display = "flex";
+                  }}
+                />
+                <div
+                  className="w-36 sm:w-44 aspect-[3/4] rounded-2xl border-2 border-primary/30 bg-primary/10 items-center justify-center text-primary font-extrabold text-3xl font-mono shadow-xl shadow-primary/10"
+                  style={{ display: "none" }}
+                >
+                  AM
+                </div>
+              </div>
+              <div className="text-center sm:text-start flex-1">
+                <h3 className="text-white font-extrabold text-2xl mb-1">{t.about.founder.name}</h3>
+                <span className="text-primary text-sm font-bold uppercase tracking-wider block mb-4">{t.about.founder.role}</span>
+                <p className="text-muted-foreground text-sm sm:text-base leading-relaxed mb-6">{t.about.founder.bio}</p>
+                <div className="flex items-center justify-center sm:justify-start gap-4">
+                <a
+                  href={t.about.founder.linkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="LinkedIn"
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  <Linkedin className="w-4 h-4" />
+                  LinkedIn
+                </a>
+                <a
+                  href={t.about.founder.github}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="GitHub"
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  <Github className="w-4 h-4" />
+                  GitHub
+                </a>
+                {t.about.founder.instagram && (
+                  <a
+                    href={t.about.founder.instagram}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Instagram"
+                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    <Instagram className="w-4 h-4" />
+                    Instagram
+                  </a>
+                )}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* 5c. ENGINEERING STANDARDS / TRUST */}
+      <section className="w-full bg-background py-20 lg:py-28 border-t border-border/50">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+          <div className="flex flex-col items-center text-center mb-14">
+            <span className="text-primary font-bold tracking-[0.2em] text-sm uppercase mb-4 block">{t.trust.title}</span>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-6">{t.trust.subtitle}</h2>
+            <div className="w-16 h-1 bg-primary rounded-full"></div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {t.trust.items.map((item: any, i: number) => (
+              <motion.div
+                key={item.title}
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ delay: i * 0.04, duration: 0.4 }}
+                className="bg-card border border-border/50 rounded-xl p-5 flex items-start gap-3 text-start"
+              >
+                <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="text-white font-bold text-sm mb-1">{item.title}</h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* 6. OUR PROJECTS */}
       <section id="projects" className="w-full bg-background py-20 lg:py-28 border-t border-border/50">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
@@ -669,7 +835,10 @@ export default function Home() {
                             {project.category}
                           </span>
                         )}
-                        <h3 className="text-xl font-bold text-white mb-2">{project.title}</h3>
+                        <h3 className="text-xl font-bold text-white mb-1">{project.title}</h3>
+                        {project.org && project.group !== "product" && (
+                          <span className="text-[11px] text-muted-foreground font-medium mb-2 block">{project.org}</span>
+                        )}
                         <p className="text-muted-foreground text-sm mb-6 flex-1 leading-relaxed">{project.desc}</p>
                         <div className="flex items-center text-primary font-medium text-sm mt-auto gap-2 group-hover:gap-3 transition-all">
                           {t.projectsSection.viewDetails}{" "}
@@ -710,7 +879,7 @@ export default function Home() {
       </section>
 
       {/* 7. OUR PROCESS */}
-      <section id="about" className="w-full bg-background py-20 lg:py-28 border-t border-border/50">
+      <section id="process" className="w-full bg-background py-20 lg:py-28 border-t border-border/50">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           {/* Top */}
           <div className="flex flex-col items-center text-center mb-16">
@@ -751,64 +920,70 @@ export default function Home() {
       </section>
 
       {/* CLIENT TESTIMONIALS */}
-      <section className="w-full bg-background py-20 lg:py-28 border-t border-border/50">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12">
-          {/* Section Top */}
-          <div className="flex flex-col items-center text-center mb-16">
-            <span className="text-primary font-bold tracking-[0.2em] text-sm uppercase mb-4 block">
-              {t.testimonials.title}
-            </span>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-6">
-              {t.testimonials.subtitle}
-            </h2>
-            <div className="w-16 h-1 bg-primary rounded-full"></div>
+      {t.testimonials.list.length > 0 && (
+        <section className="w-full bg-background py-20 lg:py-28 border-t border-border/50">
+          <div className="max-w-7xl mx-auto px-6 lg:px-12">
+            {/* Section Top */}
+            <div className="flex flex-col items-center text-center mb-16">
+              <span className="text-primary font-bold tracking-[0.2em] text-sm uppercase mb-4 block">
+                {t.testimonials.title}
+              </span>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-6">
+                {t.testimonials.subtitle}
+              </h2>
+              <div className="w-16 h-1 bg-primary rounded-full"></div>
+            </div>
+
+            {/* Testimonial Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+              {t.testimonials.list.map((review: any, idx: number) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, y: 15 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 0.4, delay: idx * 0.15 }}
+                  className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 flex flex-col justify-between hover:border-primary/40 transition-all duration-300 shadow-md relative"
+                >
+                  {/* Gold Quote Mark Deco */}
+                  <span className={`absolute top-4 ${lang === "ar" ? "left-6" : "right-6"} text-primary/10 text-6xl font-serif select-none pointer-events-none`}>
+                    “
+                  </span>
+
+                  <div className="space-y-4">
+                    {/* Rating Stars */}
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: review.rating }).map((_, i) => (
+                        <Star key={i} className="w-4 h-4 fill-primary text-primary" />
+                      ))}
+                    </div>
+                    {/* Quote text */}
+                    <p className="text-muted-foreground text-sm sm:text-base italic leading-relaxed text-start">
+                      “{review.quote}”
+                    </p>
+                  </div>
+
+                  {/* Reviewer Details */}
+                  <div className="flex items-center gap-3.5 mt-8 pt-4 border-t border-border/20">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-extrabold uppercase font-mono text-sm shrink-0">
+                      {review.name.charAt(0)}
+                    </div>
+                    <div className="text-start">
+                      <span className="text-sm font-bold text-white block">{review.name}</span>
+                      <span className="text-xs text-muted-foreground block">
+                        {review.role}{review.company ? `, ${review.company}` : ""}
+                      </span>
+                      {review.industry && (
+                        <span className="text-[11px] text-primary/70 font-semibold uppercase tracking-wide block mt-0.5">{review.industry}</span>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </div>
-
-          {/* Testimonial Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            {t.testimonials.list.map((review: any, idx: number) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, y: 15 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.4, delay: idx * 0.15 }}
-                className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 flex flex-col justify-between hover:border-primary/40 transition-all duration-300 shadow-md relative"
-              >
-                {/* Gold Quote Mark Deco */}
-                <span className={`absolute top-4 ${lang === "ar" ? "left-6" : "right-6"} text-primary/10 text-6xl font-serif select-none pointer-events-none`}>
-                  “
-                </span>
-
-
-                <div className="space-y-4">
-                  {/* Rating Stars */}
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: review.rating }).map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-primary text-primary" />
-                    ))}
-                  </div>
-                  {/* Quote text */}
-                  <p className="text-muted-foreground text-sm sm:text-base italic leading-relaxed text-start">
-                    “{review.quote}”
-                  </p>
-                </div>
-
-                {/* Reviewer Details */}
-                <div className="flex items-center gap-3.5 mt-8 pt-4 border-t border-border/20">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-extrabold uppercase font-mono text-sm shrink-0">
-                    {review.name.charAt(0)}
-                  </div>
-                  <div className="text-start">
-                    <span className="text-sm font-bold text-white block">{review.name}</span>
-                    <span className="text-xs text-muted-foreground block">{review.role}</span>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* 8. CTA BANNER */}
       <section id="contact" className="w-full bg-background pb-20 lg:pb-28">
@@ -1110,6 +1285,9 @@ export default function Home() {
                   <DialogTitle className="text-2xl md:text-3xl font-extrabold text-white leading-tight">
                     {selectedProjectForModal.title}
                   </DialogTitle>
+                  {selectedProjectForModal.org && (
+                    <span className="text-xs font-semibold text-muted-foreground">{selectedProjectForModal.org}</span>
+                  )}
                   {/* Tech stack chips */}
                   <div className="flex flex-wrap gap-1.5">
                     {selectedProjectForModal.tech.map((tech) => (
@@ -1127,6 +1305,30 @@ export default function Home() {
                     ))}
                   </div>
                 </div>
+
+                {/* Challenge / Solution / Impact */}
+                {(selectedProjectForModal.challenge || selectedProjectForModal.solution || selectedProjectForModal.impact) && (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {selectedProjectForModal.challenge && (
+                      <div className="text-start">
+                        <span className="text-primary text-[11px] font-bold uppercase tracking-wider block mb-1.5">{t.projectDetails.challenge}</span>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{selectedProjectForModal.challenge}</p>
+                      </div>
+                    )}
+                    {selectedProjectForModal.solution && (
+                      <div className="text-start">
+                        <span className="text-primary text-[11px] font-bold uppercase tracking-wider block mb-1.5">{t.projectDetails.solution}</span>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{selectedProjectForModal.solution}</p>
+                      </div>
+                    )}
+                    {selectedProjectForModal.impact && (
+                      <div className="text-start">
+                        <span className="text-primary text-[11px] font-bold uppercase tracking-wider block mb-1.5">{t.projectDetails.impact}</span>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{selectedProjectForModal.impact}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Description */}
                 <DialogDescription className="text-muted-foreground text-sm md:text-base leading-relaxed text-start">
@@ -1200,6 +1402,19 @@ export default function Home() {
                       </a>
                     </Button>
                   )}
+                  {selectedProjectForModal.links?.map((link) => (
+                    <Button
+                      key={link.url}
+                      asChild
+                      variant="outline"
+                      className="rounded-lg border-primary text-primary hover:bg-primary/10 gap-2"
+                    >
+                      <a href={link.url} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="w-4 h-4" />
+                        {link.label}
+                      </a>
+                    </Button>
+                  ))}
                   <Button
                     onClick={() => {
                       if (selectedProjectForModal) openContactWithProject(selectedProjectForModal);

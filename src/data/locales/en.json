@@ -5,63 +5,145 @@
     "services": "Services",
     "solutions": "Solutions",
     "projects": "Projects",
-    "about": "About Us",
+    "about": "About",
     "contact": "Contact",
     "getStarted": "Get Started"
   },
   "hero": {
-    "sub": "Software Solutions From Nineveh",
-    "desc": "We build powerful, scalable, and intelligent software solutions that help businesses grow, automate, and succeed in the digital world.",
+    "sub": "Enterprise Software Engineering From Nineveh",
+    "desc": "We design, build, and ship production-grade software — web platforms, mobile apps, and AI automation — that helps businesses, financial institutions, and public organizations cut operating costs, move faster, and scale with confidence.",
     "viewServices": "View Services"
   },
   "stats": {
-    "hero": "Trusted by businesses across Iraq and beyond",
-    "projects": "Projects Completed",
-    "clients": "Happy Clients",
-    "experience": "Years Experience",
-    "support": "Support Available"
+    "hero": "Backed by 5+ years of enterprise software engineering experience",
+    "projects": "Software Systems Delivered",
+    "clients": "Businesses Served",
+    "experience": "Years of Engineering Experience",
+    "techstack": "Technologies"
+  },
+  "trusted": {
+    "title": "Trusted Experience",
+    "subtitle": "Our Team's Experience Includes Delivering Software For",
+    "disclaimer": "NinuSoft is a young company. The organizations below are not NinuSoft clients — they reflect the direct, hands-on professional experience of our founding engineering team, built before and alongside NinuSoft.",
+    "orgs": [
+      {
+        "name": "Fastlink Telecom",
+        "role": "Lead Software Engineer",
+        "period": "2024 — 2025",
+        "desc": "Architected and rebuilt the flagship Fastlink mobile app with a scalable Compose Multiplatform codebase, and engineered FastSIM, a digitization platform used by hundreds of agents and points-of-sale nationwide."
+      },
+      {
+        "name": "First Iraqi Bank",
+        "role": "Contributed via Gateway ICT Solutions",
+        "period": "2022 — 2024",
+        "desc": "Delivered production features for FIB's large-scale personal banking transaction app, working within strict reliability and compliance requirements typical of financial software."
+      },
+      {
+        "name": "Gateway ICT Solutions",
+        "role": "Software Developer",
+        "period": "2022 — 2024",
+        "desc": "Architected real-time network monitoring tools — including the Customer Complaint Handler, Drive-Test, and FastSupport apps — used by field technicians and network engineers to track live 4G/LTE performance."
+      },
+      {
+        "name": "Google Developer Student Club",
+        "role": "Team Lead, Ninevah University",
+        "period": "2022 — 2023",
+        "desc": "Selected as campus lead within the Google Developers community; organized technical workshops and coding bootcamps for 300+ students on Android, Flutter, and Python."
+      },
+      {
+        "name": "The Chance",
+        "role": "Mentor, Mobile Development",
+        "period": "2021, 2025",
+        "desc": "Mentored 45+ junior developers on Android best practices and clean code through structured code reviews, after completing the program's own six-month development internship ranked #1 of 50 interns."
+      }
+    ]
   },
   "services": {
     "title": "Our Services",
-    "subtitle": "Complete Software Solutions For Your Business",
-    "desc": "We offer end-to-end software services to help you build, scale, and transform your business.",
+    "subtitle": "Software Engineering Built Around Business Outcomes",
+    "desc": "We offer end-to-end software services engineered to lower operating costs, remove manual work, and give your business room to scale.",
     "exploreServices": "Explore All Services",
     "customSoftware": "Custom Software Development",
-    "customSoftwareDesc": "Tailored software solutions built to your unique business needs and requirements.",
+    "customSoftwareDesc": "Purpose-built systems that replace spreadsheets and manual processes with software mapped to how your business actually runs.",
     "webApps": "Web Applications",
-    "webAppsDesc": "Modern, responsive, and high-performance web applications.",
+    "webAppsDesc": "Fast, secure, and responsive web platforms engineered to convert visitors and support your team's daily operations.",
     "mobileApps": "Mobile App Development",
-    "mobileAppsDesc": "Native and cross-platform apps for iOS and Android.",
+    "mobileAppsDesc": "Native and cross-platform iOS and Android apps built on clean architecture, so they stay maintainable as your user base grows.",
     "aiSolutions": "AI Solutions & Automation",
-    "aiSolutionsDesc": "Robust AI tools and automation to supercharge your business.",
+    "aiSolutionsDesc": "AI-powered workflows and agents that eliminate repetitive manual work and free your team to focus on higher-value tasks.",
     "cloud": "Cloud & System Integration",
-    "cloudDesc": "Cloud solutions, architecture, and enterprise system integrations."
+    "cloudDesc": "Cloud architecture and system integrations that keep your infrastructure reliable, secure, and ready for enterprise scale."
   },
   "why": {
     "title": "Why Choose NinuSoft?",
-    "subtitle": "We Build Solutions That Drive Real Results",
+    "subtitle": "Engineering Discipline That Reduces Your Risk",
     "features": {
       "businessFocused": "Business Focused",
-      "businessFocusedDesc": "We align our technology strategy with your business goals.",
+      "businessFocusedDesc": "Every technical decision is measured against your business goals, not novelty for its own sake.",
       "scalable": "Scalable Solutions",
-      "scalableDesc": "Built to grow seamlessly alongside your enterprise.",
+      "scalableDesc": "Built on Clean Architecture and SOLID principles, so your software grows with your business instead of holding it back.",
       "modernTech": "Modern Technology",
-      "modernTechDesc": "Using the latest frameworks and proven architectures.",
+      "modernTechDesc": "Production-proven frameworks and architectures, the same standards used to build banking and telecom-grade applications.",
       "secure": "Secure & Reliable",
-      "secureDesc": "Enterprise-grade security and robust infrastructure.",
+      "secureDesc": "Security and data protection considered from day one, not bolted on after launch.",
       "fastDelivery": "Fast Delivery",
-      "fastDeliveryDesc": "Agile methodologies ensuring rapid time-to-market.",
+      "fastDeliveryDesc": "Agile delivery cycles that get a working product in front of your users faster, without cutting corners on quality.",
       "longTerm": "Long-Term Partner",
-      "longTermDesc": "Dedicated support and continuous evolution of your product."
+      "longTermDesc": "Ongoing support, maintenance, and iteration — we stay accountable for your software after launch, not just at delivery."
     }
+  },
+  "about": {
+    "kicker": "About NinuSoft",
+    "title": "Engineering Discipline, Rooted in Nineveh",
+    "storyTitle": "Why Nineveh",
+    "story": "NinuSoft was founded in Mosul, Nineveh, on the belief that world-class software engineering doesn't require relocating to a tech hub. Nineveh has a deep, underused pool of engineering talent — we exist to put that talent to work building the software that businesses, banks, and public institutions actually depend on. We combine international engineering standards — Clean Architecture, SOLID principles, automated testing, and CI/CD — with a founding team that has shipped production software for telecom operators and financial institutions. Clients choose NinuSoft because we treat every engagement with the same discipline as mission-critical, regulated software, whether the project is a small business tool or an enterprise system.",
+    "founder": {
+      "kicker": "Founder & Lead Software Engineer",
+      "name": "Ahmed Mones",
+      "role": "Founder & Lead Software Engineer",
+      "bio": "Ahmed founded NinuSoft after five years engineering the systems that Iraq's telecom and banking sectors run on — architecting Fastlink Telecom's flagship mobile app from scratch, building a digitization platform used by hundreds of points-of-sale nationwide, and delivering production features for First Iraqi Bank's transaction app while at Gateway ICT Solutions. Alongside client work, he led Ninevah University's Google Developer Student Club and has personally mentored 45+ junior developers in clean architecture and production engineering practices. He founded NinuSoft to bring that same enterprise-grade discipline to businesses and institutions building their next software system.",
+      "linkedin": "https://linkedin.com/in/ahmedmones",
+      "github": "https://github.com/Al-Taie",
+      "instagram": "https://instagram.com/9_tay"
+    }
+  },
+  "trust": {
+    "title": "How We Build",
+    "subtitle": "Engineering Standards We Never Compromise On",
+    "items": [
+      { "title": "Clean Architecture", "desc": "Layered, testable codebases that stay maintainable as your product grows." },
+      { "title": "SOLID Principles", "desc": "Code built to be extended safely, not rewritten every time requirements change." },
+      { "title": "Security by Design", "desc": "Authentication, data handling, and infrastructure hardened from the first commit." },
+      { "title": "Scalable Systems", "desc": "Architecture that holds up under real user load, not just in a demo." },
+      { "title": "Performance Engineering", "desc": "Fast load times and responsive interfaces, measured and optimized, not assumed." },
+      { "title": "Offline-First Design", "desc": "Software that keeps working through unreliable connectivity — built for real-world conditions." },
+      { "title": "AI Automation", "desc": "AI agents and workflows applied where they remove real manual work, not as a buzzword." },
+      { "title": "Enterprise Architecture", "desc": "System design patterns proven in banking and telecom-grade production environments." },
+      { "title": "Agile Delivery", "desc": "Iterative sprints with visible progress, so you're never waiting in the dark." },
+      { "title": "Automated Testing", "desc": "Unit and integration tests that catch regressions before your users do." },
+      { "title": "CI/CD Pipelines", "desc": "Automated build, release, and deployment pipelines for faster, safer shipping." },
+      { "title": "Ongoing Support", "desc": "Maintenance and support after launch — we don't disappear once the project ships." }
+    ]
+  },
+  "projectGroups": {
+    "all": "All",
+    "product": "Company Products",
+    "experience": "Professional Experience",
+    "enterprise": "Enterprise Systems",
+    "opensource": "Open Source"
   },
   "projects": [
     {
       "id": 1,
+      "group": "product",
       "category": "Retail",
       "title": "Hindam Customer App",
       "desc": "Privacy-first native Android app for real-time tailoring and laundry order tracking via QR code scanning, without signing in.",
       "img": "/customer-app-dark.png",
+      "org": "NinuSoft",
+      "challenge": "Tailoring and dry-cleaning shops had no way to give customers real-time order status, resulting in constant \"is my order ready?\" phone calls that pulled staff off the floor.",
+      "solution": "A privacy-first Android app that lets customers scan the QR code on their receipt to track status instantly, with zero sign-in or account creation required.",
+      "impact": "Eliminates status-inquiry calls for partner shops and gives customers a self-service way to track orders end to end.",
       "details": "A consumer-focused native Android app designed with a strict Clean Architecture and MVI/MVVM flow. Utilizes Jetpack Compose for a highly responsive, localized interface. Customers can scan the QR code printed on their physical receipt to instantly monitor their order status (Pending, In Progress, Ready, Delivered), review comprehensive payment details (total, paid, and remaining balance), and access operator contact details and location. The app is completely privacy-first, requiring no sign-in, account creation, or password input.",
       "tech": ["Kotlin", "Jetpack Compose", "Room DB", "Supabase", "Koin", "Ktor / Ktorfit", "Kotlinx Datetime"],
       "features": [
@@ -77,10 +159,15 @@
     },
     {
       "id": 2,
+      "group": "product",
       "category": "Business",
       "title": "Hindam Manager App",
       "desc": "Offline-first shop management app for tailors and dry cleaners with Bluetooth thermal printing, customer measurement history, and cloud sync.",
       "img": "/manager-app-dark.png",
+      "org": "NinuSoft",
+      "challenge": "Shop owners relied on paper order books and manual receipts, losing customer measurement history and struggling with unreliable internet connectivity.",
+      "solution": "An offline-first Android app that lets staff create orders, manage customer profiles, and print thermal receipts with zero internet dependency, syncing automatically once connectivity returns.",
+      "impact": "Replaces paper-based operations entirely and keeps shops running without interruption during connectivity outages, common in the region.",
       "details": "An enterprise-grade native Android shop management app built using Kotlin and Jetpack Compose under Clean Architecture guidelines. Operates fully offline using Room DB and synchronizes securely with Supabase. Enables managers and staff to create orders, manage customer profiles along with detailed measurement history, handle support tickets, and print physical receipts via Bluetooth thermal printers (supporting both 58mm and 80mm layouts). Includes a setup wizard to customize workflows for tailoring, laundry, or combined services, and features automated Play Store publishing via Gradle Play Publisher (GPP).",
       "tech": ["Kotlin", "Jetpack Compose", "Room DB", "Supabase", "Koin", "Ktor / Ktorfit", "Bluetooth Thermal Printer SDK"],
       "features": [
@@ -93,11 +180,192 @@
       ],
       "storeLink": "https://play.google.com/store/apps/details?id=com.ninusoft.hindam.manager",
       "websiteLink": "https://hindam.ninusoft.com"
+    },
+    {
+      "id": 3,
+      "group": "enterprise",
+      "category": "Banking",
+      "title": "First Iraqi Bank (FIB) App",
+      "desc": "Large-scale personal banking transaction app — production features delivered while at Gateway ICT Solutions, not a NinuSoft-owned product.",
+      "img": "/fib.png",
+      "org": "Delivered via Gateway ICT Solutions",
+      "challenge": "A large-scale banking app needed continuous feature development and legacy component maintenance without disrupting a live financial transaction system.",
+      "solution": "Maintained legacy XML components while developing robust new features using Kotlin and Jetpack Compose, working under the reliability standards required of financial software.",
+      "impact": "Contributed production-grade features to a personal banking app handling real financial transactions at national scale.",
+      "details": "Contributed to the First Iraqi Bank (FIB) app, a large-scale personal banking transaction application, by maintaining legacy XML components and developing robust new features using Kotlin and Compose. This entry reflects professional experience delivered while employed at Gateway ICT Solutions, not a NinuSoft-owned product.",
+      "tech": ["Kotlin", "Jetpack Compose", "XML (legacy)", "RESTful APIs"],
+      "features": [
+        "Production feature development on a live financial transaction system",
+        "Legacy XML component maintenance alongside new Compose UI",
+        "Delivered under financial-grade reliability and stability requirements"
+      ],
+      "storeLink": "https://play.google.com/store/apps/details?id=com.firstiraqibank.personal"
+    },
+    {
+      "id": 4,
+      "group": "enterprise",
+      "category": "Telecom",
+      "title": "Customer Complaint Handler (CCH)",
+      "desc": "Real-time 4G/LTE network monitoring tool for telecom field engineers — professional experience, not a NinuSoft-owned product.",
+      "img": "/cch.png",
+      "org": "Delivered via Gateway ICT Solutions",
+      "challenge": "Network professionals needed real-time visibility into 4G/LTE cell performance data in the field, without relying on desktop monitoring tools.",
+      "solution": "Architected and built a native Android app from scratch using Kotlin and Compose, giving engineers live cell information directly in the field.",
+      "impact": "Gave telecom network teams real-time diagnostic data on-site, speeding up issue resolution.",
+      "details": "Architected and built the Customer Complaint Handler (CCH) app from scratch using Kotlin and Compose, enabling network professionals to monitor 4G/LTE cell info in real-time. This entry reflects professional experience delivered while employed at Gateway ICT Solutions, not a NinuSoft-owned product.",
+      "tech": ["Kotlin", "Jetpack Compose", "RESTful APIs"],
+      "features": [
+        "Real-time 4G/LTE cell information monitoring",
+        "Built for field use by network engineers",
+        "Clean Architecture for long-term maintainability"
+      ],
+      "storeLink": "https://play.google.com/store/apps/details?id=com.gateway.cch"
+    },
+    {
+      "id": 5,
+      "group": "experience",
+      "category": "Telecom",
+      "title": "Fastlink App",
+      "desc": "Flagship telecom consumer app, rebuilt from scratch on Compose Multiplatform — professional experience as Lead Software Engineer, not a NinuSoft-owned product.",
+      "img": "/fastlink.png",
+      "org": "Delivered at Fastlink Telecom",
+      "challenge": "Fastlink's flagship consumer app needed a full architectural rebuild for long-term scalability and maintainability.",
+      "solution": "Architected and rebuilt the flagship app from scratch using Compose Multiplatform (CMP) on a scalable, reusable codebase.",
+      "impact": "Replaced a legacy consumer telecom app with a scalable rebuild serving Fastlink's nationwide subscriber base.",
+      "details": "As Lead Software Engineer at Fastlink Telecom, architected and rebuilt the flagship Fastlink app from scratch using Compose Multiplatform (CMP) with scalable architecture and clean, reusable code practices. This entry reflects professional experience delivered while employed at Fastlink Telecom, not a NinuSoft-owned product.",
+      "tech": ["Kotlin", "Compose Multiplatform", "RESTful APIs", "Firebase"],
+      "features": [
+        "Full architectural rebuild of a nationwide consumer telecom app",
+        "Built on Compose Multiplatform for long-term scalability",
+        "App distribution managed across Firebase, Google Play Console, and Huawei AppGallery"
+      ],
+      "storeLink": "https://play.google.com/store/apps/details?id=pl.dotsystems.fastlink"
+    },
+    {
+      "id": 6,
+      "group": "experience",
+      "category": "Telecom",
+      "title": "FastSIM",
+      "desc": "Nationwide SIM-sales digitization platform for hundreds of agents and points-of-sale — professional experience, not a NinuSoft-owned product.",
+      "img": "/fastsim.png",
+      "org": "Delivered at Fastlink Telecom",
+      "challenge": "Hundreds of SIM sales agents nationwide were still relying on manual, paper-based processes to register and sell SIM cards.",
+      "solution": "Engineered FastSIM from the ground up in Jetpack Compose to digitize the entire SIM card sales workflow.",
+      "impact": "Digitized SIM sales for hundreds of agents and points-of-sale nationwide, replacing paper-based processes.",
+      "details": "Engineered the FastSIM app from scratch using Jetpack Compose to digitize SIM card sales, supporting hundreds of agents and points-of-sale nationwide. This entry reflects professional experience delivered while employed at Fastlink Telecom, not a NinuSoft-owned product.",
+      "tech": ["Kotlin", "Jetpack Compose", "RESTful APIs", "Firebase"],
+      "features": [
+        "Digitized SIM sales workflow for hundreds of agents and points-of-sale",
+        "Built for nationwide field agent use",
+        "App distribution managed across Firebase, Google Play Console, and Huawei AppGallery"
+      ],
+      "storeLink": "https://play.google.com/store/apps/details?id=com.fastlink.fastsim"
+    },
+    {
+      "id": 7,
+      "group": "experience",
+      "category": "Telecom",
+      "title": "Drive-Test",
+      "desc": "Field telemetry app for network technicians — professional experience delivered at Gateway ICT Solutions, not a NinuSoft-owned product.",
+      "img": "/drive-test.png",
+      "org": "Delivered via Gateway ICT Solutions",
+      "challenge": "Field technicians needed a reliable way to capture and report real-time 4G/LTE network telemetry data while on-site.",
+      "solution": "Built a purpose-made Android app in Kotlin and Jetpack Compose to capture, process, and display live network telemetry for field use.",
+      "impact": "Gave field technicians the tooling to diagnose and report network issues directly from the field.",
+      "details": "Built the Drive-Test application using Kotlin and Jetpack Compose to capture, process, and display real-time network telemetry for field technicians. This entry reflects professional experience delivered while employed at Gateway ICT Solutions, not a NinuSoft-owned product.",
+      "tech": ["Kotlin", "Jetpack Compose", "RESTful APIs"],
+      "features": [
+        "Real-time network telemetry capture and processing",
+        "Built for daily use by field technicians",
+        "Stable, production-monitored release cycle"
+      ],
+      "storeLink": "https://play.google.com/store/apps/details?id=com.gateway.drivetest"
+    },
+    {
+      "id": 8,
+      "group": "experience",
+      "category": "Telecom",
+      "title": "FastSupport",
+      "desc": "Field support and telemetry app for network technicians — professional experience delivered at Gateway ICT Solutions, not a NinuSoft-owned product.",
+      "img": "/fastsupport.png",
+      "org": "Delivered via Gateway ICT Solutions",
+      "challenge": "Field technicians needed a dedicated support tool to capture and report network issues alongside telemetry data.",
+      "solution": "Built a purpose-made Android app in Kotlin and Jetpack Compose to capture, process, and display real-time network telemetry and support data for field use.",
+      "impact": "Gave field technicians a dedicated support tool for diagnosing and reporting network issues directly from the field.",
+      "details": "Built the FastSupport application using Kotlin and Jetpack Compose to capture, process, and display real-time network telemetry for field technicians. This entry reflects professional experience delivered while employed at Gateway ICT Solutions, not a NinuSoft-owned product.",
+      "tech": ["Kotlin", "Jetpack Compose", "RESTful APIs"],
+      "features": [
+        "Real-time network telemetry capture and processing",
+        "Built for daily use by field technicians",
+        "Stable, production-monitored release cycle"
+      ],
+      "storeLink": "https://play.google.com/store/apps/details?id=com.gateway.fastsupport"
+    },
+    {
+      "id": 9,
+      "group": "opensource",
+      "category": "Android Library",
+      "title": "Fingerprint Lib",
+      "desc": "Open-source Kotlin Android library for seamless fingerprint scanner integration.",
+      "img": "/fingerprint.png",
+      "org": "Open Source",
+      "challenge": "Android teams integrating fingerprint scanners typically rebuild the same low-level image capture and processing logic from scratch.",
+      "solution": "An open-source, Kotlin-based Android library that handles fingerprint scanner integration with efficient image capture and processing out of the box.",
+      "impact": "Freely available on GitHub for any Android team that needs fingerprint scanner integration without reinventing the low-level implementation.",
+      "details": "An open-source Kotlin-based Android library for seamless fingerprint scanner integration with efficient image capture and processing.",
+      "tech": ["Kotlin", "Android SDK"],
+      "features": [
+        "Efficient fingerprint image capture and processing",
+        "Drop-in integration for Android apps",
+        "Maintained as an open-source project on GitHub"
+      ],
+      "websiteLink": "https://github.com/Al-Taie/fingerprint_lib_android"
+    },
+    {
+      "id": 10,
+      "group": "opensource",
+      "category": "Native Module",
+      "title": "Expo-eSIM Lib",
+      "desc": "Open-source Kotlin native module for eSIM activation and QR scanning in React Native (Expo) apps.",
+      "img": "/npm.svg",
+      "org": "Open Source",
+      "challenge": "React Native / Expo apps had no straightforward, native-quality way to support eSIM activation and QR-based provisioning.",
+      "solution": "A Kotlin native module that brings eSIM activation and QR code scanning to Expo apps with minimal integration effort.",
+      "impact": "Open-sourced on GitHub, giving React Native teams native eSIM support without writing platform code themselves.",
+      "details": "An open-source Kotlin native module for eSIM activation and QR code scanning, for seamless integration into React Native (Expo) apps.",
+      "tech": ["Kotlin", "React Native", "Expo"],
+      "features": [
+        "Native eSIM activation flow for Expo apps",
+        "Built-in QR code scanning for provisioning",
+        "Maintained as an open-source project on GitHub"
+      ],
+      "websiteLink": "https://github.com/Al-Taie/expo-esim"
+    },
+    {
+      "id": 11,
+      "group": "opensource",
+      "category": "Python Library",
+      "title": "Quick-Mailer",
+      "desc": "High-performance Python email library with 51,000+ cumulative PyPI downloads.",
+      "img": "/pypi.svg",
+      "org": "Open Source",
+      "challenge": "Python developers needed a lightweight, fast library for MIME email delivery with multi-recipient routing and secure SMTP, without heavyweight dependencies.",
+      "solution": "A high-performance, open-source Python email library maintained on PyPI, supporting fast MIME delivery, multi-recipient routing, and secure SMTP connectivity.",
+      "impact": "Adopted widely enough to reach over 51,000 cumulative downloads on PyPI.",
+      "details": "A high-performance Python email library supporting fast MIME delivery, multi-recipient routing, and secure SMTP connectivity; maintained on PyPI with over 51,000 cumulative downloads.",
+      "tech": ["Python", "SMTP", "MIME"],
+      "features": [
+        "Fast MIME email delivery",
+        "Multi-recipient routing",
+        "Secure SMTP connectivity",
+        "51,000+ cumulative downloads on PyPI"
+      ],
+      "websiteLink": "https://pypi.org/project/quick-mailer/"
     }
   ],
   "projectsSection": {
     "title": "Our Projects",
-    "subtitle": "Some Of Our Recent Work",
+    "subtitle": "Company Products, Enterprise Work, and Open Source",
     "viewDetails": "View Details"
   },
   "projectDetails": {
@@ -106,7 +374,10 @@
     "close": "Close",
     "inquire": "Inquire About This Project",
     "technologies": "Technologies Used",
-    "features": "Key Features"
+    "features": "Key Features",
+    "challenge": "The Challenge",
+    "solution": "Our Solution",
+    "impact": "Business Impact"
   },
   "process": {
     "title": "Our Process",
@@ -126,26 +397,13 @@
   },
   "cta": {
     "title": "Ready To Start Your Project?",
-    "subtitle": "Let's build something amazing together.",
+    "subtitle": "Tell us about your business goals — we'll respond within 24 hours with next steps.",
     "button": "Get In Touch"
   },
   "testimonials": {
     "title": "Client Reviews",
     "subtitle": "What Our Partners Say About Us",
-    "list": [
-      {
-        "name": "Ahmad Al-Sudani",
-        "role": "Owner, Al-Mansour Tailoring",
-        "rating": 5,
-        "quote": "Hindam Manager changed how we operate. We print QR receipts and clients never call to ask 'is my order ready?' anymore. Truly premium!"
-      },
-      {
-        "name": "Yousif Mosul",
-        "role": "Manager, CleanExpress Dry Cleaning",
-        "rating": 5,
-        "quote": "The offline-first feature is a lifesaver in Mosul. Internet goes down, but we register customer measurements and print receipts offline. It syncs later."
-      }
-    ]
+    "list": []
   },
   "calculator": {
     "title": "ROI & Cost Savings Calculator",
@@ -163,7 +421,7 @@
   },
   "contact": {
     "title": "Let's build something amazing",
-    "subtitle": "Fill out the form below and our team will get back to you within 24 hours.",
+    "subtitle": "Fill out the form below and our team will get back to you within 24 hours with next steps.",
     "name": "Full Name",
     "email": "Email Address",
     "phone": "Mobile Number",
@@ -185,7 +443,7 @@
     "selectPlaceholder": "Select project type"
   },
   "footer": {
-    "brandDesc": "Software solutions from Nineveh. We help businesses transform and grow with technology.",
+    "brandDesc": "Enterprise software engineering from Nineveh. We help businesses and institutions cut costs, automate operations, and scale with confidence.",
     "quickLinks": "Quick Links",
     "services": "Services",
     "contactUs": "Contact Us",

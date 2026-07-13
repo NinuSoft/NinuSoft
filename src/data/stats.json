@@ -1,22 +1,22 @@
 [
   {
     "key": "projects",
-    "value": "2+",
+    "value": "20+",
     "icon": "Shield"
   },
   {
     "key": "clients",
-    "value": "30+",
+    "value": "50+",
     "icon": "Users2"
   },
   {
     "key": "experience",
     "value": "5+",
-    "icon": "Settings"
+    "icon": "Code2"
   },
   {
-    "key": "support",
-    "value": "24/7",
-    "icon": "Headphones"
+    "key": "techstack",
+    "value": "15+",
+    "icon": "Settings"
   }
 ]
