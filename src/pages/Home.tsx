@@ -555,7 +555,14 @@ export default function Home() {
                   <span className="text-[11px] font-mono text-muted-foreground shrink-0 whitespace-nowrap">{org.period}</span>
                 </div>
                 <span className="text-primary text-xs font-bold uppercase tracking-wider mb-3">{org.role}</span>
-                <p className="text-sm text-muted-foreground leading-relaxed">{org.desc}</p>
+                <ul className="space-y-1.5">
+                  {org.highlights.map((h: string) => (
+                    <li key={h} className="flex items-start gap-2 text-sm text-muted-foreground leading-relaxed">
+                      <span className="text-primary mt-1.5 w-1 h-1 rounded-full bg-primary shrink-0" />
+                      {h}
+                    </li>
+                  ))}
+                </ul>
               </motion.div>
             ))}
           </div>
@@ -587,6 +594,10 @@ export default function Home() {
               </Button>
             </div>
           </div>
+
+          <p className="text-primary/90 font-semibold text-base sm:text-lg mb-8 text-start">
+            {t.services.tagline}
+          </p>
 
           {/* Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">

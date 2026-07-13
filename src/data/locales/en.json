@@ -30,31 +30,51 @@
         "name": "Fastlink Telecom",
         "role": "Lead Software Engineer",
         "period": "2024 — 2025",
-        "desc": "Architected and rebuilt the flagship Fastlink mobile app with a scalable Compose Multiplatform codebase, and engineered FastSIM, a digitization platform used by hundreds of agents and points-of-sale nationwide."
+        "highlights": [
+          "Rebuilt the flagship Fastlink app from scratch on Compose Multiplatform",
+          "Engineered FastSIM, a digitization platform for hundreds of agents nationwide",
+          "Managed app distribution across Firebase, Google Play, and Huawei AppGallery"
+        ]
       },
       {
         "name": "First Iraqi Bank",
         "role": "Contributed via Gateway ICT Solutions",
         "period": "2022 — 2024",
-        "desc": "Delivered production features for FIB's large-scale personal banking transaction app, working within strict reliability and compliance requirements typical of financial software."
+        "highlights": [
+          "Delivered production features for FIB's personal banking transaction app",
+          "Maintained legacy components while shipping new Kotlin/Compose UI",
+          "Worked under financial-grade reliability and compliance standards"
+        ]
       },
       {
         "name": "Gateway ICT Solutions",
         "role": "Software Developer",
         "period": "2022 — 2024",
-        "desc": "Architected real-time network monitoring tools — including the Customer Complaint Handler, Drive-Test, and FastSupport apps — used by field technicians and network engineers to track live 4G/LTE performance."
+        "highlights": [
+          "Architected the Customer Complaint Handler, Drive-Test, and FastSupport apps",
+          "Built real-time 4G/LTE network monitoring tools for field engineers",
+          "Delivered production Android apps under Clean Architecture"
+        ]
       },
       {
         "name": "Google Developer Student Club",
         "role": "Team Lead, Ninevah University",
         "period": "2022 — 2023",
-        "desc": "Selected as campus lead within the Google Developers community; organized technical workshops and coding bootcamps for 300+ students on Android, Flutter, and Python."
+        "highlights": [
+          "Selected as campus lead within the Google Developers community",
+          "Organized technical workshops and coding bootcamps for 300+ students",
+          "Covered Android, Flutter, and Python development"
+        ]
       },
       {
         "name": "The Chance",
         "role": "Mentor, Mobile Development",
         "period": "2021, 2025",
-        "desc": "Mentored 45+ junior developers on Android best practices and clean code through structured code reviews, after completing the program's own six-month development internship ranked #1 of 50 interns."
+        "highlights": [
+          "Mentored 45+ junior developers on Android best practices and clean code",
+          "Ran structured code review sessions to raise code quality",
+          "Ranked #1 of 50 interns in the program's own development internship"
+        ]
       }
     ]
   },
@@ -62,6 +82,7 @@
     "title": "Our Services",
     "subtitle": "Software Engineering Built Around Business Outcomes",
     "desc": "We offer end-to-end software services engineered to lower operating costs, remove manual work, and give your business room to scale.",
+    "tagline": "Every solution is engineered around measurable business outcomes — not technology for its own sake.",
     "exploreServices": "Explore All Services",
     "customSoftware": "Custom Software Development",
     "customSoftwareDesc": "Purpose-built systems that replace spreadsheets and manual processes with software mapped to how your business actually runs.",
@@ -444,7 +465,7 @@
   },
   "contact": {
     "title": "Let's build something amazing",
-    "subtitle": "Fill out the form below and our team will get back to you within 24 hours with next steps.",
+    "subtitle": "Tell us about your project. Within 24 hours, we'll review your requirements and recommend the best path forward.",
     "name": "Full Name",
     "email": "Email Address",
     "phone": "Mobile Number",
