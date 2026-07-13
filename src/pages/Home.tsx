@@ -49,6 +49,13 @@ interface Project {
 
 const logoLarge = "/logo.png";
 
+const PROJECT_GROUP_PRIORITY: Record<string, number> = {
+  product: 0,
+  enterprise: 1,
+  experience: 2,
+  opensource: 3,
+};
+
 const NAV_LINKS = [
   { key: "home", href: "#home" },
   { key: "services", href: "#services" },
@@ -115,7 +122,9 @@ export default function Home() {
     return "en";
   });
   const t = translations[lang];
-  const PROJECTS = t.projects as Project[];
+  const PROJECTS = [...(t.projects as Project[])].sort(
+    (a, b) => (PROJECT_GROUP_PRIORITY[a.group] ?? 99) - (PROJECT_GROUP_PRIORITY[b.group] ?? 99)
+  );
 
   // Intro screen visibility state
   const [showIntro, setShowIntro] = useState(() => {

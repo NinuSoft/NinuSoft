@@ -361,6 +361,29 @@
         "51,000+ cumulative downloads on PyPI"
       ],
       "websiteLink": "https://pypi.org/project/quick-mailer/"
+    },
+    {
+      "id": 12,
+      "group": "product",
+      "category": "AI Subscriptions",
+      "title": "NinuSoft AI",
+      "desc": "Activate-first, pay-after subscription storefront that makes Google AI Pro accessible to Iraqi consumers via local payment methods, with a real-time admin console for order and subscription management.",
+      "img": "/ai-store.png",
+      "org": "NinuSoft",
+      "challenge": "Iraqi consumers wanted Google AI Pro (Gemini Advanced) but most lack access to the international Visa cards Google's official checkout requires, and full USD pricing is out of reach for many.",
+      "solution": "Built an activate-first, pay-after subscription storefront: customers sign in with Google, NinuSoft activates Google AI Pro directly on their own Gmail account, and they only pay afterward — locally in Iraqi Dinar via ZainCash, AsiaCell Hawala, FastPay, or Al-Tayf — backed by a real-time Supabase admin console for order approval, subscriptions, and renewals.",
+      "impact": "Serves 50+ active subscribers across Iraq with a 98% customer satisfaction rate, at prices up to 260,000 IQD below official 12-month pricing, with zero card or upfront-payment requirement.",
+      "details": "A React and Supabase-powered e-commerce platform that resells Google AI Pro subscriptions to Iraqi consumers who lack international payment cards. The activate-first, pay-after model builds trust by proving the subscription works on the customer's own Gmail account before any money changes hands. A real-time admin back-office handles order approval, subscription lifecycle (active, expired, suspended), renewal requests, and KPI analytics.",
+      "tech": ["React", "TypeScript", "Vite", "Tailwind CSS", "Supabase (PostgreSQL, Auth, Realtime)", "React Router"],
+      "features": [
+        "Activate-first, pay-after model: the subscription goes live on the customer's own Gmail account before payment",
+        "Local Iraqi payment methods: ZainCash, AsiaCell Hawala, FastPay, Al-Tayf",
+        "Google OAuth one-click sign-in",
+        "Real-time customer dashboard for orders, subscriptions, and renewal requests",
+        "Admin back-office for order approval, subscription lifecycle, and KPI analytics",
+        "Multiple subscription tiers (1/3/12/18-month) with transparent savings vs. official pricing"
+      ],
+      "websiteLink": "https://ai.ninusoft.com"
     }
   ],
   "projectsSection": {
