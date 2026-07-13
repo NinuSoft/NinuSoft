@@ -53,8 +53,8 @@ const NAV_LINKS = [
   { key: "home", href: "#home" },
   { key: "services", href: "#services" },
   { key: "solutions", href: "#solutions" },
-  { key: "projects", href: "#projects" },
   { key: "about", href: "#about" },
+  { key: "projects", href: "#projects" },
   { key: "contact", href: "#contact" },
 ];
 
@@ -146,7 +146,7 @@ export default function Home() {
 
   const openContactWithProject = (project: Project) => {
     let type = "web";
-    if (project.group === "product") type = "mobile";
+    if (project.group === "product" || project.group === "experience") type = "mobile";
     else if (project.group === "enterprise") type = "software";
     else if (project.group === "opensource") type = "other";
     openContactWithService(type);
@@ -246,8 +246,13 @@ export default function Home() {
   }, [emblaApi, selectedCategory, lang]);
 
   React.useEffect(() => {
-    const ids = ["home", "services", "solutions", "projects", "about", "contact"];
+    const ids = ["home", "services", "solutions", "about", "projects", "contact"];
     const observers: IntersectionObserver[] = [];
+    // Give the browser (and any incoming #anchor deep link) time to finish its
+    // initial scroll before we start rewriting the hash on our own.
+    let hashSyncEnabled = false;
+    const enableTimer = window.setTimeout(() => { hashSyncEnabled = true; }, 1200);
+
     ids.forEach((id) => {
       const el = document.getElementById(id);
       if (!el) return;
@@ -255,6 +260,7 @@ export default function Home() {
         ([entry]) => {
           if (entry.isIntersecting) {
             setActiveSection(id);
+            if (!hashSyncEnabled) return;
             const newHash = id === "home" ? "" : `#${id}`;
             const newUrl = `${window.location.pathname}${window.location.search}${newHash}`;
             if (window.location.hash !== newHash) {
@@ -267,7 +273,10 @@ export default function Home() {
       obs.observe(el);
       observers.push(obs);
     });
-    return () => observers.forEach((o) => o.disconnect());
+    return () => {
+      window.clearTimeout(enableTimer);
+      observers.forEach((o) => o.disconnect());
+    };
   }, []);
 
   return (
@@ -689,7 +698,7 @@ export default function Home() {
                   }}
                 />
                 <div
-                  className="w-36 sm:w-44 aspect-[3/4] rounded-2xl border-2 border-primary/30 bg-primary/10 items-center justify-center text-primary font-extrabold text-3xl font-mono shadow-xl shadow-primary/10"
+                  className="w-48 sm:w-56 aspect-[3/4] rounded-2xl border-2 border-primary/30 bg-primary/10 items-center justify-center text-primary font-extrabold text-3xl font-mono shadow-xl shadow-primary/10"
                   style={{ display: "none" }}
                 >
                   AM
