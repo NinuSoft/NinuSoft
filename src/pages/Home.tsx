@@ -136,7 +136,6 @@ export default function Home() {
     setShowIntro(false);
   };
 
-  const [, setActiveSlide] = useState(0);
   const [activeSection, setActiveSection] = useState("home");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedProjectForModal, setSelectedProjectForModal] = useState<Project | null>(null);
@@ -244,8 +243,12 @@ export default function Home() {
     direction: lang === "ar" ? "rtl" : "ltr"
   });
 
+  const [scrollSnaps, setScrollSnaps] = useState<number[]>([]);
+  const [selectedSnap, setSelectedSnap] = useState(0);
+
   const scrollPrev = React.useCallback(() => { if (emblaApi) emblaApi.scrollPrev(); }, [emblaApi]);
   const scrollNext = React.useCallback(() => { if (emblaApi) emblaApi.scrollNext(); }, [emblaApi]);
+  const scrollToSnap = React.useCallback((index: number) => { if (emblaApi) emblaApi.scrollTo(index); }, [emblaApi]);
 
   React.useEffect(() => {
     if (emblaApi) {
@@ -253,6 +256,22 @@ export default function Home() {
       emblaApi.scrollTo(0, false);
     }
   }, [emblaApi, selectedCategory, lang]);
+
+  React.useEffect(() => {
+    if (!emblaApi) return;
+    const onSelect = () => setSelectedSnap(emblaApi.selectedScrollSnap());
+    const onReInit = () => {
+      setScrollSnaps(emblaApi.scrollSnapList());
+      setSelectedSnap(emblaApi.selectedScrollSnap());
+    };
+    onReInit();
+    emblaApi.on("select", onSelect);
+    emblaApi.on("reInit", onReInit);
+    return () => {
+      emblaApi.off("select", onSelect);
+      emblaApi.off("reInit", onReInit);
+    };
+  }, [emblaApi]);
 
   React.useEffect(() => {
     const ids = ["home", "services", "solutions", "about", "projects", "contact"];
@@ -880,27 +899,44 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Slider Navigation Arrows - Only show if there are items to scroll */}
+            {/* Slider Navigation - Only show if there are items to scroll */}
             {filteredProjects.length > 1 && (
-              <div className="flex justify-end gap-3 mt-8">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={scrollPrev}
-                  className="rounded-full border-border/50 text-white hover:bg-primary hover:text-primary-foreground transition-all duration-300"
-                  aria-label="Previous slide"
-                >
-                  <ChevronLeft className={`w-5 h-5 ${lang === "ar" ? "rotate-180" : ""}`} />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={scrollNext}
-                  className="rounded-full border-border/50 text-white hover:bg-primary hover:text-primary-foreground transition-all duration-300"
-                  aria-label="Next slide"
-                >
-                  <ChevronRight className={`w-5 h-5 ${lang === "ar" ? "rotate-180" : ""}`} />
-                </Button>
+              <div className="flex items-center justify-between mt-8">
+                {/* Page dot indicators */}
+                <div className="flex items-center gap-2">
+                  {scrollSnaps.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => scrollToSnap(i)}
+                      aria-label={`Go to slide ${i + 1}`}
+                      className={`h-2 rounded-full transition-all duration-300 ${i === selectedSnap
+                        ? "w-6 bg-primary"
+                        : "w-2 bg-border/70 hover:bg-primary/50"
+                        }`}
+                    />
+                  ))}
+                </div>
+
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={scrollPrev}
+                    className="rounded-full border-border/50 text-white hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+                    aria-label="Previous slide"
+                  >
+                    <ChevronLeft className={`w-5 h-5 ${lang === "ar" ? "rotate-180" : ""}`} />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={scrollNext}
+                    className="rounded-full border-border/50 text-white hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+                    aria-label="Next slide"
+                  >
+                    <ChevronRight className={`w-5 h-5 ${lang === "ar" ? "rotate-180" : ""}`} />
+                  </Button>
+                </div>
               </div>
             )}
           </div>
