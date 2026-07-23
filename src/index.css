@@ -914,6 +914,101 @@ html {
   background: hsl(220 30% 6% / 0.8);
 }
 
+/* Multi-Section Navigation Styles */
+.proposal-section-nav {
+  margin-bottom: 1.5rem;
+}
+
+.proposal-section-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0.35rem;
+  background: hsl(220 28% 10% / 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid hsl(215 25% 18%);
+  border-radius: 0.85rem;
+  scrollbar-width: none;
+}
+
+.proposal-section-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.proposal-section-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  padding: 0.55rem 1rem;
+  border-radius: 0.6rem;
+  background: transparent;
+  border: 1px solid transparent;
+  color: hsl(215 20% 70%);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.proposal-section-tab:hover {
+  color: hsl(210 40% 95%);
+  background: hsl(220 25% 15% / 0.6);
+}
+
+.proposal-section-tab.is-active {
+  background: hsl(43 75% 49% / 0.18);
+  border-color: hsl(43 75% 49% / 0.5);
+  color: hsl(43 75% 65%);
+  box-shadow: 0 0 15px rgba(201, 163, 58, 0.15);
+}
+
+.proposal-tab-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  background: hsl(220 25% 18%);
+  color: hsl(210 40% 90%);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.proposal-section-tab.is-active .proposal-tab-num {
+  background: hsl(43 75% 49%);
+  color: hsl(220 30% 7%);
+}
+
+.proposal-section-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid hsl(215 25% 18%);
+}
+
+.proposal-sections-editor {
+  margin-top: 1.25rem;
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: hsl(220 30% 6% / 0.6);
+  border: 1px solid hsl(215 25% 18%);
+  border-radius: 0.75rem;
+}
+
+.proposal-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 .proposal-admin-message {
   margin-top: 1rem;
   border-radius: 0.4rem;

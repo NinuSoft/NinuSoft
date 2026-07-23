@@ -39,6 +39,10 @@ import {
   type Proposal,
   type ProposalSummary,
 } from "@/lib/proposals-api";
+import {
+  parseProposalSections,
+  serializeProposalSections,
+} from "@/lib/proposal-sections";
 
 type FormState = {
   id: string;
@@ -129,15 +133,43 @@ export default function ProposalAdmin() {
     value: FormState[K],
   ) => setForm((current) => ({ ...current, [field]: value }));
 
-  const readMarkdownFile = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const markdown = await file.text();
-    setForm((current) => ({
-      ...current,
-      markdown,
-      title: current.title || file.name.replace(/\.md(?:own)?$/i, ""),
-    }));
+  const readMarkdownFiles = async (event: ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    const fileList = Array.from(files);
+
+    if (fileList.length === 1) {
+      const file = fileList[0];
+      const text = await file.text();
+      const sectionTitle = file.name.replace(/\.md(?:own)?$/i, "");
+      const formatted = text.includes("<!-- section:") ? text : `<!-- section: ${sectionTitle} -->\n${text.trim()}`;
+      setForm((current) => ({
+        ...current,
+        markdown: current.markdown ? `${current.markdown.trim()}\n\n${formatted}` : formatted,
+        title: current.title || sectionTitle,
+      }));
+    } else {
+      const sectionPromises = fileList.map(async (file) => {
+        const text = await file.text();
+        const sectionTitle = file.name.replace(/\.md(?:own)?$/i, "");
+        if (text.includes("<!-- section:")) {
+          return text.trim();
+        }
+        return `<!-- section: ${sectionTitle} -->\n${text.trim()}`;
+      });
+
+      const sectionBlocks = await Promise.all(sectionPromises);
+      const combined = sectionBlocks.join("\n\n");
+      const firstTitle = fileList[0].name.replace(/\.md(?:own)?$/i, "");
+
+      setForm((current) => ({
+        ...current,
+        markdown: current.markdown ? `${current.markdown.trim()}\n\n${combined}` : combined,
+        title: current.title || firstTitle,
+      }));
+    }
+
     event.target.value = "";
   };
 
@@ -331,12 +363,17 @@ export default function ProposalAdmin() {
 
             <div className="proposal-markdown-label">
               <div>
-                <span>محتوى Markdown</span>
-                <small>يدعم العناوين، الجداول، القوائم، الروابط، والأكواد.</small>
+                <span>محتوى Markdown (يدعم عدة ملفات وأقسام)</span>
+                <small>يمكنك رفع ملف واحد أو عدة ملفات .md ليتم تقسيمها تلقائياً إلى أقسام تنقل.</small>
               </div>
               <label className="proposal-file-button">
-                رفع ملف .md
-                <input type="file" accept=".md,.markdown,text/markdown,text/plain" onChange={readMarkdownFile} />
+                + رفع ملف / ملفات .md
+                <input
+                  type="file"
+                  accept=".md,.markdown,text/markdown,text/plain"
+                  multiple
+                  onChange={readMarkdownFiles}
+                />
               </label>
             </div>
             <Textarea
