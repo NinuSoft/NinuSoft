@@ -6,6 +6,8 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import { lazy, Suspense, useEffect } from "react";
 
+import IntroScreen from "@/components/IntroScreen";
+
 const ProposalAdmin = lazy(() => import("@/pages/ProposalAdmin"));
 const ProposalView = lazy(() => import("@/pages/ProposalView"));
 
@@ -31,6 +33,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+          <IntroScreen />
           <Suspense fallback={<div className="min-h-screen bg-background" />}>
             <Router />
           </Suspense>

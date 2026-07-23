@@ -193,4 +193,11 @@
   if (!sessionBypass) {
     startScan();
   }
+
+  /* ── Safety fallback: force dismiss if React mounted signals are delayed ─ */
+  setTimeout(function () {
+    reactMounted = true;
+    reactReady = true;
+    tryDismiss();
+  }, 4000);
 })();

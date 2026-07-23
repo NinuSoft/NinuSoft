@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 
 interface IntroScreenProps {
-  onComplete: () => void;
+  onComplete?: () => void;
 }
 
 declare global {
@@ -31,7 +31,7 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
     // Overlay already gone (bundle was very slow or already seen in session)
     if (!introEl) {
       document.body.classList.remove("ns-loading");
-      onComplete();
+      onComplete?.();
       return;
     }
 
@@ -39,7 +39,7 @@ export default function IntroScreen({ onComplete }: IntroScreenProps) {
     const observer = new MutationObserver(() => {
       if (!document.getElementById("ns-intro")) {
         observer.disconnect();
-        onComplete();
+        onComplete?.();
       }
     });
     observer.observe(document.body, { childList: true, subtree: false });
