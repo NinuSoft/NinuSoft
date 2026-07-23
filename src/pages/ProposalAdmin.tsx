@@ -1,3 +1,34 @@
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import Mermaid from "@/components/Mermaid";
+
+const markdownComponents = {
+  pre(props: any) {
+    const { children } = props;
+    if (
+      children &&
+      typeof children === "object" &&
+      "props" in children &&
+      children.props?.className?.includes("language-mermaid")
+    ) {
+      const code = String(children.props.children || "");
+      return <Mermaid chart={code} />;
+    }
+    return <pre {...props}>{children}</pre>;
+  },
+  code(props: any) {
+    const { children, className, ...rest } = props;
+    if (className?.includes("language-mermaid")) {
+      return <Mermaid chart={String(children || "")} />;
+    }
+    return (
+      <code className={className} {...rest}>
+        {children}
+      </code>
+    );
+  },
+};
+
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -357,7 +388,11 @@ export default function ProposalAdmin() {
 
           {showPreview && (
             <div className="proposal-preview">
-              <pre>{form.markdown || "ستظهر معاينة النص هنا."}</pre>
+              <article className="proposal-document">
+                <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                  {form.markdown || "ستظهر معاينة النص هنا."}
+                </ReactMarkdown>
+              </article>
             </div>
           )}
           {message && <p className="proposal-admin-message">{message}</p>}
