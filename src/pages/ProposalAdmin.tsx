@@ -42,6 +42,7 @@ import {
 import {
   parseProposalSections,
   serializeProposalSections,
+  type ProposalSection,
 } from "@/lib/proposal-sections";
 
 type FormState = {
@@ -87,6 +88,89 @@ export default function ProposalAdmin() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+
+  const [sections, setSections] = useState<ProposalSection[]>(() =>
+    parseProposalSections(emptyForm.markdown)
+  );
+  const [activeSectionId, setActiveSectionId] = useState<string>("sec-1");
+  const [editorMode, setEditorMode] = useState<"sections" | "raw">("sections");
+  const [previewingSectionId, setPreviewingSectionId] = useState<string | null>(null);
+
+  // Sync sections whenever form.markdown changes externally or on load
+  useEffect(() => {
+    const parsed = parseProposalSections(form.markdown);
+    setSections(parsed);
+    if (parsed.length > 0 && !parsed.some((s) => s.id === activeSectionId)) {
+      setActiveSectionId(parsed[0].id);
+    }
+  }, [form.markdown]);
+
+  const updateSectionTitle = (id: string, newTitle: string) => {
+    const updated = sections.map((sec) =>
+      sec.id === id ? { ...sec, title: newTitle } : sec
+    );
+    setSections(updated);
+    setForm((current) => ({
+      ...current,
+      markdown: serializeProposalSections(updated),
+    }));
+  };
+
+  const updateSectionContent = (id: string, newContent: string) => {
+    const updated = sections.map((sec) =>
+      sec.id === id ? { ...sec, content: newContent } : sec
+    );
+    setSections(updated);
+    setForm((current) => ({
+      ...current,
+      markdown: serializeProposalSections(updated),
+    }));
+  };
+
+  const addNewSection = () => {
+    const newId = `sec-${Date.now()}`;
+    const newSec: ProposalSection = {
+      id: newId,
+      title: `قسم جديد ${sections.length + 1}`,
+      content: "## عنوان فرعي\n\nأكتب محتوى هذا القسم هنا...",
+    };
+    const updated = [...sections, newSec];
+    setSections(updated);
+    setActiveSectionId(newId);
+    setForm((current) => ({
+      ...current,
+      markdown: serializeProposalSections(updated),
+    }));
+  };
+
+  const removeSection = (id: string) => {
+    if (sections.length <= 1) {
+      setError("يجب أن يحتوي العرض على قسم واحد على الأقل.");
+      return;
+    }
+    const updated = sections.filter((sec) => sec.id !== id);
+    setSections(updated);
+    if (activeSectionId === id) {
+      setActiveSectionId(updated[0]?.id || "");
+    }
+    setForm((current) => ({
+      ...current,
+      markdown: serializeProposalSections(updated),
+    }));
+  };
+
+  const moveSection = (index: number, direction: "up" | "down") => {
+    const targetIdx = direction === "up" ? index - 1 : index + 1;
+    if (targetIdx < 0 || targetIdx >= sections.length) return;
+    const copy = [...sections];
+    const [moved] = copy.splice(index, 1);
+    copy.splice(targetIdx, 0, moved);
+    setSections(copy);
+    setForm((current) => ({
+      ...current,
+      markdown: serializeProposalSections(copy),
+    }));
+  };
 
   const publicOrigin = useMemo(() => window.location.origin, []);
 
@@ -397,27 +481,163 @@ export default function ProposalAdmin() {
 
             <div className="proposal-markdown-label">
               <div>
-                <span>محتوى Markdown (يدعم عدة ملفات وأقسام)</span>
-                <small>يمكنك رفع ملف واحد أو عدة ملفات .md ليتم تقسيمها تلقائياً إلى أقسام تنقل.</small>
+                <span>إدارة المحتوى والأقسام</span>
+                <small>يمكنك تعديل كل قسم على حدة (العنوان والمحتوى) أو رفع عدة ملفات .md.</small>
               </div>
-              <label className="proposal-file-button">
-                + رفع ملف / ملفات .md
-                <input
-                  type="file"
-                  accept=".md,.markdown,text/markdown,text/plain"
-                  multiple
-                  onChange={readMarkdownFiles}
-                />
-              </label>
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="inline-flex rounded-lg p-1 bg-muted border border-border/40">
+                  <button
+                    type="button"
+                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${editorMode === "sections" ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}
+                    onClick={() => setEditorMode("sections")}
+                  >
+                    📑 الأقسام المستقلة ({sections.length})
+                  </button>
+                  <button
+                    type="button"
+                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${editorMode === "raw" ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}
+                    onClick={() => setEditorMode("raw")}
+                  >
+                    📝 ماركداون خام
+                  </button>
+                </div>
+                <label className="proposal-file-button">
+                  + رفع ملف / ملفات .md
+                  <input
+                    type="file"
+                    accept=".md,.markdown,text/markdown,text/plain"
+                    multiple
+                    onChange={readMarkdownFiles}
+                  />
+                </label>
+              </div>
             </div>
-            <Textarea
-              className="proposal-markdown-editor"
-              dir="auto"
-              value={form.markdown}
-              onChange={(event) => updateField("markdown", event.target.value)}
-              placeholder={"# عنوان العرض\n\nمرحباً بكم...\n\n## نطاق العمل"}
-              required
-            />
+
+            {editorMode === "sections" ? (
+              <div className="proposal-sections-editor border border-border/60 rounded-xl p-4 bg-card/40 backdrop-blur-sm space-y-4">
+                {/* Section Tabs Bar */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-border/40 scrollbar-none">
+                  {sections.map((sec, idx) => (
+                    <button
+                      key={sec.id}
+                      type="button"
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 border ${activeSectionId === sec.id ? "bg-primary/20 border-primary text-primary shadow" : "bg-card/80 border-border/60 text-muted-foreground hover:text-foreground"}`}
+                      onClick={() => {
+                        setActiveSectionId(sec.id);
+                        setPreviewingSectionId(null);
+                      }}
+                    >
+                      <span className="w-4 h-4 rounded-full bg-muted flex items-center justify-center text-[10px]">{idx + 1}</span>
+                      <span>{sec.title || `قسم ${idx + 1}`}</span>
+                    </button>
+                  ))}
+                  <Button type="button" variant="outline" size="sm" className="h-7 text-xs font-bold" onClick={addNewSection}>
+                    + إضافة قسم
+                  </Button>
+                </div>
+
+                {/* Active Section Editor Card */}
+                {(() => {
+                  const activeSec = sections.find((s) => s.id === activeSectionId) || sections[0];
+                  const activeIdx = sections.findIndex((s) => s.id === activeSectionId);
+                  if (!activeSec) return null;
+
+                  return (
+                    <div className="space-y-4 pt-1">
+                      {/* Section Header Controls */}
+                      <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-center bg-card/60 p-3 rounded-lg border border-border/60">
+                        <div className="space-y-1">
+                          <span className="text-xs font-bold text-muted-foreground">عنوان هذا القسم</span>
+                          <Input
+                            value={activeSec.title}
+                            onChange={(e) => updateSectionTitle(activeSec.id, e.target.value)}
+                            placeholder="مثال: 1. نطاق العمل والتسليمات"
+                            className="font-bold text-sm"
+                          />
+                        </div>
+                        <div className="flex items-center gap-1.5 self-end flex-wrap">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-9 px-2 text-xs"
+                            disabled={activeIdx === 0}
+                            onClick={() => moveSection(activeIdx, "up")}
+                            title="نقل القسم للأعلى"
+                          >
+                            ↑ للأعلى
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-9 px-2 text-xs"
+                            disabled={activeIdx === sections.length - 1}
+                            onClick={() => moveSection(activeIdx, "down")}
+                            title="نقل القسم للأسفل"
+                          >
+                            ↓ للأسفل
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={previewingSectionId === activeSec.id ? "default" : "outline"}
+                            size="sm"
+                            className="h-9 text-xs"
+                            onClick={() => setPreviewingSectionId((prev) => (prev === activeSec.id ? null : activeSec.id))}
+                          >
+                            {previewingSectionId === activeSec.id ? "إخفاء المعاينة" : "👁 معاينة القسم"}
+                          </Button>
+                          {sections.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              className="h-9 text-xs"
+                              onClick={() => removeSection(activeSec.id)}
+                            >
+                              🗑 حذف القسم
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Section Independent Preview */}
+                      {previewingSectionId === activeSec.id && (
+                        <div className="p-4 rounded-xl border border-primary/30 bg-card/80 shadow-lg space-y-2">
+                          <span className="text-xs font-bold text-primary">معاينة مباشرة للقسم: {activeSec.title}</span>
+                          <article className="proposal-document">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                              {activeSec.content || "لا يوجد محتوى لهذا القسم بعد."}
+                            </ReactMarkdown>
+                          </article>
+                        </div>
+                      )}
+
+                      {/* Section Content Textarea */}
+                      <div className="space-y-1">
+                        <span className="text-xs font-bold text-muted-foreground">محتوى هذا القسم (Markdown)</span>
+                        <Textarea
+                          className="proposal-markdown-editor min-h-[18rem]"
+                          dir="auto"
+                          value={activeSec.content}
+                          onChange={(e) => updateSectionContent(activeSec.id, e.target.value)}
+                          placeholder={`# ${activeSec.title}\n\nأكتب محتوى هذا القسم هنا...`}
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            ) : (
+              <Textarea
+                className="proposal-markdown-editor min-h-[22rem]"
+                dir="auto"
+                value={form.markdown}
+                onChange={(event) => updateField("markdown", event.target.value)}
+                placeholder={"# عنوان العرض\n\nمرحباً بكم...\n\n## نطاق العمل"}
+                required
+              />
+            )}
 
             <div className="proposal-form-options">
               <label>
