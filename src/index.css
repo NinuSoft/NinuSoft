@@ -1065,6 +1065,13 @@ html {
   white-space: nowrap;
 }
 
+.proposal-actions-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
 .proposal-status {
   display: inline-flex !important;
   width: fit-content;

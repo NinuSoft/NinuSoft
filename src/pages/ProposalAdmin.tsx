@@ -257,6 +257,35 @@ export default function ProposalAdmin() {
     setMessage("تم نسخ رابط العميل.");
   };
 
+  const deleteProposal = async (id: string, title: string) => {
+    if (!window.confirm(`هل أنت تأكد من حذف العرض "${title}" نهائياً؟`)) {
+      return;
+    }
+    setBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      await adminRequest<{ ok: boolean }>(
+        adminKey,
+        `/proposals/${id}`,
+        { method: "DELETE" },
+      );
+      setMessage(`تم حذف العرض "${title}" بنجاح.`);
+      if (form.id === id) {
+        setForm(emptyForm);
+      }
+      await loadItems();
+    } catch (requestError) {
+      setError(
+        requestError instanceof ApiError
+          ? requestError.message
+          : "تعذر حذف العرض.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const logout = () => {
     sessionStorage.removeItem("ninusoft-proposals-admin-key");
     setAdminKey("");
@@ -314,9 +343,14 @@ export default function ProposalAdmin() {
               <h1>{form.id ? "تحديث عرض العميل" : "إنشاء عرض Markdown"}</h1>
             </div>
             {form.id && (
-              <Button variant="outline" onClick={() => setForm(emptyForm)}>
-                إلغاء التعديل
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="destructive" size="sm" onClick={() => void deleteProposal(form.id, form.title)} disabled={busy}>
+                  حذف هذا العرض
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setForm(emptyForm)}>
+                  إلغاء التعديل
+                </Button>
+              </div>
             )}
           </div>
 
@@ -481,9 +515,10 @@ export default function ProposalAdmin() {
                           <strong>{formatDate(item.lastReadAt || item.lastOpenedAt)}</strong>
                           <span>{item.firstOpenedAt ? `أول فتح ${formatDate(item.firstOpenedAt)}` : "لم يُفتح بعد"}</span>
                         </td>
-                        <td>
+                        <td className="proposal-actions-cell">
                           <Button size="sm" variant="outline" onClick={() => void copyLink(item.token)}>نسخ الرابط</Button>
                           <Button size="sm" variant="ghost" onClick={() => void editProposal(item.id)}>تعديل</Button>
+                          <Button size="sm" variant="destructive" onClick={() => void deleteProposal(item.id, item.title)} disabled={busy}>حذف</Button>
                         </td>
                       </tr>
                     );
