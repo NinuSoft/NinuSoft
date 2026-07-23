@@ -4,7 +4,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
+
+const ProposalAdmin = lazy(() => import("@/pages/ProposalAdmin"));
+const ProposalView = lazy(() => import("@/pages/ProposalView"));
 
 const queryClient = new QueryClient();
 
@@ -12,6 +15,8 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/proposals/admin" component={ProposalAdmin} />
+      <Route path="/proposals/:token" component={ProposalView} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -26,7 +31,9 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
+          <Suspense fallback={<div className="min-h-screen bg-background" />}>
+            <Router />
+          </Suspense>
         </WouterRouter>
         <Toaster />
       </TooltipProvider>

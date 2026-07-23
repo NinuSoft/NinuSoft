@@ -61,6 +61,24 @@ Currently, the following app privacy policies are available:
 | **Hindam Customer** | [privacy-policy.html](./public/apps/hindam-customer/privacy-policy.html) | [Open Link](https://ninusoft.com/apps/hindam-customer/privacy-policy.html) |
 | **Hindam Manager** | [privacy-policy.html](./public/apps/hindam-manager/privacy-policy.html) | [Open Link](https://ninusoft.com/apps/hindam-manager/privacy-policy.html) |
 
+### 4. Private Markdown Proposals
+
+The site includes a read-only client proposal viewer and an internal management
+screen:
+
+- Client links: `https://ninusoft.com/proposals/<private-token>`
+- Management: `https://ninusoft.com/proposals/admin`
+- Markdown rendering supports tables, task lists, links, and code blocks.
+- Printing and browser-native “Save as PDF” use a dedicated A4 print layout.
+- Passwords, expiration checks, content, and open/read events are handled by a
+  separate Cloudflare Worker rather than the public static bundle.
+
+The backend project is located at
+`/home/al-taie/Github/cloudflare-workers/ninusoft-proposals`. Follow its README
+to create D1, set `ADMIN_API_KEY` and `SESSION_SECRET`, apply the migration, and
+deploy. The frontend uses `https://ninusoft-proposals.ninusoft.workers.dev` by
+default; override it at build time with `VITE_PROPOSALS_API_URL` if needed.
+
 ## Deployment
 
 Pushing to the `main` branch triggers the GitHub Actions workflow in `.github/workflows/deploy.yml`, which builds the site and publishes the `dist/public` folder to GitHub Pages under the custom domain configured in `CNAME` (`ninusoft.com`).
