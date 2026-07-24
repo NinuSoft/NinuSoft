@@ -186,13 +186,13 @@ export function ProposalAiAssistant({
       <section className="relative flex h-[96dvh] w-full max-w-6xl overflow-hidden rounded-t-[28px] border border-white/10 bg-[#0c0f16] text-right text-white shadow-[0_35px_120px_rgba(0,0,0,.65)] sm:h-[88vh] sm:rounded-[32px]">
         <div className="pointer-events-none absolute -left-24 -top-28 h-80 w-80 rounded-full bg-amber-400/10 blur-[100px]" />
 
-        <aside className="relative hidden w-[300px] shrink-0 flex-col border-l border-white/8 bg-white/[0.025] p-5 lg:flex">
+        <aside className="relative hidden w-[330px] shrink-0 flex-col overflow-y-auto border-l border-white/8 bg-white/[0.025] p-5 lg:flex">
           <div className="flex items-center gap-3 px-1 py-2">
             <div className="grid h-10 w-10 place-items-center rounded-xl bg-amber-400 text-[#111318] shadow-[0_0_28px_rgba(251,191,36,.16)]">
               <Sparkles className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-sm font-extrabold">Ninu AI</p>
+              <p className="text-sm font-extrabold">NinuSoft AI</p>
               <p className="mt-0.5 text-[11px] text-white/40">مستشارك داخل العرض</p>
             </div>
           </div>
@@ -206,7 +206,7 @@ export function ProposalAiAssistant({
             <RefreshCw className="h-3.5 w-3.5 text-amber-300" />
           </button>
 
-          <div className="mt-8">
+          <div className="mt-6">
             <p className="px-1 text-[10px] font-bold tracking-wide text-white/30">مصدر الإجابات</p>
             <div className="mt-3 rounded-2xl border border-white/8 bg-black/15 p-4">
               <div className="flex items-start gap-3">
@@ -221,7 +221,37 @@ export function ProposalAiAssistant({
             </div>
           </div>
 
-          <div className="mt-auto rounded-2xl border border-emerald-400/10 bg-emerald-400/[0.04] p-4">
+          <div className="mt-6">
+            <div className="flex items-center justify-between px-1">
+              <p className="text-[10px] font-bold tracking-wide text-white/30">أسئلة مقترحة</p>
+              <span className="text-[9px] text-white/20">{suggestedQuestions.length} خيارات</span>
+            </div>
+            <div className="mt-3 grid gap-2">
+              {suggestedQuestions.map((question) => {
+                const Icon = question.icon;
+                return (
+                  <button
+                    key={question.eyebrow}
+                    type="button"
+                    disabled={loading}
+                    onClick={() => handleAsk(question.text)}
+                    className="group flex items-center gap-3 rounded-xl border border-white/8 bg-white/[0.025] p-3 text-right transition hover:border-amber-300/25 hover:bg-amber-300/[0.04] disabled:cursor-not-allowed disabled:opacity-45"
+                  >
+                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-amber-300/[0.08] text-amber-300 transition group-hover:bg-amber-300/[0.13]">
+                      <Icon className="h-3.5 w-3.5" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[9px] font-bold text-amber-200/50">{question.eyebrow}</span>
+                      <span className="mt-0.5 block text-[11px] font-semibold leading-5 text-white/65">{question.text}</span>
+                    </span>
+                    <ArrowLeft className="h-3 w-3 shrink-0 text-white/15 transition group-hover:-translate-x-0.5 group-hover:text-amber-300" />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-2xl border border-emerald-400/10 bg-emerald-400/[0.04] p-4">
             <div className="flex items-center gap-2 text-[11px] font-bold text-emerald-300">
               <span className="relative flex h-2 w-2">
                 <span className="absolute h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
@@ -273,7 +303,7 @@ export function ProposalAiAssistant({
                     اسأل عن الاستثمار، نطاق العمل، مراحل التنفيذ، أو اطلب تلخيص أي جزء.
                   </p>
 
-                  <div className="mt-7 grid gap-2.5 sm:grid-cols-2">
+                  <div className="mt-7 grid gap-2.5 sm:grid-cols-2 lg:hidden">
                     {suggestedQuestions.map((question) => {
                       const Icon = question.icon;
                       return (

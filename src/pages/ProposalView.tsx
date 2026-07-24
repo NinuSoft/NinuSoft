@@ -21,7 +21,6 @@ import { ProposalExecutiveSummary } from "@/components/ProposalExecutiveSummary"
 import { ProposalExpiryCountdown } from "@/components/ProposalExpiryCountdown";
 import { ProposalAttachments } from "@/components/ProposalAttachments";
 import { ProposalIncentiveBanner } from "@/components/ProposalIncentiveBanner";
-import { ProposalCurrencyConverter, Currency } from "@/components/ProposalCurrencyConverter";
 import { ProposalPackageSwitcher } from "@/components/ProposalPackageSwitcher";
 import { ProposalComments } from "@/components/ProposalComments";
 import { Textarea } from "@/components/ui/textarea";
@@ -77,7 +76,7 @@ export default function ProposalView() {
   const accessToken = useRef(sessionStorage.getItem(accessStorageKey) || "");
 
   const [settings, setSettings] = useState(getProposalSettings);
-  const [scrollProgress, setScrollProgress] = useState(0);
+  const readingProgressRef = useRef<HTMLDivElement>(null);
   const [lang, setLang] = useState<"ar" | "en">("ar");
   const [showMobileNav, setShowMobileNav] = useState(false);
 
@@ -87,7 +86,6 @@ export default function ProposalView() {
   const [highlightCommentText, setHighlightCommentText] = useState("");
   const [showAiModal, setShowAiModal] = useState(false);
   const [showExecSummary, setShowExecSummary] = useState(false);
-  const [currency, setCurrency] = useState<Currency>("USD");
 
   useEffect(() => {
     const handleSettingsChange = () => setSettings(getProposalSettings());
@@ -172,15 +170,39 @@ export default function ProposalView() {
   };
 
   useEffect(() => {
-    const handleScroll = () => {
+    if (!settings.enableReadingTime) return;
+
+    let animationFrame = 0;
+
+    const updateProgress = () => {
+      animationFrame = 0;
       const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
-      if (totalHeight > 0) {
-        setScrollProgress(Math.min(100, Math.max(0, (window.scrollY / totalHeight) * 100)));
+      const progress = totalHeight > 0
+        ? Math.min(1, Math.max(0, window.scrollY / totalHeight))
+        : 0;
+
+      readingProgressRef.current?.style.setProperty(
+        "transform",
+        `scaleX(${progress})`,
+      );
+    };
+
+    const scheduleProgressUpdate = () => {
+      if (!animationFrame) {
+        animationFrame = window.requestAnimationFrame(updateProgress);
       }
     };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+
+    updateProgress();
+    window.addEventListener("scroll", scheduleProgressUpdate, { passive: true });
+    window.addEventListener("resize", scheduleProgressUpdate, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", scheduleProgressUpdate);
+      window.removeEventListener("resize", scheduleProgressUpdate);
+      if (animationFrame) window.cancelAnimationFrame(animationFrame);
+    };
+  }, [settings.enableReadingTime]);
 
   const readTimeMinutes = useMemo(() => {
     if (!proposal?.markdown) return 1;
@@ -193,6 +215,7 @@ export default function ProposalView() {
     [proposal?.markdown],
   );
   const [activeSectionId, setActiveSectionId] = useState<string>("sec-all");
+  const [visibleSectionId, setVisibleSectionId] = useState<string | null>(null);
   const sectionStorageKey = `ninusoft-proposal-sec:${token}`;
 
   useEffect(() => {
@@ -253,6 +276,70 @@ export default function ProposalView() {
       // fallback
     }
   };
+
+  useEffect(() => {
+    if (activeSectionId !== "sec-all" || sections.length === 0) {
+      setVisibleSectionId(null);
+      return;
+    }
+
+    const sectionElements = sections
+      .map((section) =>
+        document.querySelector<HTMLElement>(
+          `[data-proposal-section-id="${section.id}"]`,
+        ),
+      )
+      .filter((element): element is HTMLElement => Boolean(element));
+
+    if (sectionElements.length === 0) return;
+
+    let animationFrame = 0;
+    let currentVisibleId: string | null = null;
+
+    const updateVisibleSection = () => {
+      animationFrame = 0;
+      const readingLine = 140;
+      let currentSection = sectionElements[0];
+
+      if (
+        window.scrollY + window.innerHeight >=
+        document.documentElement.scrollHeight - 2
+      ) {
+        currentSection = sectionElements[sectionElements.length - 1];
+      } else {
+        for (const element of sectionElements) {
+          if (element.getBoundingClientRect().top <= readingLine) {
+            currentSection = element;
+          } else {
+            break;
+          }
+        }
+      }
+
+      const nextId = currentSection.dataset.proposalSectionId || null;
+      if (currentVisibleId !== nextId) {
+        currentVisibleId = nextId;
+        setVisibleSectionId(nextId);
+      }
+    };
+
+    const scheduleUpdate = () => {
+      if (!animationFrame) {
+        animationFrame = window.requestAnimationFrame(updateVisibleSection);
+      }
+    };
+
+    updateVisibleSection();
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
+      if (animationFrame) window.cancelAnimationFrame(animationFrame);
+    };
+  }, [activeSectionId, sections]);
+
   const sessionId = useMemo(() => {
     const key = `ninusoft-proposal-session:${token}`;
     const existing = sessionStorage.getItem(key);
@@ -414,8 +501,8 @@ export default function ProposalView() {
 
       {settings.enableReadingTime && (
         <div
+          ref={readingProgressRef}
           className="proposal-reading-progress-bar"
-          style={{ width: `${scrollProgress}%` }}
         />
       )}
       <header className="proposal-toolbar">
@@ -425,30 +512,20 @@ export default function ProposalView() {
             variant="ghost"
             size="sm"
             onClick={() => setLang((prev) => (prev === "ar" ? "en" : "ar"))}
-            className="text-xs font-mono font-bold flex items-center gap-1.5"
+            className="proposal-action-language text-xs font-mono font-bold flex items-center gap-1.5"
           >
             <Globe className="w-3.5 h-3.5" />
-            <span>{lang === "ar" ? "English" : "العربية"}</span>
+            <span className="proposal-action-label">{lang === "ar" ? "English" : "العربية"}</span>
           </Button>
 
           <Button
             variant="outline"
             size="sm"
             onClick={() => setShowExecSummary(true)}
-            className="text-xs font-bold flex items-center gap-1.5 border-amber-500/30 text-amber-300 hover:bg-amber-500/10"
+            className="proposal-action-summary text-xs font-bold flex items-center gap-1.5 border-amber-500/30 text-amber-300 hover:bg-amber-500/10"
           >
             <FileText className="w-3.5 h-3.5" />
-            <span>ملخص تنفيذي</span>
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowAiModal(true)}
-            className="text-xs font-bold flex items-center gap-1.5 border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>المساعد الذكي</span>
+            <span className="proposal-action-label">ملخص تنفيذي</span>
           </Button>
 
           {settings.enableReadingTime && (
@@ -459,11 +536,13 @@ export default function ProposalView() {
           )}
           {settings.enablePdfExport && (
             <>
-              <Button variant="outline" onClick={() => print("print")} className="flex items-center gap-1.5">
-                <Printer className="w-4 h-4" /> {lang === "ar" ? "طباعة" : "Print"}
+              <Button variant="outline" onClick={() => print("print")} className="proposal-action-print flex items-center gap-1.5">
+                <Printer className="w-4 h-4" />
+                <span className="proposal-action-label">{lang === "ar" ? "طباعة" : "Print"}</span>
               </Button>
-              <Button onClick={() => print("pdf")} className="flex items-center gap-1.5">
-                <Download className="w-4 h-4" /> {lang === "ar" ? "تنزيل PDF" : "Download PDF"}
+              <Button onClick={() => print("pdf")} className="proposal-action-pdf flex items-center gap-1.5">
+                <Download className="w-4 h-4" />
+                <span className="proposal-action-label">{lang === "ar" ? "تنزيل PDF" : "Download PDF"}</span>
               </Button>
             </>
           )}
@@ -497,7 +576,11 @@ export default function ProposalView() {
           </div>
         </div>
 
-        <div className="proposal-layout-grid">
+        <div
+          className={`proposal-layout-grid ${
+            settings.enableSidebarNav && sections.length > 0 ? "has-sidebar" : ""
+          }`}
+        >
           {/* Right Panel Sidebar Navigation */}
           {settings.enableSidebarNav && sections.length > 0 && (
             <aside className="proposal-sidebar">
@@ -531,7 +614,13 @@ export default function ProposalView() {
                     <button
                       key={sec.id}
                       type="button"
-                      className={`proposal-sidebar-item ${activeSectionId === sec.id ? "is-active" : ""}`}
+                      className={`proposal-sidebar-item ${
+                        activeSectionId === sec.id ? "is-active" : ""
+                      } ${
+                        activeSectionId === "sec-all" && visibleSectionId === sec.id
+                          ? "is-in-view"
+                          : ""
+                      }`}
                       onClick={() => {
                         handleSelectSection(sec.id);
                         window.scrollTo({ top: 120, behavior: "smooth" });
@@ -573,7 +662,12 @@ export default function ProposalView() {
               {activeSectionId === "sec-all" ? (
                 <div className="proposal-all-sections">
                   {sections.map((sec, idx) => (
-                    <section key={sec.id} className="proposal-section-block">
+                    <section
+                      key={sec.id}
+                      id={sec.id}
+                      data-proposal-section-id={sec.id}
+                      className="proposal-section-block"
+                    >
                       {sections.length > 1 && idx > 0 && <hr className="my-8" />}
                       <ReactMarkdown remarkPlugins={[remarkGfm, remarkAlerts]} components={proposalMarkdownComponents}>
                         {sec.content}
@@ -632,15 +726,6 @@ export default function ProposalView() {
                 </div>
               )}
 
-              <ProposalCurrencyConverter
-                currentCurrency={currency}
-                onCurrencyChange={(c) => setCurrency(c)}
-              />
-
-
-
-
-
               {settings.enableDigitalSignature && (
                 <ProposalSignature
                   proposalTitle={proposal.title}
@@ -666,20 +751,22 @@ export default function ProposalView() {
         </footer>
       </main>
 
-      {/* Floating Eye-Catching AI Assistant Trigger (FAB) */}
-      <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 group">
-        <div className="hidden sm:flex items-center px-3 py-1.5 rounded-xl bg-card/90 border border-amber-500/50 shadow-2xl text-amber-300 text-xs font-bold font-mono opacity-90 group-hover:opacity-100 transition-opacity">
-          🤖 أسأل المساعد الذكي
-        </div>
+      {/* NinuSoft AI launcher */}
+      <div className="fixed bottom-5 right-4 z-50 sm:bottom-6 sm:right-6">
         <button
           type="button"
           onClick={() => setShowAiModal(true)}
-          className="relative w-14 h-14 rounded-full bg-gradient-to-tr from-amber-600 via-amber-500 to-amber-300 text-black flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all ring-4 ring-amber-500/40 animate-pulse"
-          aria-label="المساعد الذكي"
+          className="group relative flex h-12 items-center gap-2.5 overflow-hidden rounded-2xl border border-amber-300/25 bg-[#11141b]/95 px-3 text-white shadow-[0_16px_45px_rgba(0,0,0,.45),0_0_24px_rgba(245,185,55,.10)] backdrop-blur-xl transition duration-200 hover:-translate-y-0.5 hover:border-amber-300/45 hover:bg-[#161922] active:translate-y-0 sm:h-14 sm:px-3.5"
+          aria-label="فتح NinuSoft AI"
         >
-          <Sparkles className="w-7 h-7 stroke-[2.5]" />
-          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-background animate-ping" />
-          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-background" />
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-amber-300 text-[#17130a] shadow-[0_0_20px_rgba(252,211,77,.16)] sm:h-9 sm:w-9">
+            <Sparkles className="h-4 w-4 stroke-[2.4]" />
+          </span>
+          <span className="hidden min-w-0 pr-0.5 text-right sm:grid">
+            <span className="text-[9px] font-semibold leading-none text-white/35">تحتاج مساعدة؟</span>
+            <span className="mt-1 text-xs font-extrabold leading-none text-white/90">اسأل NinuSoft AI</span>
+          </span>
+          <span className="absolute left-2 top-2 h-1.5 w-1.5 rounded-full bg-emerald-400 ring-2 ring-[#11141b]" />
         </button>
       </div>
 
@@ -746,6 +833,12 @@ export default function ProposalView() {
                     {toEnglishDigits(idx + 1)}
                   </span>
                   <span className="truncate">{sec.title}</span>
+                  {activeSectionId === "sec-all" && visibleSectionId === sec.id && (
+                    <span
+                      className="ms-auto h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400"
+                      aria-label={lang === "ar" ? "القسم الحالي" : "Current section"}
+                    />
+                  )}
                 </button>
               ))}
             </div>
