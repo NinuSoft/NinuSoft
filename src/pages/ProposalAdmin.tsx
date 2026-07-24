@@ -19,7 +19,26 @@ import {
 } from "@/lib/proposal-sections";
 import { ProposalSettingsManager } from "@/components/ProposalSettingsManager";
 import { ProposalAnalytics } from "@/components/ProposalAnalytics";
-import { FileText, BarChart, Settings, Eye, FileSpreadsheet, BookOpen, Send, CheckCircle, XCircle, Layers, Edit, Trash2 } from "@/components/Icons";
+import {
+  FileText,
+  BarChart,
+  Settings,
+  Eye,
+  FileSpreadsheet,
+  BookOpen,
+  Send,
+  CheckCircle,
+  XCircle,
+  Layers,
+  Edit,
+  Trash2,
+  Plus,
+  Search,
+  RefreshCw,
+  Copy,
+  Shield,
+  ArrowLeft,
+} from "@/components/Icons";
 
 type FormState = {
   id: string;
@@ -66,6 +85,7 @@ export default function ProposalAdmin() {
   const [selectedAuditProposal, setSelectedAuditProposal] = useState<ProposalSummary | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [activeAdminTab, setActiveAdminTab] = useState<"editor" | "analytics" | "settings">("editor");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [sections, setSections] = useState<ProposalSection[]>(() =>
     parseProposalSections(emptyForm.markdown)
@@ -151,6 +171,23 @@ export default function ProposalAdmin() {
   };
 
   const publicOrigin = useMemo(() => window.location.origin, []);
+  const dashboardStats = useMemo(() => {
+    const now = Date.now();
+    return {
+      active: items.filter((item) => item.active && (!item.expiresAt || new Date(item.expiresAt).getTime() > now)).length,
+      opens: items.reduce((sum, item) => sum + item.openCount, 0),
+      reads: items.reduce((sum, item) => sum + item.readCount, 0),
+    };
+  }, [items]);
+  const filteredItems = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return items;
+    return items.filter(
+      (item) =>
+        item.title.toLowerCase().includes(query) ||
+        item.clientName.toLowerCase().includes(query),
+    );
+  }, [items, searchQuery]);
 
   const loadItems = async (key = adminKey) => {
     const result = await adminRequest<{ proposals: ProposalSummary[] }>(
@@ -381,14 +418,16 @@ export default function ProposalAdmin() {
   if (!authenticated) {
     return (
       <main className="proposal-admin-login" dir="rtl">
-        <a className="proposal-brand" href="/">
-          <img src="/logo.png" alt="" />
-          <span>NinuSoft</span>
-        </a>
+        <div className="proposal-login-glow" />
         <form onSubmit={login}>
-          <span className="proposal-admin-eyebrow">منطقة خاصة بالفريق</span>
-          <h1>إدارة عروض العملاء</h1>
-          <p>أدخل مفتاح الإدارة المحفوظ في Cloudflare.</p>
+          <a className="proposal-brand" href="/">
+            <img src="/logo.png" alt="" />
+            <span>NinuSoft</span>
+          </a>
+          <div className="proposal-login-icon"><Shield className="h-5 w-5" /></div>
+          <span className="proposal-admin-eyebrow">مساحة عمل الفريق</span>
+          <h1>مرحباً بعودتك</h1>
+          <p>أدخل مفتاح الإدارة للوصول إلى عروض العملاء والتحليلات.</p>
           <label htmlFor="admin-key">مفتاح الإدارة</label>
           <Input
             id="admin-key"
@@ -399,9 +438,11 @@ export default function ProposalAdmin() {
             required
           />
           {error && <p className="proposal-form-error">{error}</p>}
-          <Button type="submit" disabled={busy}>
+          <Button type="submit" disabled={busy} className="proposal-login-submit">
             {busy ? "جاري التحقق…" : "دخول"}
+            {!busy && <ArrowLeft className="h-4 w-4" />}
           </Button>
+          <small>اتصال مشفّر · وصول خاص بفريق NinuSoft</small>
         </form>
       </main>
     );
@@ -409,52 +450,80 @@ export default function ProposalAdmin() {
 
   return (
     <div className="proposal-admin" dir="rtl">
-      <header>
+      <aside className="proposal-admin-rail">
         <a className="proposal-brand" href="/">
           <img src="/logo.png" alt="" />
-          <span>NinuSoft</span>
+          <span>NinuSoft <small>Proposals</small></span>
         </a>
-        <div className="flex items-center gap-3">
-          <div className="inline-flex p-1 bg-muted/60 rounded-xl border border-border/40">
-            <button
-              type="button"
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                activeAdminTab === "editor"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => setActiveAdminTab("editor")}
-            >
-              <FileText className="w-3.5 h-3.5" /> إدارة العروض
-            </button>
-            <button
-              type="button"
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                activeAdminTab === "analytics"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => setActiveAdminTab("analytics")}
-            >
-              <BarChart className="w-3.5 h-3.5" /> إحصائيات الأداء
-            </button>
-            <button
-              type="button"
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                activeAdminTab === "settings"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => setActiveAdminTab("settings")}
-            >
-              <Settings className="w-3.5 h-3.5" /> الإعدادات والميزات
-            </button>
+        <nav aria-label="التنقل الرئيسي">
+          {[
+            { id: "editor" as const, label: "العروض", icon: FileText },
+            { id: "analytics" as const, label: "التحليلات", icon: BarChart },
+            { id: "settings" as const, label: "الإعدادات", icon: Settings },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                className={activeAdminTab === tab.id ? "is-active" : ""}
+                onClick={() => setActiveAdminTab(tab.id)}
+              >
+                <Icon className="h-4 w-4" />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+        <div className="proposal-admin-rail-footer">
+          <div className="proposal-admin-avatar">NS</div>
+          <div>
+            <strong>فريق NinuSoft</strong>
+            <span>مسؤول النظام</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={logout}>تسجيل الخروج</Button>
+          <button type="button" onClick={logout} aria-label="تسجيل الخروج">
+            <ArrowLeft className="h-4 w-4" />
+          </button>
         </div>
-      </header>
+      </aside>
 
-      <main>
+      <div className="proposal-admin-workspace">
+        <header className="proposal-admin-topbar">
+          <div>
+            <span className="proposal-admin-mobile-brand">NinuSoft</span>
+            <h1>
+              {activeAdminTab === "editor"
+                ? "إدارة العروض"
+                : activeAdminTab === "analytics"
+                  ? "التحليلات والأداء"
+                  : "إعدادات التجربة"}
+            </h1>
+            <p>
+              {activeAdminTab === "editor"
+                ? "أنشئ عروضاً احترافية وتابع تفاعل العملاء من مكان واحد."
+                : activeAdminTab === "analytics"
+                  ? "راقب وصول العملاء وقراءة العروض."
+                  : "خصص تجربة العرض والميزات المتاحة للعملاء."}
+            </p>
+          </div>
+          <div className="proposal-admin-top-actions">
+            <span className="proposal-admin-live"><i /> النظام متصل</span>
+            {activeAdminTab === "editor" && (
+              <Button
+                type="button"
+                onClick={() => {
+                  setForm(emptyForm);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+              >
+                <Plus className="h-4 w-4" />
+                عرض جديد
+              </Button>
+            )}
+          </div>
+        </header>
+
+        <main>
         {activeAdminTab === "settings" ? (
           <section className="proposal-editor">
             <ProposalSettingsManager />
@@ -465,6 +534,32 @@ export default function ProposalAdmin() {
           </section>
         ) : (
           <>
+            <section className="proposal-admin-overview" aria-label="ملخص العروض">
+              <div>
+                <span className="proposal-stat-icon is-gold"><FileText className="h-4 w-4" /></span>
+                <p>إجمالي العروض</p>
+                <strong>{items.length}</strong>
+                <small>كل العروض المنشأة</small>
+              </div>
+              <div>
+                <span className="proposal-stat-icon is-green"><CheckCircle className="h-4 w-4" /></span>
+                <p>روابط فعّالة</p>
+                <strong>{dashboardStats.active}</strong>
+                <small>متاحة للعملاء الآن</small>
+              </div>
+              <div>
+                <span className="proposal-stat-icon is-blue"><Eye className="h-4 w-4" /></span>
+                <p>مرات الفتح</p>
+                <strong>{dashboardStats.opens}</strong>
+                <small>إجمالي الزيارات</small>
+              </div>
+              <div>
+                <span className="proposal-stat-icon is-purple"><BookOpen className="h-4 w-4" /></span>
+                <p>قراءات مكتملة</p>
+                <strong>{dashboardStats.reads}</strong>
+                <small>تفاعل عميق مع المحتوى</small>
+              </div>
+            </section>
             <section className="proposal-editor">
           <div className="proposal-admin-section-title">
             <div>
@@ -798,15 +893,30 @@ export default function ProposalAdmin() {
               <span>المتابعة</span>
               <h2>عروض العملاء</h2>
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => void loadItems()} disabled={busy}>تحديث</Button>
+            <div className="proposal-list-tools">
+              <label className="proposal-list-search">
+                <Search className="h-3.5 w-3.5" />
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="ابحث بالعرض أو العميل"
+                  aria-label="البحث في العروض"
+                />
+              </label>
+              <Button variant="outline" size="sm" onClick={() => void loadItems()} disabled={busy} aria-label="تحديث القائمة">
+                <RefreshCw className={`h-3.5 w-3.5 ${busy ? "animate-spin" : ""}`} />
+              </Button>
               <Button variant="secondary" size="sm" onClick={exportCSV} disabled={items.length === 0} className="font-bold text-xs flex items-center gap-1.5">
                 <FileSpreadsheet className="w-4 h-4 text-emerald-400" /> تصدير تقرير CSV
               </Button>
             </div>
           </div>
-          {items.length === 0 ? (
-            <div className="proposal-empty">لا توجد عروض بعد. أنشئ العرض الأول من النموذج أعلاه.</div>
+          {filteredItems.length === 0 ? (
+            <div className="proposal-empty">
+              <Search className="h-5 w-5" />
+              {items.length === 0 ? "لا توجد عروض بعد. أنشئ العرض الأول من الأعلى." : "لا توجد نتائج مطابقة لبحثك."}
+            </div>
           ) : (
             <div className="proposal-table-wrap">
               <table>
@@ -820,7 +930,7 @@ export default function ProposalAdmin() {
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((item) => {
+                  {filteredItems.map((item) => {
                     const expired = item.expiresAt && new Date(item.expiresAt) <= new Date();
                     let sigStatus: "SIGNED" | "REJECTED" | null = null;
                     try {
@@ -888,7 +998,9 @@ export default function ProposalAdmin() {
                           <Button size="sm" variant="outline" onClick={() => setSelectedAuditProposal(item)} className="flex items-center gap-1">
                             <BarChart className="w-3.5 h-3.5" /> تدقيق
                           </Button>
-                          <Button size="sm" variant="outline" onClick={() => void copyLink(item.token)}>نسخ الرابط</Button>
+                          <Button size="sm" variant="outline" onClick={() => void copyLink(item.token)} aria-label="نسخ رابط العرض">
+                            <Copy className="h-3.5 w-3.5" />
+                          </Button>
                           <Button size="sm" variant="ghost" onClick={() => void editProposal(item.id)}>تعديل</Button>
                           <Button size="sm" variant="destructive" onClick={() => void deleteProposal(item.id, item.title)} disabled={busy}>حذف</Button>
                         </td>
@@ -997,6 +1109,7 @@ export default function ProposalAdmin() {
         </>
         )}
       </main>
+      </div>
     </div>
   );
 }

@@ -684,6 +684,544 @@ html {
   margin: 0 auto;
 }
 
+/* Proposal admin workspace */
+.proposal-admin {
+  display: grid;
+  grid-template-columns: 248px minmax(0, 1fr);
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at 78% -10%, hsl(43 75% 49% / 0.07), transparent 28rem),
+    hsl(222 32% 6%);
+}
+
+.proposal-admin-rail {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  height: 100dvh;
+  flex-direction: column;
+  padding: 1.4rem 1rem;
+  border-left: 1px solid hsl(215 25% 18% / 0.85);
+  background: hsl(220 30% 7% / 0.96);
+}
+
+.proposal-admin-rail .proposal-brand {
+  gap: 0.65rem;
+  padding: 0.25rem 0.65rem 1.5rem;
+}
+
+.proposal-admin-rail .proposal-brand img {
+  width: 2rem;
+  height: 2rem;
+}
+
+.proposal-admin-rail .proposal-brand > span {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.92rem;
+  line-height: 1.15;
+}
+
+.proposal-admin-rail .proposal-brand small {
+  margin-top: 0.25rem;
+  color: hsl(215 15% 47%);
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.proposal-admin-rail nav {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 1.25rem;
+}
+
+.proposal-admin-rail nav::before {
+  content: "مساحة العمل";
+  margin: 0 0.65rem 0.45rem;
+  color: hsl(215 15% 42%);
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+
+.proposal-admin-rail nav button {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.72rem 0.8rem;
+  border: 1px solid transparent;
+  border-radius: 0.7rem;
+  color: hsl(215 16% 59%);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: start;
+  transition: 160ms ease;
+}
+
+.proposal-admin-rail nav button:hover {
+  background: hsl(220 24% 12%);
+  color: hsl(210 30% 92%);
+}
+
+.proposal-admin-rail nav button.is-active {
+  border-color: hsl(43 75% 49% / 0.18);
+  background: linear-gradient(90deg, hsl(43 75% 49% / 0.14), hsl(43 75% 49% / 0.035));
+  color: hsl(43 80% 67%);
+}
+
+.proposal-admin-rail-footer {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: auto;
+  padding: 0.8rem 0.65rem 0;
+  border-top: 1px solid hsl(215 25% 16%);
+}
+
+.proposal-admin-avatar {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid hsl(43 75% 49% / 0.22);
+  border-radius: 0.6rem;
+  background: hsl(43 75% 49% / 0.1);
+  color: hsl(43 80% 67%);
+  font-size: 0.65rem;
+  font-weight: 900;
+}
+
+.proposal-admin-rail-footer div:not(.proposal-admin-avatar) {
+  display: grid;
+  min-width: 0;
+}
+
+.proposal-admin-rail-footer strong {
+  color: hsl(210 25% 88%);
+  font-size: 0.68rem;
+}
+
+.proposal-admin-rail-footer span {
+  color: hsl(215 15% 45%);
+  font-size: 0.58rem;
+}
+
+.proposal-admin-rail-footer button {
+  display: grid;
+  width: 1.9rem;
+  height: 1.9rem;
+  place-items: center;
+  border-radius: 0.5rem;
+  color: hsl(215 15% 45%);
+}
+
+.proposal-admin-rail-footer button:hover {
+  background: hsl(0 60% 45% / 0.12);
+  color: hsl(0 75% 67%);
+}
+
+.proposal-admin-workspace {
+  min-width: 0;
+}
+
+.proposal-admin-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  min-height: 5.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1rem clamp(1.25rem, 3vw, 2.5rem);
+  border-bottom: 1px solid hsl(215 25% 16% / 0.9);
+  background: hsl(222 32% 6% / 0.88);
+  backdrop-filter: blur(20px);
+}
+
+.proposal-admin-topbar h1 {
+  color: hsl(210 35% 96%);
+  font-size: 1.2rem;
+  font-weight: 850;
+  letter-spacing: -0.025em;
+}
+
+.proposal-admin-topbar p {
+  margin-top: 0.25rem;
+  color: hsl(215 15% 48%);
+  font-size: 0.7rem;
+}
+
+.proposal-admin-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.proposal-admin-top-actions > button {
+  gap: 0.45rem;
+  border-radius: 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.proposal-admin-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: hsl(145 45% 64%);
+  font-size: 0.62rem;
+  font-weight: 700;
+}
+
+.proposal-admin-live i {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: hsl(145 65% 52%);
+  box-shadow: 0 0 0 4px hsl(145 65% 52% / 0.08);
+}
+
+.proposal-admin-mobile-brand {
+  display: none;
+}
+
+.proposal-admin-workspace > main {
+  display: grid;
+  gap: 1.35rem;
+  width: min(100% - clamp(2rem, 5vw, 5rem), 88rem);
+  margin: 0 auto;
+  padding: 2rem 0 4rem;
+}
+
+.proposal-admin-overview {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.proposal-admin-overview > div {
+  position: relative;
+  min-height: 8.5rem;
+  padding: 1.15rem;
+  overflow: hidden;
+  border: 1px solid hsl(215 25% 17%);
+  border-radius: 0.9rem;
+  background: hsl(220 27% 9% / 0.72);
+}
+
+.proposal-admin-overview p {
+  margin-top: 1rem;
+  color: hsl(215 16% 56%);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.proposal-admin-overview strong {
+  display: block;
+  margin-top: 0.2rem;
+  color: hsl(210 35% 96%);
+  font-size: 1.55rem;
+  font-weight: 850;
+}
+
+.proposal-admin-overview small {
+  position: absolute;
+  left: 1.1rem;
+  bottom: 1.15rem;
+  color: hsl(215 15% 38%);
+  font-size: 0.58rem;
+}
+
+.proposal-stat-icon {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 0.55rem;
+}
+
+.proposal-stat-icon.is-gold { background: hsl(43 75% 49% / 0.11); color: hsl(43 80% 65%); }
+.proposal-stat-icon.is-green { background: hsl(145 60% 42% / 0.11); color: hsl(145 58% 62%); }
+.proposal-stat-icon.is-blue { background: hsl(205 75% 50% / 0.11); color: hsl(205 80% 68%); }
+.proposal-stat-icon.is-purple { background: hsl(270 65% 57% / 0.11); color: hsl(270 70% 72%); }
+
+.proposal-admin .proposal-editor,
+.proposal-admin .proposal-list {
+  padding: clamp(1.25rem, 2.5vw, 2rem);
+  border-color: hsl(215 25% 17%);
+  border-radius: 1rem;
+  background: hsl(220 27% 9% / 0.7);
+  box-shadow: none;
+}
+
+.proposal-admin .proposal-admin-section-title {
+  padding-bottom: 1.15rem;
+  border-bottom: 1px solid hsl(215 25% 16%);
+}
+
+.proposal-admin .proposal-admin-section-title h1,
+.proposal-admin .proposal-admin-section-title h2 {
+  font-size: 1.1rem;
+}
+
+.proposal-admin .proposal-admin-section-title > div > span {
+  color: hsl(43 75% 62% / 0.75);
+  font-size: 0.61rem;
+}
+
+.proposal-admin .proposal-form-grid {
+  gap: 1.15rem;
+  padding: 1rem;
+  border: 1px solid hsl(215 25% 16%);
+  border-radius: 0.8rem;
+  background: hsl(222 30% 7% / 0.55);
+}
+
+.proposal-admin .proposal-sections-editor {
+  border-color: hsl(215 25% 16%) !important;
+  background: hsl(222 30% 6% / 0.55) !important;
+}
+
+.proposal-list-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.proposal-list-search {
+  display: flex;
+  min-width: 14rem;
+  height: 2.25rem;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.7rem;
+  border: 1px solid hsl(215 25% 19%);
+  border-radius: 0.6rem;
+  background: hsl(222 30% 7%);
+  color: hsl(215 15% 42%);
+}
+
+.proposal-list-search:focus-within {
+  border-color: hsl(43 75% 49% / 0.5);
+}
+
+.proposal-list-search input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: hsl(210 30% 90%);
+  font-size: 0.68rem;
+}
+
+.proposal-list-search input::placeholder {
+  color: hsl(215 15% 38%);
+}
+
+.proposal-admin .proposal-list th {
+  padding: 0.8rem 0.75rem;
+  border-bottom-color: hsl(215 25% 17%);
+  color: hsl(215 15% 45%);
+  font-size: 0.63rem;
+}
+
+.proposal-admin .proposal-list td {
+  padding: 1rem 0.75rem;
+  border-bottom-color: hsl(215 25% 14%);
+}
+
+.proposal-admin .proposal-empty {
+  display: flex;
+  min-height: 10rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  color: hsl(215 15% 45%);
+}
+
+.proposal-admin-login {
+  position: relative;
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  overflow: hidden;
+  padding: 1.25rem;
+  background:
+    linear-gradient(hsl(222 32% 6% / 0.88), hsl(222 32% 6% / 0.96)),
+    radial-gradient(circle at center, hsl(43 75% 49% / 0.12), transparent 40%);
+}
+
+.proposal-login-glow {
+  position: absolute;
+  width: 32rem;
+  height: 32rem;
+  border-radius: 50%;
+  background: hsl(43 75% 49% / 0.06);
+  filter: blur(90px);
+}
+
+.proposal-admin-login form {
+  position: relative;
+  align-self: auto;
+  justify-self: auto;
+  gap: 0.75rem;
+  width: min(100%, 25rem);
+  padding: 2rem;
+  border-color: hsl(215 25% 18%);
+  border-radius: 1.25rem;
+  background: hsl(220 28% 9% / 0.9);
+  box-shadow: 0 2rem 6rem hsl(0 0% 0% / 0.45);
+}
+
+.proposal-admin-login form .proposal-brand {
+  margin-bottom: 1.75rem;
+}
+
+.proposal-login-icon {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  margin-bottom: 0.4rem;
+  border-radius: 0.75rem;
+  background: hsl(43 75% 49% / 0.1);
+  color: hsl(43 80% 65%);
+}
+
+.proposal-admin-login h1 {
+  font-size: 1.55rem;
+}
+
+.proposal-admin-login p {
+  margin-bottom: 0.9rem;
+  font-size: 0.75rem;
+  line-height: 1.7;
+}
+
+.proposal-login-submit {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  border-radius: 0.65rem;
+}
+
+.proposal-admin-login form > small {
+  margin-top: 0.65rem;
+  color: hsl(215 15% 38%);
+  font-size: 0.58rem;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .proposal-admin {
+    display: block;
+    padding-bottom: 4.75rem;
+  }
+
+  .proposal-admin-rail {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 40;
+    display: block;
+    width: 100%;
+    height: auto;
+    padding: 0.45rem max(0.8rem, env(safe-area-inset-right)) max(0.45rem, env(safe-area-inset-bottom));
+    border-top: 1px solid hsl(215 25% 18%);
+    border-left: 0;
+  }
+
+  .proposal-admin-rail > .proposal-brand,
+  .proposal-admin-rail-footer,
+  .proposal-admin-rail nav::before {
+    display: none;
+  }
+
+  .proposal-admin-rail nav {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.35rem;
+    margin: 0;
+  }
+
+  .proposal-admin-rail nav button {
+    justify-content: center;
+    padding: 0.6rem;
+  }
+
+  .proposal-admin-topbar {
+    min-height: 4.8rem;
+  }
+
+  .proposal-admin-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .proposal-admin-workspace > main {
+    width: min(100% - 1.25rem, 88rem);
+    padding-top: 1rem;
+  }
+
+  .proposal-admin-topbar {
+    padding: 0.85rem 1rem;
+  }
+
+  .proposal-admin-topbar p,
+  .proposal-admin-live {
+    display: none;
+  }
+
+  .proposal-admin-mobile-brand {
+    display: block;
+    margin-bottom: 0.15rem;
+    color: hsl(43 75% 62%);
+    font-size: 0.55rem;
+    font-weight: 900;
+  }
+
+  .proposal-admin-top-actions > button {
+    width: 2.4rem;
+    padding: 0;
+  }
+
+  .proposal-admin-top-actions > button:not(:focus) {
+    font-size: 0;
+  }
+
+  .proposal-admin-overview {
+    gap: 0.55rem;
+  }
+
+  .proposal-admin-overview > div {
+    min-height: 7.8rem;
+    padding: 0.9rem;
+  }
+
+  .proposal-admin-overview small {
+    display: none;
+  }
+
+  .proposal-admin .proposal-admin-section-title {
+    flex-direction: column;
+  }
+
+  .proposal-list-tools {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .proposal-list-search {
+    min-width: 0;
+    flex: 1;
+  }
+}
+
 @media print {
   .mermaid-toolbar {
     display: none !important;
