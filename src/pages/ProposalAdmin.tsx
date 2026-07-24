@@ -42,6 +42,7 @@ import {
   ArrowLeft,
   LogOut,
   Lock,
+  Share2,
 } from "@/components/Icons";
 
 type FormState = {
@@ -90,6 +91,9 @@ export default function ProposalAdmin() {
   const [protectionType, setProtectionType] = useState<"pin" | "password">("pin");
   const [showPin, setShowPin] = useState(false);
   const [selectedAuditProposal, setSelectedAuditProposal] = useState<ProposalSummary | null>(null);
+  const [shareProposal, setShareProposal] = useState<ProposalSummary | null>(null);
+  const [sharePassword, setSharePassword] = useState("");
+  const [shareCopied, setShareCopied] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [activeAdminTab, setActiveAdminTab] = useState<"editor" | "analytics" | "settings">("editor");
   const [searchQuery, setSearchQuery] = useState("");
@@ -1317,6 +1321,9 @@ export default function ProposalAdmin() {
                           <Button size="sm" variant="outline" onClick={() => void copyLink(item.token)} aria-label="نسخ رابط العرض">
                             <Copy className="h-3.5 w-3.5" />
                           </Button>
+                          <Button size="sm" variant="outline" onClick={() => { setShareProposal(item); setSharePassword(""); setShareCopied(false); }} className="flex items-center gap-1" aria-label="مشاركة العرض">
+                            <Share2 className="h-3.5 w-3.5" />
+                          </Button>
                           <Button size="sm" variant="ghost" onClick={() => void editProposal(item.id)}>تعديل</Button>
                           <Button size="sm" variant="destructive" onClick={() => void deleteProposal(item.id, item.title)} disabled={busy}>حذف</Button>
                         </td>
@@ -1422,6 +1429,79 @@ export default function ProposalAdmin() {
             </div>
           </div>
         )}
+        {/* Share Modal */}
+        {shareProposal && (() => {
+          const link = `${window.location.origin}/proposals/${shareProposal.token}`;
+          const msg = [
+            `السلام عليكم ورحمة الله وبركاته،`,
+            ``,
+            `يسعدنا مشاركتكم عرض ${shareProposal.title} المُعدّ خصيصاً لكم.`,
+            ``,
+            `🔗 رابط العرض:`,
+            link,
+            ...(sharePassword ? [``, `🔑 ${shareProposal.protected ? "رمز الدخول" : "كلمة المرور"}:`, sharePassword] : []),
+            ``,
+            `نتطلع إلى تعليقاتكم وآرائكم الكريمة.`,
+            ``,
+            `مع تحيات فريق نينوسوفت 🚀`,
+          ].join("\n");
+          return (
+            <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+              <div className="w-full max-w-lg p-6 rounded-2xl bg-card border border-border/80 shadow-2xl space-y-4 text-start dir-rtl">
+                <div className="flex items-center justify-between border-b border-border/40 pb-3">
+                  <h3 className="font-bold text-base text-foreground flex items-center gap-2">
+                    <Share2 className="w-4 h-4 text-primary" />
+                    <span>مشاركة العرض</span>
+                  </h3>
+                  <button type="button" onClick={() => setShareProposal(null)} className="text-muted-foreground hover:text-foreground transition-colors text-lg leading-none">&times;</button>
+                </div>
+
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground font-bold">{shareProposal.title} &mdash; {shareProposal.clientName}</p>
+                  <p className="text-xs text-muted-foreground font-mono break-all text-primary/80">{link}</p>
+                </div>
+
+                {shareProposal.protected && (
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-muted-foreground block">
+                      <Lock className="inline w-3 h-3 mb-0.5 me-1" />
+                      أدخل رمز الدخول لتضمينه في الرسالة (اختياري)
+                    </label>
+                    <input
+                      type="text"
+                      value={sharePassword}
+                      onChange={(e) => { setSharePassword(e.target.value); setShareCopied(false); }}
+                      placeholder="رمز PIN أو كلمة السر..."
+                      className="w-full h-9 rounded-md border border-border bg-muted px-3 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-muted-foreground block">الرسالة الجاهزة للإرسال</label>
+                  <pre className="text-xs text-foreground bg-muted/60 border border-border/60 rounded-xl p-3 whitespace-pre-wrap leading-relaxed font-sans dir-rtl text-right max-h-52 overflow-y-auto">{msg}</pre>
+                </div>
+
+                <div className="flex items-center gap-2 justify-end pt-1">
+                  <Button type="button" variant="outline" size="sm" onClick={() => setShareProposal(null)}>إغلاق</Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(msg).catch(() => {});
+                      setShareCopied(true);
+                      setTimeout(() => setShareCopied(false), 2000);
+                    }}
+                    className="flex items-center gap-1.5"
+                  >
+                    {shareCopied ? <CheckCircle className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                    {shareCopied ? "تم النسخ!" : "نسخ الرسالة"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
         </>
         )}
       </main>
