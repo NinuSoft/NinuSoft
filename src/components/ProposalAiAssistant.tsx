@@ -1,8 +1,20 @@
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Button } from "@/components/ui/button";
-import { XCircle, Send, Sparkles, CheckCircle, RefreshCw, Rocket, TrendingUp, Target, Shield } from "@/components/Icons";
+import {
+  ArrowLeft,
+  CheckCircle,
+  Copy,
+  FileText,
+  RefreshCw,
+  Rocket,
+  Send,
+  Shield,
+  Sparkles,
+  Target,
+  TrendingUp,
+  X,
+} from "@/components/Icons";
 import { askProposalAiApi } from "@/lib/proposals-api";
 
 interface ProposalAiAssistantProps {
@@ -23,11 +35,43 @@ interface Message {
   modelUsed?: string;
 }
 
-function formatTimestamp(): string {
+const suggestedQuestions = [
+  {
+    icon: Rocket,
+    eyebrow: "القيمة المقترحة",
+    text: "لماذا اختيار NinuSoft هو الخيار الأفضل لهذا المشروع؟",
+  },
+  {
+    icon: TrendingUp,
+    eyebrow: "الاستثمار",
+    text: "ما تفاصيل الميزانية والعائد الاستثماري المتوقع؟",
+  },
+  {
+    icon: Target,
+    eyebrow: "خطة التنفيذ",
+    text: "ما الجدول الزمني ومراحل التسليم الرئيسية؟",
+  },
+  {
+    icon: Shield,
+    eyebrow: "ما بعد الإطلاق",
+    text: "ما ضمانات الجودة والدعم الفني المستمر؟",
+  },
+];
+
+function formatTimestamp() {
   return new Date().toLocaleTimeString("ar-EG-u-nu-latn", {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function createWelcomeMessage(clientName: string): Message {
+  return {
+    id: "welcome",
+    sender: "bot",
+    text: `مرحباً **${clientName}**، أنا مساعدك الذكي لهذا العرض. يمكنني تلخيص البنود، مقارنة الخيارات، وشرح التكلفة وخطة التنفيذ.`,
+    time: formatTimestamp(),
+  };
 }
 
 export function ProposalAiAssistant({
@@ -38,324 +82,343 @@ export function ProposalAiAssistant({
   isOpen,
   onClose,
 }: ProposalAiAssistantProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      sender: "bot",
-      text: `مرحباً بك عزيزي **${clientName}**! 👋\n\nأنا **مستشار الذكاء الاصطناعي الخبير** في NinuSoft لخدمتك.\n\nيسعدني الإجابة على أي استفسارات حول **الجدول الزمني، الميزانية، أو الضمانات الفنية**. كيف يمكنني مساعدتك اليوم؟`,
-      time: formatTimestamp(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>(() => [createWelcomeMessage(clientName)]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [engineStatus, setEngineStatus] = useState<string>("Cloudflare Workers AI Live");
+  const [engineStatus, setEngineStatus] = useState("متصل بالعرض");
   const chatBottomRef = useRef<HTMLDivElement>(null);
-
-  const structuredQuestions = [
-    {
-      icon: Rocket,
-      color: "text-amber-400 bg-amber-500/10 border-amber-500/30",
-      text: "لماذا اختيار NinuSoft هو الخيار الأفضل لهذا المشروع؟",
-      label: "رؤية ومزايا NinuSoft",
-    },
-    {
-      icon: TrendingUp,
-      color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
-      text: "ما هي تفاصيل الميزانية والعائد الاستثماري؟",
-      label: "التكلفة والعائد المالي",
-    },
-    {
-      icon: Target,
-      color: "text-sky-400 bg-sky-500/10 border-sky-500/30",
-      text: "ما هو الجدول الزمني والالتزام بالتسليم؟",
-      label: "الجدول والمراحل الزمنية",
-    },
-    {
-      icon: Shield,
-      color: "text-purple-400 bg-purple-500/10 border-purple-500/30",
-      text: "ما هي ضمانات الجودة والدعم التقني المستمر؟",
-      label: "الضمانات والدعم الفني",
-    },
-  ];
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (isOpen) {
-      chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
+    if (!isOpen) return;
+    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isOpen, loading]);
 
-  const handleCopy = (id: string, text: string) => {
-    navigator.clipboard.writeText(text);
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    const focusTimer = window.setTimeout(() => inputRef.current?.focus(), 180);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.clearTimeout(focusTimer);
+    };
+  }, [isOpen, onClose]);
+
+  const handleCopy = async (id: string, text: string) => {
+    await navigator.clipboard.writeText(text);
     setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
+    window.setTimeout(() => setCopiedId(null), 1800);
   };
 
   const handleAsk = async (queryText?: string) => {
-    const question = (queryText || input).trim();
+    const question = (queryText ?? input).trim();
     if (!question || loading) return;
 
-    const currentTime = formatTimestamp();
-    const userMsg: Message = { id: `u-${Date.now()}`, sender: "user", text: question, time: currentTime };
-
-    setMessages((prev) => [...prev, userMsg]);
-    if (!queryText) setInput("");
+    setMessages((previous) => [
+      ...previous,
+      { id: `u-${Date.now()}`, sender: "user", text: question, time: formatTimestamp() },
+    ]);
+    setInput("");
     setLoading(true);
 
     try {
-      let answer = "";
-      let modelUsed = "";
+      if (!proposalToken) throw new Error("No proposal token");
+      const response = await askProposalAiApi(proposalToken, question, accessToken);
+      if (!response.answer) throw new Error("No response");
 
-      if (proposalToken) {
-        const res = await askProposalAiApi(proposalToken, question, accessToken);
-        answer = res.answer;
-        modelUsed = res.modelUsed || "Cloudflare Workers AI";
-      }
-
-      if (!answer) {
-        throw new Error("No response");
-      }
-
-      setEngineStatus(modelUsed.includes("70b") ? "Llama 3.3 70B (Flagship AI)" : "Workers AI Live");
-      setMessages((prev) => [
-        ...prev,
+      setEngineStatus(response.modelUsed?.includes("70b") ? "Llama 3.3 · مباشر" : "Workers AI · مباشر");
+      setMessages((previous) => [
+        ...previous,
         {
           id: `b-${Date.now()}`,
           sender: "bot",
-          text: answer,
+          text: response.answer,
           time: formatTimestamp(),
-          modelUsed,
+          modelUsed: response.modelUsed,
         },
       ]);
     } catch {
-      setEngineStatus("البحث المباشر في العرض");
-      let fallbackAnswer = "";
+      setEngineStatus("وضع العرض المحلي");
       const lower = question.toLowerCase();
+      let answer = "فريق **NinuSoft** ملتزم بتقديم مستوى احترافي، وقد صُممت بنود العرض لضمان نجاح المشروع وسرعة تنفيذه.";
 
       if (lower.includes("أفضل") || lower.includes("لماذا") || lower.includes("خيار")) {
-        fallbackAnswer = `تقدم **NinuSoft** حلاً برمجياً متكاملاً يتفوق بالسرعة والأمان العالي:\n- **حقوق الكود المصدري كاملة**\n- **ضمان استقرار الأنظمة** لمدة 30 يوماً\n- **دعم فني وتكاملي شامل** لتأمين نجاح المشروع.`;
-      } else if (lower.includes("جدول") || lower.includes("زمني") || lower.includes("مدة")) {
-        fallbackAnswer = `نلتزم في **NinuSoft** بجدول زمني صارم ومقسم إلى مراحل تسليم واضحة تضمن متابعتكم للتقدم خطوة بخطوة حتى الإطلاق النهائي.`;
-      } else if (lower.includes("سعر") || lower.includes("ميزانية") || lower.includes("كلفة")) {
-        fallbackAnswer = `الميزانية المحددة صُممت لتمنحكم **أفضل عائد استثماري (ROI)** مقابل الجودة العالية والاستقرار التقني للأنظمة المقدمة.`;
-      } else {
-        fallbackAnswer = `فريق **NinuSoft** ملتزم بتقديم أفضل مستوى احترافي. جميع البنود مصممة لضمان نجاح المشروع وسرعة تنفيذه.`;
+        answer = "تقدم **NinuSoft** حلاً متكاملاً يجمع السرعة والأمان:\n\n- حقوق الكود المصدري كاملة\n- ضمان استقرار الأنظمة لمدة 30 يوماً\n- دعم فني وتكاملي شامل";
+      } else if (lower.includes("جدول") || lower.includes("زمني") || lower.includes("مدة") || lower.includes("مراحل")) {
+        answer = "خطة التنفيذ مقسمة إلى **مراحل تسليم واضحة** تتيح متابعة التقدم خطوة بخطوة، وصولاً إلى الاختبار والإطلاق النهائي.";
+      } else if (lower.includes("سعر") || lower.includes("ميزانية") || lower.includes("كلفة") || lower.includes("استثمار")) {
+        answer = "الميزانية مصممة لتمنحكم **أفضل عائد استثماري** مقابل الجودة، ملكية المنتج، واستقرار الأنظمة على المدى الطويل.";
       }
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `b-${Date.now()}`,
-          sender: "bot",
-          text: fallbackAnswer,
-          time: formatTimestamp(),
-        },
+      setMessages((previous) => [
+        ...previous,
+        { id: `b-${Date.now()}`, sender: "bot", text: answer, time: formatTimestamp() },
       ]);
     } finally {
       setLoading(false);
     }
   };
 
+  const resetConversation = () => {
+    setMessages([createWelcomeMessage(clientName)]);
+    setInput("");
+    setEngineStatus("متصل بالعرض");
+    window.setTimeout(() => inputRef.current?.focus(), 0);
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200 dir-rtl">
-      <div className="w-full max-w-2xl h-[85vh] flex flex-col rounded-3xl bg-card/95 border border-amber-500/40 shadow-2xl overflow-hidden text-start dir-rtl backdrop-blur-xl">
-        {/* Header */}
-        <div className="p-4 bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-card border-b border-border/60 flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-amber-500 text-black flex items-center justify-center font-bold shadow-lg shadow-amber-500/20">
-              <Sparkles className="w-6 h-6 animate-pulse" />
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-[#07090e]/85 p-0 backdrop-blur-sm sm:items-center sm:p-5"
+      dir="rtl"
+      role="dialog"
+      aria-modal="true"
+      aria-label="مساعد العرض الذكي"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <section className="relative flex h-[96dvh] w-full max-w-6xl overflow-hidden rounded-t-[28px] border border-white/10 bg-[#0c0f16] text-right text-white shadow-[0_35px_120px_rgba(0,0,0,.65)] sm:h-[88vh] sm:rounded-[32px]">
+        <div className="pointer-events-none absolute -left-24 -top-28 h-80 w-80 rounded-full bg-amber-400/10 blur-[100px]" />
+
+        <aside className="relative hidden w-[300px] shrink-0 flex-col border-l border-white/8 bg-white/[0.025] p-5 lg:flex">
+          <div className="flex items-center gap-3 px-1 py-2">
+            <div className="grid h-10 w-10 place-items-center rounded-xl bg-amber-400 text-[#111318] shadow-[0_0_28px_rgba(251,191,36,.16)]">
+              <Sparkles className="h-5 w-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-black text-base text-foreground">مستشار الذكاء الاصطناعي</h3>
-                <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono font-semibold flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                  {engineStatus}
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground">استفسارات فورية ودعم ذكي مستند لوثيقة المقترح</p>
+              <p className="text-sm font-extrabold">Ninu AI</p>
+              <p className="mt-0.5 text-[11px] text-white/40">مستشارك داخل العرض</p>
             </div>
           </div>
-          <Button
+
+          <button
             type="button"
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="rounded-full hover:bg-muted/80 text-muted-foreground hover:text-foreground"
+            onClick={resetConversation}
+            className="mt-7 flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.045] px-4 py-3 text-xs font-bold text-white/80 transition hover:border-amber-300/30 hover:bg-white/[0.07]"
           >
-            <XCircle className="w-5 h-5" />
-          </Button>
-        </div>
+            <span>محادثة جديدة</span>
+            <RefreshCw className="h-3.5 w-3.5 text-amber-300" />
+          </button>
 
-        {/* Top Quick Suggestion Pills */}
-        <div className="p-2.5 bg-muted/20 border-b border-border/40 flex items-center gap-2 overflow-x-auto text-xs no-scrollbar">
-          <span className="text-muted-foreground font-bold whitespace-nowrap text-[11px] shrink-0">أسئلة سريعة:</span>
-          {structuredQuestions.map((q, i) => {
-            const IconComponent = q.icon;
-            return (
-              <button
-                key={i}
-                type="button"
-                onClick={() => handleAsk(q.text)}
-                disabled={loading}
-                className="px-3 py-1.5 rounded-full bg-card hover:bg-amber-500/10 text-foreground border border-amber-500/20 hover:border-amber-500/50 whitespace-nowrap transition-all text-xs font-medium flex items-center gap-1.5 shadow-sm hover:scale-[1.02] active:scale-95"
-              >
-                <IconComponent className="w-3.5 h-3.5 shrink-0 text-amber-400" />
-                <span>{q.label}</span>
-              </button>
-            );
-          })}
-        </div>
+          <div className="mt-8">
+            <p className="px-1 text-[10px] font-bold tracking-wide text-white/30">مصدر الإجابات</p>
+            <div className="mt-3 rounded-2xl border border-white/8 bg-black/15 p-4">
+              <div className="flex items-start gap-3">
+                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-amber-400/10 text-amber-300">
+                  <FileText className="h-4 w-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-bold">{proposalTitle}</p>
+                  <p className="mt-1 text-[10px] leading-5 text-white/35">يستخدم المساعد محتوى هذا العرض فقط لصياغة الإجابات.</p>
+                </div>
+              </div>
+            </div>
+          </div>
 
-        {/* Chat Body */}
-        <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4 bg-black/10 text-xs sm:text-sm dir-rtl">
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex items-start gap-3 ${msg.sender === "user" ? "flex-row-reverse" : "flex-row"}`}
+          <div className="mt-auto rounded-2xl border border-emerald-400/10 bg-emerald-400/[0.04] p-4">
+            <div className="flex items-center gap-2 text-[11px] font-bold text-emerald-300">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+                <span className="relative h-2 w-2 rounded-full bg-emerald-400" />
+              </span>
+              {engineStatus}
+            </div>
+            <p className="mt-2 text-[10px] leading-5 text-white/30">قدّم أسئلة محددة لتحصل على إجابات أدق.</p>
+          </div>
+        </aside>
+
+        <div className="relative flex min-w-0 flex-1 flex-col">
+          <header className="flex h-[72px] shrink-0 items-center justify-between border-b border-white/8 px-4 sm:px-6">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-amber-400 text-[#111318] lg:hidden">
+                <Sparkles className="h-4 w-4" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h2 className="truncate text-sm font-extrabold sm:text-base">مساعد العرض الذكي</h2>
+                  <span className="hidden rounded-full border border-emerald-400/15 bg-emerald-400/[0.07] px-2 py-0.5 text-[9px] font-bold text-emerald-300 sm:inline">متصل</span>
+                </div>
+                <p className="mt-1 truncate text-[10px] text-white/35 sm:text-[11px]">{proposalTitle}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="إغلاق المحادثة"
+              className="grid h-9 w-9 place-items-center rounded-full text-white/45 transition hover:bg-white/8 hover:text-white"
             >
-              {/* Avatar */}
-              <div
-                className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 font-bold text-xs shadow-md ${
-                  msg.sender === "user"
-                    ? "bg-amber-500 text-black"
-                    : "bg-muted border border-border/60 text-amber-400"
-                }`}
-              >
-                {msg.sender === "user" ? "أنت" : <Sparkles className="w-4 h-4" />}
-              </div>
+              <X className="h-4 w-4" />
+            </button>
+          </header>
 
-              {/* Message Content */}
-              <div className="space-y-1 max-w-[85%]">
-                <div
-                  className={`p-4 rounded-2xl shadow-lg leading-relaxed ${
-                    msg.sender === "user"
-                      ? "bg-gradient-to-l from-amber-500 to-amber-600 text-black font-semibold rounded-tl-none"
-                      : "bg-card/90 border border-border/80 text-foreground rounded-tr-none shadow-xl"
-                  }`}
-                >
-                  {msg.sender === "user" ? (
-                    <p className="whitespace-pre-wrap">{msg.text}</p>
-                  ) : (
-                    <div className="prose prose-invert max-w-none text-xs sm:text-sm prose-p:leading-relaxed prose-headings:text-amber-300 prose-strong:text-amber-300 prose-ul:my-1 prose-li:my-0.5">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {msg.text}
-                      </ReactMarkdown>
+          <main className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8 lg:px-12">
+            <div className="mx-auto w-full max-w-3xl space-y-7">
+              {messages.length === 1 && (
+                <div className="pb-3 pt-1 sm:pt-5">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-amber-300/15 bg-amber-300/[0.06] px-3 py-1.5 text-[10px] font-bold text-amber-200">
+                    <Sparkles className="h-3 w-3" />
+                    مدرّب على تفاصيل العرض
+                  </span>
+                  <h1 className="mt-5 max-w-xl text-2xl font-black leading-[1.45] tracking-tight sm:text-3xl">
+                    أهلاً {clientName}،<br />
+                    <span className="text-white/45">ما الذي تود معرفته عن العرض؟</span>
+                  </h1>
+                  <p className="mt-3 max-w-xl text-xs leading-6 text-white/40 sm:text-sm">
+                    اسأل عن الاستثمار، نطاق العمل، مراحل التنفيذ، أو اطلب تلخيص أي جزء.
+                  </p>
+
+                  <div className="mt-7 grid gap-2.5 sm:grid-cols-2">
+                    {suggestedQuestions.map((question) => {
+                      const Icon = question.icon;
+                      return (
+                        <button
+                          key={question.eyebrow}
+                          type="button"
+                          disabled={loading}
+                          onClick={() => handleAsk(question.text)}
+                          className="group flex min-h-[104px] flex-col items-start justify-between rounded-2xl border border-white/8 bg-white/[0.025] p-4 text-right transition duration-200 hover:-translate-y-0.5 hover:border-amber-300/25 hover:bg-amber-300/[0.035]"
+                        >
+                          <div className="flex w-full items-center justify-between">
+                            <Icon className="h-4 w-4 text-amber-300" />
+                            <ArrowLeft className="h-3.5 w-3.5 text-white/20 transition group-hover:-translate-x-1 group-hover:text-amber-300" />
+                          </div>
+                          <div className="mt-4">
+                            <p className="text-[10px] font-bold text-amber-200/60">{question.eyebrow}</p>
+                            <p className="mt-1 text-xs font-semibold leading-5 text-white/70">{question.text}</p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {messages.length > 1 && (
+                <div className="flex items-center gap-3 py-1">
+                  <span className="h-px flex-1 bg-white/8" />
+                  <span className="text-[10px] font-medium text-white/25">اليوم</span>
+                  <span className="h-px flex-1 bg-white/8" />
+                </div>
+              )}
+
+              {messages.map((message, index) => {
+                if (index === 0 && messages.length === 1) return null;
+                return (
+                  <article
+                    key={message.id}
+                    className={`flex gap-3 ${message.sender === "user" ? "justify-start" : "justify-end"}`}
+                  >
+                    {message.sender === "bot" && (
+                      <div className="mt-1 hidden h-8 w-8 shrink-0 place-items-center rounded-lg border border-amber-300/15 bg-amber-300/[0.07] text-amber-300 sm:grid">
+                        <Sparkles className="h-3.5 w-3.5" />
+                      </div>
+                    )}
+                    <div className={`max-w-[90%] sm:max-w-[82%] ${message.sender === "user" ? "items-start" : "items-end"} flex flex-col`}>
+                      <div
+                        className={
+                          message.sender === "user"
+                            ? "rounded-[20px] rounded-tr-md bg-amber-300 px-4 py-3 text-sm font-semibold leading-6 text-[#18140b]"
+                            : "w-full rounded-[22px] rounded-tl-md border border-white/8 bg-white/[0.035] px-4 py-4 text-sm leading-7 text-white/80 sm:px-5"
+                        }
+                      >
+                        {message.sender === "user" ? (
+                          <p className="whitespace-pre-wrap">{message.text}</p>
+                        ) : (
+                          <div className="prose prose-invert prose-sm max-w-none prose-p:my-1 prose-p:leading-7 prose-strong:text-amber-200 prose-ul:my-2 prose-li:my-1">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.text}</ReactMarkdown>
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-2 flex items-center gap-3 px-1 text-[10px] text-white/25">
+                        <span>{message.time}</span>
+                        {message.sender === "bot" && (
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(message.id, message.text)}
+                            className="flex items-center gap-1.5 transition hover:text-white/65"
+                          >
+                            {copiedId === message.id ? (
+                              <>
+                                <CheckCircle className="h-3 w-3 text-emerald-300" />
+                                <span className="text-emerald-300">تم النسخ</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="h-3 w-3" />
+                                <span>نسخ</span>
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  )}
+                  </article>
+                );
+              })}
+
+              {loading && (
+                <div className="flex justify-end gap-3">
+                  <div className="mt-1 hidden h-8 w-8 shrink-0 place-items-center rounded-lg border border-amber-300/15 bg-amber-300/[0.07] text-amber-300 sm:grid">
+                    <Sparkles className="h-3.5 w-3.5" />
+                  </div>
+                  <div className="flex items-center gap-3 rounded-[20px] rounded-tl-md border border-white/8 bg-white/[0.035] px-4 py-3 text-xs text-white/45">
+                    <RefreshCw className="h-3.5 w-3.5 animate-spin text-amber-300" />
+                    <span>أراجع تفاصيل العرض...</span>
+                  </div>
                 </div>
-
-                {/* Message Actions & Timestamp */}
-                <div className={`flex items-center gap-2 px-1 text-[10px] text-muted-foreground font-mono ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
-                  <span>{msg.time}</span>
-                  {msg.sender === "bot" && (
-                    <button
-                      type="button"
-                      onClick={() => handleCopy(msg.id, msg.text)}
-                      className="hover:text-amber-400 flex items-center gap-1 transition-colors"
-                    >
-                      {copiedId === msg.id ? (
-                        <>
-                          <CheckCircle className="w-3 h-3 text-emerald-400" />
-                          <span className="text-emerald-400">تم النسخ</span>
-                        </>
-                      ) : (
-                        <span>نسخ الإجابة</span>
-                      )}
-                    </button>
-                  )}
-                </div>
-              </div>
+              )}
+              <div ref={chatBottomRef} />
             </div>
-          ))}
+          </main>
 
-          {/* Welcome Screen Interactive Suggestion Grid Cards */}
-          {messages.length === 1 && (
-            <div className="mt-6 pt-4 border-t border-border/40 space-y-3">
-              <p className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                <span>اختر استفساراً شائعاً للبدء الفوري:</span>
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {structuredQuestions.map((q, i) => {
-                  const IconComponent = q.icon;
-                  return (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => handleAsk(q.text)}
-                      disabled={loading}
-                      className="p-3.5 rounded-2xl bg-gradient-to-br from-card/90 to-muted/40 border border-border/80 hover:border-amber-500/50 text-right transition-all group hover:shadow-lg hover:scale-[1.02] active:scale-95 flex flex-col justify-between gap-2"
-                    >
-                      <div className="flex items-center justify-between w-full">
-                        <span className={`p-2 rounded-xl border ${q.color}`}>
-                          <IconComponent className="w-4 h-4" />
-                        </span>
-                        <span className="text-[10px] text-muted-foreground font-medium group-hover:text-amber-400 transition-colors">
-                          اضغط للسؤال ↵
-                        </span>
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-xs text-foreground group-hover:text-amber-300 transition-colors line-clamp-2">
-                          {q.text}
-                        </h4>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">{q.label}</p>
-                      </div>
-                    </button>
-                  );
-                })}
+          <footer className="shrink-0 border-t border-white/8 bg-[#0c0f16]/95 px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 sm:px-6 sm:pb-4">
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                handleAsk();
+              }}
+              className="mx-auto max-w-3xl"
+            >
+              <div className="flex items-end gap-2 rounded-[22px] border border-white/10 bg-white/[0.04] p-2 transition focus-within:border-amber-300/35 focus-within:bg-white/[0.055]">
+                <textarea
+                  ref={inputRef}
+                  value={input}
+                  onChange={(event) => setInput(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && !event.shiftKey) {
+                      event.preventDefault();
+                      handleAsk();
+                    }
+                  }}
+                  rows={1}
+                  maxLength={1200}
+                  disabled={loading}
+                  placeholder="اسأل عن أي تفصيل في العرض..."
+                  className="max-h-32 min-h-11 flex-1 resize-none bg-transparent px-3 py-3 text-sm leading-5 text-white outline-none placeholder:text-white/25 disabled:opacity-50"
+                />
+                <button
+                  type="submit"
+                  disabled={loading || !input.trim()}
+                  aria-label="إرسال الرسالة"
+                  className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-amber-300 text-[#17130b] transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:bg-white/8 disabled:text-white/20"
+                >
+                  <Send className="h-4 w-4" />
+                </button>
               </div>
-            </div>
-          )}
-
-          {/* Thinking Indicator */}
-          {loading && (
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-muted border border-border/60 text-amber-400 flex items-center justify-center shrink-0">
-                <RefreshCw className="w-4 h-4 animate-spin" />
+              <div className="mt-2 flex items-center justify-between px-2 text-[9px] text-white/20">
+                <span>Enter للإرسال · Shift + Enter لسطر جديد</span>
+                <span>{input.length}/1200</span>
               </div>
-              <div className="p-4 rounded-2xl bg-card/90 border border-amber-500/30 text-amber-300 text-xs flex items-center gap-2 shadow-lg">
-                <span className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" />
-                <span className="w-2 h-2 rounded-full bg-amber-400 animate-bounce [animation-delay:0.2s]" />
-                <span className="w-2 h-2 rounded-full bg-amber-400 animate-bounce [animation-delay:0.4s]" />
-                <span className="font-semibold mr-1">جاري تحليل المقترح وصياغة الإجابة...</span>
-              </div>
-            </div>
-          )}
-
-          <div ref={chatBottomRef} />
+            </form>
+          </footer>
         </div>
-
-        {/* Input Footer */}
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleAsk();
-          }}
-          className="p-3 sm:p-4 bg-card border-t border-border/60 flex items-center gap-2 dir-rtl"
-        >
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="اسأل مستشار الذكاء الاصطناعي حول العرض، الميزانية، أو الضمان..."
-            disabled={loading}
-            className="flex-1 text-xs sm:text-sm p-3 rounded-2xl border border-border/80 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all placeholder:text-muted-foreground/60"
-          />
-          <Button
-            type="submit"
-            size="default"
-            disabled={loading || !input.trim()}
-            className="font-bold bg-amber-500 text-black hover:bg-amber-400 rounded-2xl px-5 py-3 shadow-lg shadow-amber-500/20"
-          >
-            <Send className="w-4 h-4 ml-1" />
-            <span>إرسال</span>
-          </Button>
-        </form>
-      </div>
+      </section>
     </div>
   );
 }
