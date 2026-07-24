@@ -64,14 +64,37 @@ export default function ProposalView() {
     [proposal?.markdown],
   );
   const [activeSectionId, setActiveSectionId] = useState<string>("sec-all");
+  const sectionStorageKey = `ninusoft-proposal-sec:${token}`;
 
   useEffect(() => {
-    if (sections.length > 1) {
+    if (sections.length === 0) return;
+
+    const rawHash = window.location.hash.replace("#", "").trim();
+    const savedSec = localStorage.getItem(sectionStorageKey);
+    const candidate = rawHash || savedSec;
+
+    if (candidate && (candidate === "sec-all" || sections.some((s) => s.id === candidate))) {
+      setActiveSectionId(candidate);
+    } else if (sections.length > 1) {
       setActiveSectionId(sections[0].id);
     } else {
       setActiveSectionId("sec-all");
     }
-  }, [sections]);
+  }, [sections, token, sectionStorageKey]);
+
+  const handleSelectSection = (sectionId: string) => {
+    setActiveSectionId(sectionId);
+    try {
+      localStorage.setItem(sectionStorageKey, sectionId);
+      if (window.history.replaceState) {
+        window.history.replaceState(null, "", `#${sectionId}`);
+      } else {
+        window.location.hash = sectionId;
+      }
+    } catch {
+      // fallback
+    }
+  };
   const sessionId = useMemo(() => {
     const key = `ninusoft-proposal-session:${token}`;
     const existing = sessionStorage.getItem(key);
@@ -249,7 +272,7 @@ export default function ProposalView() {
                     type="button"
                     className={`proposal-sidebar-item ${activeSectionId === "sec-all" ? "is-active" : ""}`}
                     onClick={() => {
-                      setActiveSectionId("sec-all");
+                      handleSelectSection("sec-all");
                       window.scrollTo({ top: 120, behavior: "smooth" });
                     }}
                   >
@@ -268,7 +291,7 @@ export default function ProposalView() {
                       type="button"
                       className={`proposal-sidebar-item ${activeSectionId === sec.id ? "is-active" : ""}`}
                       onClick={() => {
-                        setActiveSectionId(sec.id);
+                        handleSelectSection(sec.id);
                         window.scrollTo({ top: 120, behavior: "smooth" });
                       }}
                     >
@@ -337,7 +360,7 @@ export default function ProposalView() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  setActiveSectionId(prevSection.id);
+                                  handleSelectSection(prevSection.id);
                                   window.scrollTo({ top: 120, behavior: "smooth" });
                                 }}
                               >
@@ -351,7 +374,7 @@ export default function ProposalView() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  setActiveSectionId(nextSection.id);
+                                  handleSelectSection(nextSection.id);
                                   window.scrollTo({ top: 120, behavior: "smooth" });
                                 }}
                               >
