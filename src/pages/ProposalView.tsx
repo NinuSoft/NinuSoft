@@ -476,6 +476,8 @@ export default function ProposalView() {
         )}
 
         <ProposalIncentiveBanner
+          content={proposal.markdown}
+          clientName={proposal.clientName}
           expiresAt={proposal.expiresAt}
           onScrollToSign={() => {
             const sigEl = document.getElementById("proposal-signature-section");
