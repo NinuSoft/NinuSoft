@@ -63,6 +63,7 @@ export default function ProposalAdmin() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [selectedAuditProposal, setSelectedAuditProposal] = useState<ProposalSummary | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [activeAdminTab, setActiveAdminTab] = useState<"editor" | "analytics" | "settings">("editor");
 
@@ -829,6 +830,9 @@ export default function ProposalAdmin() {
                           <Button size="sm" variant="secondary" onClick={() => window.open(`/p/${item.token}`, "_blank")} className="flex items-center gap-1">
                             <Eye className="w-3.5 h-3.5" /> معاينة
                           </Button>
+                          <Button size="sm" variant="outline" onClick={() => setSelectedAuditProposal(item)} className="flex items-center gap-1">
+                            <BarChart className="w-3.5 h-3.5" /> تدقيق
+                          </Button>
                           <Button size="sm" variant="outline" onClick={() => void copyLink(item.token)}>نسخ الرابط</Button>
                           <Button size="sm" variant="ghost" onClick={() => void editProposal(item.id)}>تعديل</Button>
                           <Button size="sm" variant="destructive" onClick={() => void deleteProposal(item.id, item.title)} disabled={busy}>حذف</Button>
@@ -841,6 +845,100 @@ export default function ProposalAdmin() {
             </div>
           )}
         </section>
+
+        {/* Engagement Audit Modal */}
+        {selectedAuditProposal && (
+          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="w-full max-w-xl p-6 rounded-2xl bg-card border border-border/80 shadow-2xl space-y-4 text-start dir-rtl max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b border-border/40 pb-3">
+                <div className="space-y-0.5">
+                  <h3 className="font-bold text-base text-foreground flex items-center gap-2">
+                    <BarChart className="w-4 h-4 text-amber-400" />
+                    <span>تقرير تفاعل وتدقيق العرض</span>
+                  </h3>
+                  <p className="text-xs text-muted-foreground">{selectedAuditProposal.title} ({selectedAuditProposal.clientName})</p>
+                </div>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setSelectedAuditProposal(null)}>
+                  <XCircle className="w-4 h-4" />
+                </Button>
+              </div>
+
+              {/* Engagement Stats Overview */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                <div className="p-3 rounded-xl bg-card/80 border border-border/60">
+                  <span className="text-[11px] text-muted-foreground block">مرات الفتح</span>
+                  <strong className="text-lg font-bold text-sky-400">{selectedAuditProposal.openCount}</strong>
+                </div>
+                <div className="p-3 rounded-xl bg-card/80 border border-border/60">
+                  <span className="text-[11px] text-muted-foreground block">القراءة الكاملة</span>
+                  <strong className="text-lg font-bold text-amber-400">{selectedAuditProposal.readCount}</strong>
+                </div>
+                <div className="p-3 rounded-xl bg-card/80 border border-border/60">
+                  <span className="text-[11px] text-muted-foreground block">أول زيارة</span>
+                  <strong className="text-xs font-mono block text-foreground pt-1">{formatDate(selectedAuditProposal.firstOpenedAt) || "لم يُفتح"}</strong>
+                </div>
+                <div className="p-3 rounded-xl bg-card/80 border border-border/60">
+                  <span className="text-[11px] text-muted-foreground block">آخر نشاط</span>
+                  <strong className="text-xs font-mono block text-foreground pt-1">{formatDate(selectedAuditProposal.lastReadAt || selectedAuditProposal.lastOpenedAt) || "لا يوجد"}</strong>
+                </div>
+              </div>
+
+              {/* Section Feedback Audit */}
+              {(() => {
+                let sectionApprovals: Record<string, string> = {};
+                try {
+                  const raw = localStorage.getItem(`ninusoft-section-approvals:${selectedAuditProposal.token}`);
+                  if (raw) sectionApprovals = JSON.parse(raw);
+                } catch {}
+
+                const feedbackEntries = Object.entries(sectionApprovals).filter(([_, v]) => Boolean(v));
+
+                return (
+                  <div className="space-y-2">
+                    <h4 className="font-bold text-xs text-foreground flex items-center gap-1.5">
+                      <CheckCircle className="w-3.5 h-3.5 text-amber-400" />
+                      <span>تقييم الأقسام من العميل ({feedbackEntries.length})</span>
+                    </h4>
+                    {feedbackEntries.length > 0 ? (
+                      <div className="space-y-1.5">
+                        {feedbackEntries.map(([title, status]) => (
+                          <div key={title} className="p-2.5 rounded-lg border border-border/40 bg-muted/30 flex items-center justify-between text-xs">
+                            <span className="font-bold">{title}</span>
+                            {status === "APPROVED" ? (
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold flex items-center gap-1">
+                                <CheckCircle className="w-3 h-3" /> موافق على البند
+                              </span>
+                            ) : (
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold flex items-center gap-1">
+                                <Edit className="w-3 h-3" /> طلب تعديل
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground italic p-3 rounded-lg bg-muted/20 border border-border/30">
+                        لم يقم العميل بتقييم أقسام محددة بعد.
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {/* Token Access Info */}
+              <div className="p-3 rounded-xl bg-card border border-border/60 space-y-1 text-xs font-mono">
+                <span className="text-[11px] text-muted-foreground block font-sans font-bold">رابط التتبع الفريد:</span>
+                <p className="text-amber-300 break-all">{window.location.origin}/p/{selectedAuditProposal.token}</p>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => setSelectedAuditProposal(null)}>
+                  إغلاق
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
         </>
         )}
       </main>

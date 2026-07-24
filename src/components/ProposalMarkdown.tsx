@@ -79,29 +79,75 @@ export const proposalMarkdownComponents = {
   },
   a(props: any) {
     const { href, children, ...rest } = props;
-    if (href && href.startsWith("#")) {
-      const targetId = href.slice(1).trim();
-      return (
-        <a
-          href={href}
-          {...rest}
-          onClick={(e) => {
-            e.preventDefault();
-            window.location.hash = targetId;
-            setTimeout(() => {
-              const targetEl = document.getElementById(targetId);
-              if (targetEl) {
-                targetEl.scrollIntoView({ behavior: "smooth" });
-              } else {
-                window.scrollTo({ top: 120, behavior: "smooth" });
-              }
-            }, 50);
-          }}
-        >
-          {children}
-        </a>
-      );
+
+    if (href) {
+      // YouTube Embed
+      const ytMatch = href.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+      if (ytMatch && ytMatch[1]) {
+        return (
+          <div className="my-4 rounded-2xl overflow-hidden border border-border/60 bg-card shadow-xl aspect-video w-full max-w-3xl mx-auto">
+            <iframe
+              src={`https://www.youtube-nocookie.com/embed/${ytMatch[1]}`}
+              title="YouTube video player"
+              className="w-full h-full border-0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        );
+      }
+
+      // Loom Embed
+      const loomMatch = href.match(/loom\.com\/(?:share|embed)\/([a-f0-9]{32})/i);
+      if (loomMatch && loomMatch[1]) {
+        return (
+          <div className="my-4 rounded-2xl overflow-hidden border border-border/60 bg-card shadow-xl aspect-video w-full max-w-3xl mx-auto">
+            <iframe
+              src={`https://www.loom.com/embed/${loomMatch[1]}`}
+              title="Loom video player"
+              className="w-full h-full border-0"
+              allowFullScreen
+            />
+          </div>
+        );
+      }
+
+      // Direct MP4 Video
+      if (href.endsWith(".mp4") || href.endsWith(".webm")) {
+        return (
+          <div className="my-4 rounded-2xl overflow-hidden border border-border/60 bg-card shadow-xl w-full max-w-3xl mx-auto">
+            <video controls src={href} className="w-full h-auto max-h-[480px]">
+              متصفحك لا يدعم تشغيل هذا الفيديو مباشرة.
+            </video>
+          </div>
+        );
+      }
+
+      if (href.startsWith("#")) {
+        const targetId = href.slice(1).trim();
+        return (
+          <a
+            href={href}
+            {...rest}
+            onClick={(e) => {
+              e.preventDefault();
+              window.location.hash = targetId;
+              setTimeout(() => {
+                const targetEl = document.getElementById(targetId);
+                if (targetEl) {
+                  targetEl.scrollIntoView({ behavior: "smooth" });
+                } else {
+                  window.scrollTo({ top: 120, behavior: "smooth" });
+                }
+              }, 50);
+            }}
+          >
+            {children}
+          </a>
+        );
+      }
     }
+
     return (
       <a href={href} target="_blank" rel="noopener noreferrer" {...rest}>
         {children}

@@ -86,8 +86,8 @@ export function unlockProposal(token: string, password: string) {
 
 export function recordProposalEvent(
   token: string,
-  type: "read" | "print" | "pdf",
-  sessionId: string,
+  type: "read" | "print" | "pdf" | "SECTION_FEEDBACK",
+  sessionId?: string | Record<string, any>,
   accessToken?: string,
 ) {
   return apiRequest<{ ok: true }>(
@@ -98,7 +98,7 @@ export function recordProposalEvent(
       headers: accessToken
         ? { Authorization: `Bearer ${accessToken}` }
         : undefined,
-      body: JSON.stringify({ type, sessionId }),
+      body: JSON.stringify({ type, details: typeof sessionId === "object" ? sessionId : { sessionId } }),
     },
   );
 }

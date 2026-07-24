@@ -20,7 +20,7 @@ import { ProposalWatermark } from "@/components/ProposalWatermark";
 import { ProposalExpiryCountdown } from "@/components/ProposalExpiryCountdown";
 import { ProposalComments } from "@/components/ProposalComments";
 import { Textarea } from "@/components/ui/textarea";
-import { Clock, Printer, Download, FileText, Globe, Layers, MessageSquare, XCircle } from "@/components/Icons";
+import { Clock, Printer, Download, FileText, Globe, Layers, MessageSquare, XCircle, CheckCircle, Edit } from "@/components/Icons";
 
 function Brand() {
   return (
@@ -77,6 +77,32 @@ export default function ProposalView() {
   const [showHighlightModal, setShowHighlightModal] = useState(false);
   const [highlightCommentText, setHighlightCommentText] = useState("");
   const [highlightAuthor, setHighlightAuthor] = useState("");
+
+  const [sectionApprovals, setSectionApprovals] = useState<Record<string, "APPROVED" | "REVISION">>(() => {
+    try {
+      const raw = localStorage.getItem(`ninusoft-section-approvals:${token}`);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const toggleSectionApproval = (sectionTitle: string, status: "APPROVED" | "REVISION") => {
+    const nextStatus = sectionApprovals[sectionTitle] === status ? undefined : status;
+    const updated = {
+      ...sectionApprovals,
+      [sectionTitle]: nextStatus,
+    };
+    setSectionApprovals(updated as any);
+    try {
+      localStorage.setItem(`ninusoft-section-approvals:${token}`, JSON.stringify(updated));
+      if (token) {
+        void recordProposalEvent(token, "SECTION_FEEDBACK", { sectionTitle, status: nextStatus || "REMOVED" });
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
     const handleSettingsChange = () => setSettings(getProposalSettings());
@@ -363,6 +389,27 @@ export default function ProposalView() {
 
   return (
     <div className="proposal-page" dir={lang === "ar" ? "rtl" : "ltr"}>
+      {/* Branded PDF Cover Page (Only visible during print/PDF export) */}
+      <div className="hidden print:flex print:flex-col justify-between p-12 text-center bg-black text-white dir-rtl min-h-[95vh] border-b-2 border-amber-500 mb-8 page-break-after">
+        <div className="space-y-4 pt-12">
+          <div className="text-4xl font-black text-amber-400 font-mono tracking-widest">NINUSOFT</div>
+          <p className="text-sm text-gray-400 font-semibold">حلول البرمجيات والأنظمة الحسابية المتكاملة</p>
+        </div>
+
+        <div className="space-y-6 my-auto border-y border-gray-800 py-16">
+          <span className="text-xs uppercase tracking-widest text-amber-400 font-mono font-bold bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/30">
+            PROPOSAL DOCUMENT
+          </span>
+          <h1 className="text-4xl font-extrabold text-white leading-tight">{proposal.title}</h1>
+          <p className="text-xl text-gray-300 font-bold">مُعد خصيصاً لـ: {proposal.clientName}</p>
+        </div>
+
+        <div className="flex justify-between items-end border-t border-gray-800 pt-8 text-xs text-gray-400 font-mono">
+          <div>تاريخ الإصدار: {new Intl.DateTimeFormat("ar-IQ-u-nu-latn", { dateStyle: "medium" }).format(new Date())}</div>
+          <div>معرف العرض: {proposal.token}</div>
+        </div>
+      </div>
+
       {settings.enableWatermark && (
         <ProposalWatermark clientName={proposal.clientName} />
       )}
@@ -501,6 +548,35 @@ export default function ProposalView() {
                       <ReactMarkdown remarkPlugins={[remarkGfm, remarkAlerts]} components={proposalMarkdownComponents}>
                         {sec.content}
                       </ReactMarkdown>
+
+                      {/* Section Approval Feedback Bar */}
+                      <div className="my-6 p-3 rounded-xl bg-card/60 border border-border/40 flex items-center justify-between gap-2 flex-wrap text-xs">
+                        <span className="text-muted-foreground font-bold">تقييم هذا البند:</span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 border ${
+                              sectionApprovals[sec.title] === "APPROVED"
+                                ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
+                                : "bg-muted/40 text-muted-foreground border-border/40 hover:text-foreground"
+                            }`}
+                            onClick={() => toggleSectionApproval(sec.title, "APPROVED")}
+                          >
+                            <CheckCircle className="w-3.5 h-3.5" /> موافق على البند
+                          </button>
+                          <button
+                            type="button"
+                            className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 border ${
+                              sectionApprovals[sec.title] === "REVISION"
+                                ? "bg-amber-500/20 text-amber-400 border-amber-500/40"
+                                : "bg-muted/40 text-muted-foreground border-border/40 hover:text-foreground"
+                            }`}
+                            onClick={() => toggleSectionApproval(sec.title, "REVISION")}
+                          >
+                            <Edit className="w-3.5 h-3.5" /> طلب تعديل
+                          </button>
+                        </div>
+                      </div>
                     </section>
                   ))}
                 </div>
@@ -517,6 +593,35 @@ export default function ProposalView() {
                         <ReactMarkdown remarkPlugins={[remarkGfm, remarkAlerts]} components={proposalMarkdownComponents}>
                           {activeSection.content}
                         </ReactMarkdown>
+
+                        {/* Section Approval Feedback Bar */}
+                        <div className="my-6 p-3 rounded-xl bg-card/60 border border-border/40 flex items-center justify-between gap-2 flex-wrap text-xs">
+                          <span className="text-muted-foreground font-bold">تقييم هذا البند:</span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 border ${
+                                sectionApprovals[activeSection.title] === "APPROVED"
+                                  ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
+                                  : "bg-muted/40 text-muted-foreground border-border/40 hover:text-foreground"
+                              }`}
+                              onClick={() => toggleSectionApproval(activeSection.title, "APPROVED")}
+                            >
+                              <CheckCircle className="w-3.5 h-3.5" /> موافق على البند
+                            </button>
+                            <button
+                              type="button"
+                              className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 border ${
+                                sectionApprovals[activeSection.title] === "REVISION"
+                                  ? "bg-amber-500/20 text-amber-400 border-amber-500/40"
+                                  : "bg-muted/40 text-muted-foreground border-border/40 hover:text-foreground"
+                              }`}
+                              onClick={() => toggleSectionApproval(activeSection.title, "REVISION")}
+                            >
+                              <Edit className="w-3.5 h-3.5" /> طلب تعديل
+                            </button>
+                          </div>
+                        </div>
 
                         {sections.length > 1 && (
                           <div className="proposal-section-pager">
