@@ -2672,7 +2672,7 @@ html {
 }
 
 @media print {
-  body > *:not(.executive-summary-overlay):not(.executive-chat-overlay) {
+  body > *:not(.executive-summary-overlay) {
     display: none !important;
   }
 
@@ -2725,58 +2725,6 @@ html {
 
   .executive-summary-grid {
     grid-template-columns: 1.35fr 0.65fr;
-  }
-}
-
-@media print {
-  body > .executive-chat-overlay {
-    position: static !important;
-    display: block !important;
-    padding: 0 !important;
-    background: white !important;
-  }
-
-  .executive-chat-dialog {
-    display: block !important;
-    width: 100% !important;
-    height: auto !important;
-    max-width: none !important;
-    overflow: visible !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    background: white !important;
-    box-shadow: none !important;
-  }
-
-  .executive-chat-dialog > aside,
-  .executive-chat-dialog > div > header,
-  .executive-chat-dialog > div > footer,
-  .executive-chat-print-content > div:first-child,
-  .executive-chat-print-content > div:last-child > div:first-child {
-    display: none !important;
-  }
-
-  .executive-chat-scroll,
-  .executive-chat-print-content {
-    width: 100% !important;
-    max-width: none !important;
-    height: auto !important;
-    overflow: visible !important;
-    padding: 0 !important;
-    background: white !important;
-  }
-
-  .executive-chat-print-content * {
-    color: #111827 !important;
-    box-shadow: none !important;
-  }
-
-  .executive-chat-print-content [class*="bg-"] {
-    background: white !important;
-  }
-
-  .executive-chat-print-content [class*="border"] {
-    border-color: #e5e7eb !important;
   }
 }
 
