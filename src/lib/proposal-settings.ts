@@ -18,6 +18,7 @@ export type ProposalSettings = {
   enableReadingTime: boolean;
   enableSidebarNav: boolean;
   enablePdfExport: boolean;
+  enablePrint: boolean;
   enableCopyCode: boolean;
   enableWatermark: boolean;
   enableExpiryCountdown: boolean;
@@ -38,6 +39,7 @@ export const defaultProposalSettings: ProposalSettings = {
   enableReadingTime: true,
   enableSidebarNav: true,
   enablePdfExport: true,
+  enablePrint: true,
   enableCopyCode: true,
   enableWatermark: false,
   enableExpiryCountdown: true,
@@ -61,7 +63,7 @@ export const defaultProposalSettings: ProposalSettings = {
     {
       id: "pro",
       name: "الباقة المتقدمة (Professional)",
-      badge: "الأكثر طلباً 🌟",
+      badge: "الأكثر طلباً",
       priceUsd: 2800,
       description: "خيار مثالي يتضمن كافة المزايا المتقدمة وأنظمة الذكاء الاصطناعي.",
       recommended: true,

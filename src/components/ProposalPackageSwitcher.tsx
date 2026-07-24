@@ -41,7 +41,7 @@ export function ProposalPackageSwitcher({
     {
       id: "pro",
       name: "الباقة المتقدمة (Professional)",
-      badge: "الأكثر طلباً 🌟",
+      badge: "الأكثر طلباً",
       priceUsd: 2800,
       description: "خيار مثالي يتضمن كافة المزايا المتقدمة وأنظمة الذكاء الاصطناعي.",
       recommended: true,
