@@ -837,7 +837,7 @@ export default function ProposalAdmin() {
                             onChange={(event) => {
                               const val = event.target.value;
                               if (currentMode === "pin") {
-                                const onlyDigits = val.replace(/\D/g, "").slice(0, 8);
+                                const onlyDigits = val.replace(/\D/g, "").slice(0, 12);
                                 updateField("password", onlyDigits);
                               } else {
                                 updateField("password", val);
@@ -845,7 +845,7 @@ export default function ProposalAdmin() {
                             }}
                             placeholder={
                               currentMode === "pin"
-                                ? "أدخل رمز PIN من أرقام فقط (مثال: 4821)"
+                                ? "رمز PIN من 8 أرقام على الأقل (مثال: 48218210)"
                                 : "أدخل كلمة سر نصية مخصصة (مثال: NinuSoft#2026)"
                             }
                             className="font-mono text-sm h-10"
@@ -853,8 +853,8 @@ export default function ProposalAdmin() {
                           />
                           <small className="text-[11px] text-muted-foreground block mt-1">
                             {currentMode === "pin"
-                              ? "رمز رقمي خفيف ومناسب لفتح الوثيقة بسرعة."
-                              : "كلمة سر نصية تتيح أحرفاً ورموزاً عالي الأمان."}
+                              ? "يجب أن يتكون رمز PIN من 8 أرقام على الأقل."
+                              : "يجب أن تتكون كلمة السر من 8 أحرف على الأقل."}
                           </small>
                         </div>
                       )}
