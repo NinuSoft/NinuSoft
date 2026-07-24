@@ -637,12 +637,7 @@ export default function ProposalView() {
                 onCurrencyChange={(c) => setCurrency(c)}
               />
 
-              {settings.enablePackageSwitcher && (
-                <ProposalPackageSwitcher
-                  tiers={settings.packageTiers}
-                  currency={currency}
-                />
-              )}
+
 
               <ProposalAttachments />
 

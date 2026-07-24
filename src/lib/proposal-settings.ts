@@ -44,7 +44,7 @@ export const defaultProposalSettings: ProposalSettings = {
   enableInlineComments: true,
   enableCustomBranding: true,
   enableAnalyticsDashboard: true,
-  enablePackageSwitcher: true,
+  enablePackageSwitcher: false,
   packageTiers: [
     {
       id: "standard",
