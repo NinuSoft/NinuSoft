@@ -188,6 +188,7 @@ export default function ProposalAdmin() {
 
   const [copiedSectionId, setCopiedSectionId] = useState<string | null>(null);
   const [copiedSectionContentId, setCopiedSectionContentId] = useState<string | null>(null);
+  const [indexCopied, setIndexCopied] = useState<boolean>(false);
 
   const copySectionHyperlink = async (sec: ProposalSection) => {
     const hyperlink = `[${sec.title || "القسم"}](#${sec.id})`;
@@ -220,7 +221,9 @@ export default function ProposalAdmin() {
       .join("\n");
     try {
       await navigator.clipboard.writeText(text);
+      setIndexCopied(true);
       setMessage("تم نسخ فهرس جميع الأقسام كروابط Hyperlinks.");
+      setTimeout(() => setIndexCopied(false), 2500);
     } catch {
       setError("تعذر النسخ للحافظة.");
     }
@@ -919,7 +922,7 @@ export default function ProposalAdmin() {
                     variant="outline"
                     size="sm"
                     className="h-8 text-xs font-bold flex items-center gap-1.5 border-border/60"
-                    onClick={copySectionsIndex}
+                    onClick={() => void copyAllSectionsHyperlinks()}
                     title="نسخ قائمة كل الأقسام مع روابطها الداخلية كـ Hyperlinks"
                   >
                     {indexCopied ? (
