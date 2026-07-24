@@ -351,15 +351,21 @@ export function ProposalSettingsManager() {
         </div>
       </div>
 
-      <div className="pt-4 flex items-center gap-4">
-        <Button type="button" onClick={handleSave} className="px-8 font-bold">
-          حفظ الإعدادات
-        </Button>
-        {saved && (
-          <span className="text-xs text-emerald-400 font-bold animate-in fade-in flex items-center gap-1">
-            <CheckCircle className="w-4 h-4" /> تم حفظ الإعدادات وتطبيقها على النظام بنجاح!
-          </span>
-        )}
+      {/* Sticky Save Actions Bar */}
+      <div className="sticky bottom-4 z-30 mt-8 p-4 rounded-2xl bg-card/95 border border-amber-500/50 backdrop-blur-md shadow-2xl flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-3">
+          <Button type="button" onClick={handleSave} size="lg" className="px-8 font-bold text-xs shadow-xl bg-amber-500 text-black hover:bg-amber-400 border border-amber-300">
+            حفظ جميع الإعدادات
+          </Button>
+          {saved && (
+            <span className="text-xs text-emerald-400 font-bold animate-in fade-in flex items-center gap-1">
+              <CheckCircle className="w-4 h-4" /> تم حفظ الإعدادات وتطبيقها بنجاح!
+            </span>
+          )}
+        </div>
+        <span className="text-xs text-muted-foreground font-mono hidden sm:inline">
+          تطبيق الإعدادات فورياً على كافة المقترحات
+        </span>
       </div>
     </div>
   );
