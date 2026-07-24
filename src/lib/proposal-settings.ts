@@ -27,7 +27,7 @@ export const defaultProposalSettings: ProposalSettings = {
   enableSidebarNav: true,
   enablePdfExport: true,
   enableCopyCode: true,
-  enableWatermark: true,
+  enableWatermark: false,
   enableExpiryCountdown: true,
   enableInlineComments: true,
   enableCustomBranding: true,

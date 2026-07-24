@@ -16,7 +16,6 @@ import {
 import { parseProposalSections } from "@/lib/proposal-sections";
 import { ProposalSignature } from "@/components/ProposalSignature";
 import { getProposalSettings } from "@/lib/proposal-settings";
-import { ProposalWatermark } from "@/components/ProposalWatermark";
 import { ProposalExpiryCountdown } from "@/components/ProposalExpiryCountdown";
 import { ProposalComments } from "@/components/ProposalComments";
 import { Textarea } from "@/components/ui/textarea";
@@ -410,9 +409,6 @@ export default function ProposalView() {
         </div>
       </div>
 
-      {settings.enableWatermark && (
-        <ProposalWatermark clientName={proposal.clientName} />
-      )}
       {settings.enableReadingTime && (
         <div
           className="proposal-reading-progress-bar"
