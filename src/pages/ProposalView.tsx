@@ -16,10 +16,12 @@ import {
 import { parseProposalSections } from "@/lib/proposal-sections";
 import { ProposalSignature } from "@/components/ProposalSignature";
 import { getProposalSettings } from "@/lib/proposal-settings";
+import { ProposalAiAssistant } from "@/components/ProposalAiAssistant";
+import { ProposalExecutiveSummary } from "@/components/ProposalExecutiveSummary";
 import { ProposalExpiryCountdown } from "@/components/ProposalExpiryCountdown";
 import { ProposalComments } from "@/components/ProposalComments";
 import { Textarea } from "@/components/ui/textarea";
-import { Clock, Printer, Download, FileText, Globe, Layers, MessageSquare, XCircle, CheckCircle, Edit } from "@/components/Icons";
+import { Clock, Printer, Download, FileText, Globe, Layers, MessageSquare, XCircle, CheckCircle, Edit, Sparkles } from "@/components/Icons";
 
 function Brand() {
   return (
@@ -79,6 +81,8 @@ export default function ProposalView() {
   const [selectionPos, setSelectionPos] = useState<{ top: number; left: number } | null>(null);
   const [showHighlightModal, setShowHighlightModal] = useState(false);
   const [highlightCommentText, setHighlightCommentText] = useState("");
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [showExecSummary, setShowExecSummary] = useState(false);
 
   useEffect(() => {
     const handleSettingsChange = () => setSettings(getProposalSettings());
@@ -422,6 +426,26 @@ export default function ProposalView() {
             <span>{lang === "ar" ? "English" : "العربية"}</span>
           </Button>
 
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowExecSummary(true)}
+            className="text-xs font-bold flex items-center gap-1.5 border-amber-500/30 text-amber-300 hover:bg-amber-500/10"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span>ملخص تنفيذي</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowAiModal(true)}
+            className="text-xs font-bold flex items-center gap-1.5 border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span>المساعد الذكي</span>
+          </Button>
+
           {settings.enableReadingTime && (
             <span className="proposal-reading-badge flex items-center gap-1">
               <Clock className="w-3.5 h-3.5" />
@@ -749,6 +773,29 @@ export default function ProposalView() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Proposal AI Assistant Modal */}
+      {proposal && (
+        <ProposalAiAssistant
+          proposalTitle={proposal.title}
+          clientName={proposal.clientName}
+          content={proposal.markdown}
+          isOpen={showAiModal}
+          onClose={() => setShowAiModal(false)}
+        />
+      )}
+
+      {/* One-Page Executive Summary Sheet Modal */}
+      {proposal && (
+        <ProposalExecutiveSummary
+          proposalTitle={proposal.title}
+          clientName={proposal.clientName}
+          content={proposal.markdown}
+          token={proposal.token}
+          isOpen={showExecSummary}
+          onClose={() => setShowExecSummary(false)}
+        />
       )}
     </div>
   );
