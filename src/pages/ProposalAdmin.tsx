@@ -761,96 +761,106 @@ export default function ProposalAdmin() {
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-border/40 space-y-3">
-                  {/* Protection Mode Options */}
-                  <div className="flex items-center justify-between gap-1.5 p-1 rounded-lg bg-muted/60 border border-border/40">
-                    <button
-                      type="button"
-                      className={`flex-1 py-1 px-2 text-[11px] font-bold rounded-md transition-all ${
-                        form.removePassword || (!isProtected && !form.password)
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                      onClick={() => {
-                        updateField("removePassword", true);
-                        updateField("password", "");
-                        setIsProtected(false);
-                      }}
-                    >
-                      بدون حماية
-                    </button>
-                    <button
-                      type="button"
-                      className={`flex-1 py-1 px-2 text-[11px] font-bold rounded-md transition-all ${
-                        (!form.removePassword || isProtected || form.password) && protectionType === "pin"
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                      onClick={() => {
-                        updateField("removePassword", false);
-                        setIsProtected(true);
-                        setProtectionType("pin");
-                        if (form.password && !/^\d+$/.test(form.password)) {
-                          updateField("password", "");
-                        }
-                      }}
-                    >
-                      رمز PIN عددي
-                    </button>
-                    <button
-                      type="button"
-                      className={`flex-1 py-1 px-2 text-[11px] font-bold rounded-md transition-all ${
-                        (!form.removePassword || isProtected || form.password) && protectionType === "password"
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                      onClick={() => {
-                        updateField("removePassword", false);
-                        setIsProtected(true);
-                        setProtectionType("password");
-                      }}
-                    >
-                      كلمة سر نصية
-                    </button>
-                  </div>
+                {(() => {
+                  const currentMode: "none" | "pin" | "password" = form.removePassword
+                    ? "none"
+                    : (isProtected || Boolean(form.password))
+                    ? protectionType
+                    : "none";
 
-                  {(!form.removePassword && (isProtected || form.password)) && (
-                    <div>
-                      <label htmlFor="proposal-pin-input" className="text-xs font-bold text-muted-foreground block mb-1">
-                        {protectionType === "pin"
-                          ? form.id ? "رمز PIN العددي الجديد" : "رمز PIN العددي"
-                          : form.id ? "كلمة السر النصية الجديدة" : "كلمة السر النصية"}
-                      </label>
-                      <Input
-                        id="proposal-pin-input"
-                        type="password"
-                        inputMode={protectionType === "pin" ? "numeric" : "text"}
-                        value={form.password}
-                        onChange={(event) => {
-                          const val = event.target.value;
-                          if (protectionType === "pin") {
-                            const onlyDigits = val.replace(/\D/g, "").slice(0, 8);
-                            updateField("password", onlyDigits);
-                          } else {
-                            updateField("password", val);
-                          }
-                        }}
-                        placeholder={
-                          protectionType === "pin"
-                            ? "أدخل رمز PIN من أرقام فقط (مثال: 4821)"
-                            : "أدخل كلمة سر نصية مخصصة (مثال: NinuSoft#2026)"
-                        }
-                        className="font-mono text-sm h-10"
-                        autoFocus
-                      />
-                      <small className="text-[11px] text-muted-foreground block mt-1">
-                        {protectionType === "pin"
-                          ? "رمز رقمي خفيف ومناسب لفتح الوثيقة بسرعة."
-                          : "كلمة سر نصية تتيح أحرفاً ورموزاً عالي الأمان."}
-                      </small>
+                  return (
+                    <div className="pt-2 border-t border-border/40 space-y-3">
+                      {/* Protection Mode Options */}
+                      <div className="flex items-center justify-between gap-1.5 p-1 rounded-lg bg-muted/60 border border-border/40">
+                        <button
+                          type="button"
+                          className={`flex-1 py-1.5 px-2 text-[11px] font-bold rounded-md transition-all ${
+                            currentMode === "none"
+                              ? "bg-primary text-primary-foreground shadow-sm"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
+                          onClick={() => {
+                            updateField("removePassword", true);
+                            updateField("password", "");
+                            setIsProtected(false);
+                          }}
+                        >
+                          بدون حماية
+                        </button>
+                        <button
+                          type="button"
+                          className={`flex-1 py-1.5 px-2 text-[11px] font-bold rounded-md transition-all ${
+                            currentMode === "pin"
+                              ? "bg-primary text-primary-foreground shadow-sm"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
+                          onClick={() => {
+                            updateField("removePassword", false);
+                            setIsProtected(true);
+                            setProtectionType("pin");
+                            if (form.password && !/^\d+$/.test(form.password)) {
+                              updateField("password", "");
+                            }
+                          }}
+                        >
+                          رمز PIN عددي
+                        </button>
+                        <button
+                          type="button"
+                          className={`flex-1 py-1.5 px-2 text-[11px] font-bold rounded-md transition-all ${
+                            currentMode === "password"
+                              ? "bg-primary text-primary-foreground shadow-sm"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
+                          onClick={() => {
+                            updateField("removePassword", false);
+                            setIsProtected(true);
+                            setProtectionType("password");
+                          }}
+                        >
+                          كلمة سر نصية
+                        </button>
+                      </div>
+
+                      {currentMode !== "none" && (
+                        <div>
+                          <label htmlFor="proposal-pin-input" className="text-xs font-bold text-muted-foreground block mb-1">
+                            {currentMode === "pin"
+                              ? form.id ? "رمز PIN العددي الجديد" : "رمز PIN العددي"
+                              : form.id ? "كلمة السر النصية الجديدة" : "كلمة السر النصية"}
+                          </label>
+                          <Input
+                            id="proposal-pin-input"
+                            type="password"
+                            inputMode={currentMode === "pin" ? "numeric" : "text"}
+                            value={form.password}
+                            onChange={(event) => {
+                              const val = event.target.value;
+                              if (currentMode === "pin") {
+                                const onlyDigits = val.replace(/\D/g, "").slice(0, 8);
+                                updateField("password", onlyDigits);
+                              } else {
+                                updateField("password", val);
+                              }
+                            }}
+                            placeholder={
+                              currentMode === "pin"
+                                ? "أدخل رمز PIN من أرقام فقط (مثال: 4821)"
+                                : "أدخل كلمة سر نصية مخصصة (مثال: NinuSoft#2026)"
+                            }
+                            className="font-mono text-sm h-10"
+                            autoFocus
+                          />
+                          <small className="text-[11px] text-muted-foreground block mt-1">
+                            {currentMode === "pin"
+                              ? "رمز رقمي خفيف ومناسب لفتح الوثيقة بسرعة."
+                              : "كلمة سر نصية تتيح أحرفاً ورموزاً عالي الأمان."}
+                          </small>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  );
+                })()}
               </div>
             </div>
 
