@@ -113,26 +113,43 @@ export default function ProposalView() {
     const handleSelection = () => {
       const selection = window.getSelection();
       if (!selection || selection.isCollapsed) {
+        if (!showHighlightModal) {
+          setSelectionPos(null);
+          setSelectedText("");
+        }
         return;
       }
 
       const text = selection.toString().trim();
       if (text.length > 2) {
-        const range = selection.getRangeAt(0);
-        const rect = range.getBoundingClientRect();
-        setSelectedText(text);
-        setSelectionPos({
-          top: rect.top + window.scrollY - 50,
-          left: Math.max(20, rect.left + rect.width / 2 - 80),
-        });
+        try {
+          const range = selection.getRangeAt(0);
+          const rect = range.getBoundingClientRect();
+          if (rect.width > 0 && rect.height > 0) {
+            setSelectedText(text);
+            // Use viewport-relative coordinates for fixed positioning
+            setSelectionPos({
+              top: Math.max(12, rect.top - 48),
+              left: Math.max(12, Math.min(window.innerWidth - 170, rect.left + rect.width / 2 - 75)),
+            });
+          }
+        } catch {}
+      }
+    };
+
+    const handleScroll = () => {
+      if (!showHighlightModal) {
+        setSelectionPos(null);
       }
     };
 
     document.addEventListener("mouseup", handleSelection);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
       document.removeEventListener("mouseup", handleSelection);
+      window.removeEventListener("scroll", handleScroll);
     };
-  }, []);
+  }, [showHighlightModal]);
 
   const submitHighlightComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -756,11 +773,16 @@ export default function ProposalView() {
         <div
           className="fixed z-40 animate-in fade-in zoom-in duration-150"
           style={{ top: `${selectionPos.top}px`, left: `${selectionPos.left}px` }}
+          onMouseDown={(e) => e.preventDefault()}
         >
           <Button
             type="button"
             size="sm"
-            onClick={() => setShowHighlightModal(true)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setShowHighlightModal(true);
+            }}
             className="shadow-2xl font-bold text-xs rounded-full px-4 py-2 flex items-center gap-1.5 bg-amber-500 text-black hover:bg-amber-400 border border-amber-300"
           >
             <MessageSquare className="w-3.5 h-3.5" />
