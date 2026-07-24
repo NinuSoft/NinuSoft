@@ -1,6 +1,7 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, ChangeEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 interface ProposalSignatureProps {
   proposalTitle: string;
@@ -9,10 +10,12 @@ interface ProposalSignatureProps {
 }
 
 export interface SignatureRecord {
+  status: "SIGNED" | "REJECTED";
   name: string;
   title: string;
   date: string;
-  signatureImage: string;
+  signatureImage?: string;
+  rejectionReason?: string;
   verificationId: string;
   documentHash: string;
 }
@@ -46,9 +49,13 @@ export function ProposalSignature({
 
   const [signerName, setSignerName] = useState(clientName || "");
   const [signerTitle, setSignerTitle] = useState("المدير التنفيذي / ممثل الشركة");
-  const [signMode, setSignMode] = useState<"draw" | "type">("draw");
+  const [signMode, setSignMode] = useState<"draw" | "type" | "upload">("draw");
+  const [uploadedImage, setUploadedImage] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasDrawn, setHasDrawn] = useState(false);
+
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState("");
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const isDrawing = useRef(false);
@@ -106,6 +113,16 @@ export function ProposalSignature({
     setHasDrawn(false);
   };
 
+  const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setUploadedImage(String(reader.result || ""));
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSign = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!signerName.trim()) return;
@@ -115,6 +132,8 @@ export function ProposalSignature({
     let signatureImage = "";
     if (signMode === "draw" && canvasRef.current && hasDrawn) {
       signatureImage = canvasRef.current.toDataURL("image/png");
+    } else if (signMode === "upload" && uploadedImage) {
+      signatureImage = uploadedImage;
     }
 
     const dateStr = new Intl.DateTimeFormat("ar-IQ", {
@@ -126,6 +145,7 @@ export function ProposalSignature({
     const verificationId = `DOC-SIG-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
 
     const record: SignatureRecord = {
+      status: "SIGNED",
       name: signerName.trim(),
       title: signerTitle.trim(),
       date: dateStr,
@@ -145,13 +165,86 @@ export function ProposalSignature({
     }
   };
 
+  const handleReject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!signerName.trim() || !rejectionReason.trim()) return;
+
+    setIsSubmitting(true);
+    const dateStr = new Intl.DateTimeFormat("ar-IQ", {
+      dateStyle: "full",
+      timeStyle: "short",
+    }).format(new Date());
+
+    const documentHash = await calculateSHA256(`${proposalTitle}:REJECTED:${rejectionReason}`);
+    const verificationId = `DOC-REJ-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+
+    const record: SignatureRecord = {
+      status: "REJECTED",
+      name: signerName.trim(),
+      title: signerTitle.trim(),
+      date: dateStr,
+      rejectionReason: rejectionReason.trim(),
+      verificationId,
+      documentHash,
+    };
+
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(record));
+      setSignedData(record);
+      setShowRejectModal(false);
+      if (onSigned) onSigned(record);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const resetSignature = () => {
     localStorage.removeItem(storageKey);
     setSignedData(null);
     setHasDrawn(false);
+    setUploadedImage("");
   };
 
   if (signedData) {
+    if (signedData.status === "REJECTED") {
+      return (
+        <div className="proposal-signature-card mt-12 p-6 md:p-8 rounded-2xl border border-destructive/50 bg-destructive/10 backdrop-blur-lg shadow-2xl space-y-4 text-start dir-rtl">
+          <div className="flex items-center justify-between gap-4 border-b border-destructive/30 pb-4 flex-wrap">
+            <div className="flex items-center gap-2.5 text-destructive font-bold text-lg">
+              <span>❌</span> تم طلب تعديل / رفض هذا المقترح
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs px-3 py-1 rounded-full bg-destructive/20 text-destructive border border-destructive/40 font-mono font-semibold">
+                {signedData.verificationId}
+              </span>
+              <Button type="button" variant="ghost" size="sm" onClick={resetSignature} className="text-xs text-muted-foreground hover:text-foreground">
+                تحديث القرار ✏️
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-3 text-sm">
+            <div>
+              <span className="block text-xs text-muted-foreground font-semibold">اسم صاحب الملاحظة</span>
+              <strong className="text-foreground text-base">{signedData.name} ({signedData.title})</strong>
+            </div>
+            <div>
+              <span className="block text-xs text-muted-foreground font-semibold mb-1">الملاحظات والسبب</span>
+              <div className="p-3 rounded-xl bg-background/60 border border-border/40 text-foreground font-medium">
+                {signedData.rejectionReason}
+              </div>
+            </div>
+            <div>
+              <span className="block text-xs text-muted-foreground font-semibold">تاريخ الطلب</span>
+              <span className="text-amber-300 font-mono text-xs">{signedData.date}</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="proposal-signature-card mt-12 p-6 md:p-8 rounded-2xl border border-amber-500/50 bg-card/90 backdrop-blur-lg shadow-2xl space-y-6 text-start dir-rtl">
         <div className="flex items-center justify-between gap-4 border-b border-border/60 pb-4 flex-wrap">
@@ -222,7 +315,7 @@ export function ProposalSignature({
         <div className="flex items-center gap-2.5 text-primary font-bold text-xl">
           <span>✍️</span> الاعتماد والتوقيع الرقمي (Documenso Engine)
         </div>
-        <div className="inline-flex p-1 bg-muted/60 rounded-xl border border-border/40">
+        <div className="inline-flex p-1 bg-muted/60 rounded-xl border border-border/40 flex-wrap">
           <button
             type="button"
             className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${
@@ -232,7 +325,7 @@ export function ProposalSignature({
             }`}
             onClick={() => setSignMode("draw")}
           >
-            ✍️ رسم التوقيع
+            ✍️ رسم باليد
           </button>
           <button
             type="button"
@@ -245,11 +338,22 @@ export function ProposalSignature({
           >
             ⌨️ كتابة الاسم
           </button>
+          <button
+            type="button"
+            className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${
+              signMode === "upload"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+            onClick={() => setSignMode("upload")}
+          >
+            📁 رفع صورة
+          </button>
         </div>
       </div>
 
       <p className="text-xs md:text-sm text-muted-foreground mb-6">
-        قم بالتوقيع باليد/الماوس أو كتابة اسمك لتأكيد موافقتك الرسمية وتوليد شهادة الاعتماد الإلكترونية (Documenso Verified).
+        قم بالتوقيع باليد/الماوس أو رفع صورة توقيعك لتأكيد موافقتك الرسمية وتوليد شهادة الاعتماد الإلكترونية (Documenso Verified).
       </p>
 
       <form onSubmit={handleSign} className="space-y-6">
@@ -318,21 +422,79 @@ export function ProposalSignature({
               )}
             </div>
           </div>
-        ) : (
+        ) : signMode === "type" ? (
           <div className="p-6 rounded-xl border-2 border-dashed border-amber-500/40 bg-black/40 text-center flex flex-col items-center justify-center min-h-[140px]">
             <span className="text-xs text-muted-foreground mb-2">معاينة التوقيع النصي:</span>
             <span className="font-serif italic text-3xl text-amber-400 tracking-wider">
               {signerName || "توقيع المعتمد"}
             </span>
           </div>
+        ) : (
+          <div className="p-6 rounded-xl border-2 border-dashed border-amber-500/40 bg-black/40 text-center flex flex-col items-center justify-center space-y-3 min-h-[140px]">
+            <span className="text-xs text-muted-foreground">اختر صورة التوقيع الخاص بك (PNG أو JPG):</span>
+            <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary text-secondary-foreground text-xs font-bold hover:bg-secondary/80 transition-colors">
+              <span>📁 اختيار ملف التوقيع</span>
+              <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+            </label>
+            {uploadedImage && (
+              <div className="pt-2">
+                <img src={uploadedImage} alt="التوقيع المرفوع" className="max-h-20 object-contain mx-auto" />
+              </div>
+            )}
+          </div>
         )}
 
-        <div className="pt-2 flex items-center justify-end">
+        <div className="pt-2 flex items-center justify-between gap-4 flex-wrap">
+          <Button
+            type="button"
+            variant="ghost"
+            className="text-xs text-destructive hover:bg-destructive/10"
+            onClick={() => setShowRejectModal(true)}
+          >
+            ❌ طلب تعديل / رفض المقترح
+          </Button>
+
           <Button type="submit" className="w-full md:w-auto px-8 font-bold text-sm" disabled={isSubmitting}>
             {isSubmitting ? "جاري الاعتماد…" : "✍️ تأكيد واعتماد المقترح"}
           </Button>
         </div>
       </form>
+
+      {/* Reject Modal */}
+      {showRejectModal && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-md p-6 rounded-2xl bg-card border border-destructive/50 shadow-2xl space-y-4 text-start dir-rtl">
+            <div className="flex items-center gap-2 text-destructive font-bold text-lg">
+              <span>❌</span> طلب تعديل أو رفض المقترح
+            </div>
+            <p className="text-xs text-muted-foreground">
+              يرجى توضيح الملاحظات أو سبب طلب التعديل ليصل إلى فريق NinuSoft لتحديث المقترح.
+            </p>
+
+            <form onSubmit={handleReject} className="space-y-4">
+              <label className="grid gap-1.5 text-xs font-semibold text-foreground">
+                <span>سبب التعديل / الملاحظات</span>
+                <Textarea
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  placeholder="اكتب ملاحظاتك هنا..."
+                  rows={4}
+                  required
+                />
+              </label>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => setShowRejectModal(false)}>
+                  إلغاء
+                </Button>
+                <Button type="submit" variant="destructive" size="sm" disabled={isSubmitting}>
+                  تأكيد الإرسال
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
