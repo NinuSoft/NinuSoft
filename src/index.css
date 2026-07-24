@@ -616,6 +616,26 @@ html {
   color: hsl(350 85% 65%);
 }
 
+.mermaid-svg-wrapper svg {
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+@media print {
+  .mermaid-toolbar {
+    display: none !important;
+  }
+  .mermaid-container {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  .mermaid-svg-wrapper {
+    transform: none !important;
+  }
+}
+
 .proposal-document code {
   border-radius: 0.35rem;
   background: hsl(220 25% 15%);
