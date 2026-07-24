@@ -5,6 +5,7 @@ import {
   saveProposalSettings,
   type ProposalSettings,
 } from "@/lib/proposal-settings";
+import { saveProposalSettingsBackendApi } from "@/lib/proposals-api";
 import {
   Settings,
   PenTool,
@@ -31,8 +32,12 @@ export function ProposalSettingsManager() {
     }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     saveProposalSettings(settings);
+    const adminKey = sessionStorage.getItem("ninusoft-proposals-admin-key");
+    if (adminKey) {
+      await saveProposalSettingsBackendApi(adminKey, settings).catch(() => {});
+    }
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };

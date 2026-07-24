@@ -116,3 +116,47 @@ export function adminRequest<T>(
     },
   });
 }
+
+export function submitProposalSignatureApi(token: string, record: unknown) {
+  return apiRequest<{ ok: true; record: unknown }>(
+    `/v1/proposals/${encodeURIComponent(token)}/signature`,
+    {
+      method: "POST",
+      body: JSON.stringify(record),
+    },
+  );
+}
+
+export function getProposalSignatureApi(token: string) {
+  return apiRequest<{ signature: unknown | null }>(
+    `/v1/proposals/${encodeURIComponent(token)}/signature`,
+  );
+}
+
+export function submitProposalCommentApi(token: string, comment: unknown) {
+  return apiRequest<{ ok: true; comments: unknown[] }>(
+    `/v1/proposals/${encodeURIComponent(token)}/comments`,
+    {
+      method: "POST",
+      body: JSON.stringify(comment),
+    },
+  );
+}
+
+export function getProposalCommentsApi(token: string) {
+  return apiRequest<{ comments: unknown[] }>(
+    `/v1/proposals/${encodeURIComponent(token)}/comments`,
+  );
+}
+
+export function saveProposalSettingsBackendApi(adminKey: string, settings: unknown) {
+  return adminRequest<{ ok: true }>(adminKey, "/settings", {
+    method: "POST",
+    body: JSON.stringify(settings),
+  });
+}
+
+export function getProposalSettingsBackendApi(adminKey: string) {
+  return adminRequest<{ settings: unknown }>(adminKey, "/settings");
+}
+

@@ -2,9 +2,11 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { MessageSquare, Plus } from "@/components/Icons";
+import { submitProposalCommentApi } from "@/lib/proposals-api";
 
 interface ProposalCommentsProps {
   proposalTitle: string;
+  proposalToken?: string;
 }
 
 export interface CommentItem {
@@ -14,7 +16,7 @@ export interface CommentItem {
   date: string;
 }
 
-export function ProposalComments({ proposalTitle }: ProposalCommentsProps) {
+export function ProposalComments({ proposalTitle, proposalToken }: ProposalCommentsProps) {
   const storageKey = `ninusoft-comments:${proposalTitle}`;
   const [comments, setComments] = useState<CommentItem[]>(() => {
     try {
@@ -29,7 +31,7 @@ export function ProposalComments({ proposalTitle }: ProposalCommentsProps) {
   const [authorName, setAuthorName] = useState("");
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentText.trim()) return;
 
@@ -37,13 +39,16 @@ export function ProposalComments({ proposalTitle }: ProposalCommentsProps) {
       id: Math.random().toString(36).substring(2, 9),
       author: authorName.trim() || "عميل NinuSoft",
       text: commentText.trim(),
-      date: new Intl.DateTimeFormat("ar-IQ", { dateStyle: "short", timeStyle: "short" }).format(new Date()),
+      date: new Intl.DateTimeFormat("ar-IQ-u-nu-latn", { dateStyle: "short", timeStyle: "short" }).format(new Date()),
     };
 
     const updated = [newComment, ...comments];
     setComments(updated);
     try {
       localStorage.setItem(storageKey, JSON.stringify(updated));
+      if (proposalToken) {
+        await submitProposalCommentApi(proposalToken, newComment).catch(() => {});
+      }
     } catch (err) {
       console.error(err);
     }

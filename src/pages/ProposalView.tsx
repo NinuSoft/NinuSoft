@@ -488,6 +488,7 @@ export default function ProposalView() {
                 <ProposalSignature
                   proposalTitle={proposal.title}
                   clientName={proposal.clientName}
+                  proposalToken={proposal.token}
                   allowDraw={settings.allowDrawSignature}
                   allowType={settings.allowTypeSignature}
                   allowUpload={settings.allowUploadSignature}
@@ -496,7 +497,7 @@ export default function ProposalView() {
               )}
 
               {settings.enableInlineComments && (
-                <ProposalComments proposalTitle={proposal.title} />
+                <ProposalComments proposalTitle={proposal.title} proposalToken={proposal.token} />
               )}
             </article>
           </div>

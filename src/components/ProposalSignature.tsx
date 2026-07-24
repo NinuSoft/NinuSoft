@@ -13,9 +13,14 @@ import {
   Edit,
 } from "@/components/Icons";
 
+import {
+  submitProposalSignatureApi,
+} from "@/lib/proposals-api";
+
 interface ProposalSignatureProps {
   proposalTitle: string;
   clientName: string;
+  proposalToken?: string;
   allowDraw?: boolean;
   allowType?: boolean;
   allowUpload?: boolean;
@@ -49,6 +54,7 @@ async function calculateSHA256(text: string): Promise<string> {
 export function ProposalSignature({
   proposalTitle,
   clientName,
+  proposalToken,
   allowDraw = true,
   allowType = true,
   allowUpload = true,
@@ -176,6 +182,9 @@ export function ProposalSignature({
     try {
       localStorage.setItem(storageKey, JSON.stringify(record));
       setSignedData(record);
+      if (proposalToken) {
+        await submitProposalSignatureApi(proposalToken, record).catch(() => {});
+      }
       if (onSigned) onSigned(record);
     } catch (err) {
       console.error(err);
@@ -189,7 +198,7 @@ export function ProposalSignature({
     if (!signerName.trim() || !rejectionReason.trim()) return;
 
     setIsSubmitting(true);
-    const dateStr = new Intl.DateTimeFormat("ar-IQ", {
+    const dateStr = new Intl.DateTimeFormat("ar-IQ-u-nu-latn", {
       dateStyle: "full",
       timeStyle: "short",
     }).format(new Date());
@@ -211,6 +220,9 @@ export function ProposalSignature({
       localStorage.setItem(storageKey, JSON.stringify(record));
       setSignedData(record);
       setShowRejectModal(false);
+      if (proposalToken) {
+        await submitProposalSignatureApi(proposalToken, record).catch(() => {});
+      }
       if (onSigned) onSigned(record);
     } catch (err) {
       console.error(err);
