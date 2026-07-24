@@ -11,6 +11,7 @@ import {
   Maximize2,
   XCircle,
   Loader2,
+  RefreshCw,
 } from "@/components/Icons";
 
 mermaid.initialize({
@@ -79,8 +80,20 @@ interface MermaidProps {
 }
 
 const INLINE_DEFAULT_ZOOM = 1;
+const MERMAID_MODULE_RECOVERY_KEY = "ninusoft-mermaid-module-recovery";
 
 type TextDirection = "ltr" | "rtl";
+type MermaidError = {
+  kind: "syntax" | "module";
+  message: string;
+};
+
+function isDynamicModuleError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /dynamically imported module|failed to fetch.*module|importing a module script failed|error loading.*module/i.test(
+    message,
+  );
+}
 
 function sortPieChartSections(chart: string): string {
   const lines = chart.split(/\r?\n/);
@@ -262,7 +275,7 @@ function fitDiagram(
 
 export default function Mermaid({ chart }: MermaidProps) {
   const [svg, setSvg] = useState<string>("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<MermaidError | null>(null);
   const [zoom, setZoom] = useState<number>(INLINE_DEFAULT_ZOOM);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
@@ -312,7 +325,31 @@ export default function Mermaid({ chart }: MermaidProps) {
       } catch (err) {
         if (isMounted) {
           console.error("Mermaid rendering error:", err);
-          setError(err instanceof Error ? err.message : "تعذر عرض المخطط البياني (Mermaid).");
+          const moduleError = isDynamicModuleError(err);
+          if (moduleError) {
+            try {
+              const lastRecovery = Number(
+                sessionStorage.getItem(MERMAID_MODULE_RECOVERY_KEY) || 0,
+              );
+              if (!lastRecovery || Date.now() - lastRecovery > 30_000) {
+                sessionStorage.setItem(
+                  MERMAID_MODULE_RECOVERY_KEY,
+                  String(Date.now()),
+                );
+                window.location.reload();
+                return;
+              }
+            } catch {
+              // Continue to the recoverable error state.
+            }
+          }
+          setError({
+            kind: moduleError ? "module" : "syntax",
+            message:
+              err instanceof Error
+                ? err.message
+                : "تعذر عرض المخطط البياني (Mermaid).",
+          });
         }
       }
     }
@@ -499,12 +536,35 @@ export default function Mermaid({ chart }: MermaidProps) {
 
   if (error) {
     return (
-      <div className="mermaid-error border border-destructive/30 bg-destructive/10 text-destructive p-4 rounded-xl my-4 text-sm font-mono dir-ltr">
+      <div className="mermaid-error border border-destructive/30 bg-destructive/10 text-destructive p-4 rounded-xl my-4 text-sm" dir="rtl">
         <p className="font-semibold mb-1 flex items-center gap-1.5">
-          <XCircle className="w-4 h-4" /> Mermaid Syntax Error
+          <XCircle className="w-4 h-4" />
+          {error.kind === "module"
+            ? "تعذر تحميل وحدة المخطط"
+            : "خطأ في صياغة مخطط Mermaid"}
         </p>
-        <p className="text-xs opacity-90">{error}</p>
-        <pre className="mt-2 text-xs bg-background/50 p-2 rounded overflow-x-auto whitespace-pre-wrap">{chart}</pre>
+        <p className="text-xs opacity-90" dir="ltr">{error.message}</p>
+        {error.kind === "module" ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="mt-3"
+            onClick={() => {
+              try {
+                sessionStorage.removeItem(MERMAID_MODULE_RECOVERY_KEY);
+              } catch {
+                // Reload still works if storage is unavailable.
+              }
+              window.location.reload();
+            }}
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            إعادة المحاولة
+          </Button>
+        ) : (
+          <pre className="mt-2 text-xs font-mono bg-background/50 p-2 rounded overflow-x-auto whitespace-pre-wrap" dir="ltr">{chart}</pre>
+        )}
       </div>
     );
   }
