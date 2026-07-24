@@ -780,6 +780,7 @@ export default function ProposalView() {
         <ProposalAiAssistant
           proposalTitle={proposal.title}
           clientName={proposal.clientName}
+          proposalToken={proposal.token}
           content={proposal.markdown}
           isOpen={showAiModal}
           onClose={() => setShowAiModal(false)}

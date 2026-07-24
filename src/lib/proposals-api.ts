@@ -84,6 +84,16 @@ export function unlockProposal(token: string, password: string) {
   );
 }
 
+export function askProposalAiApi(token: string, question: string) {
+  return apiRequest<{ answer: string }>(
+    `/v1/proposals/${encodeURIComponent(token)}/ai-query`,
+    {
+      method: "POST",
+      body: JSON.stringify({ question }),
+    },
+  );
+}
+
 export function recordProposalEvent(
   token: string,
   type: "read" | "print" | "pdf" | "SECTION_FEEDBACK",

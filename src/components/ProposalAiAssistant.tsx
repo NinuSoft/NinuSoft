@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { MessageSquare, XCircle, Send, CheckCircle2 } from "@/components/Icons";
+import { MessageSquare, XCircle, Send, Sparkles } from "@/components/Icons";
+import { askProposalAiApi } from "@/lib/proposals-api";
 
 interface ProposalAiAssistantProps {
   proposalTitle: string;
   clientName: string;
+  proposalToken?: string;
   content: string;
   isOpen: boolean;
   onClose: () => void;
@@ -19,6 +20,7 @@ interface Message {
 export function ProposalAiAssistant({
   proposalTitle,
   clientName,
+  proposalToken,
   content,
   isOpen,
   onClose,
@@ -26,20 +28,20 @@ export function ProposalAiAssistant({
   const [messages, setMessages] = useState<Message[]>([
     {
       sender: "bot",
-      text: `مرحباً بك عزيزي/عزيزتي (${clientName})! أنا المساعد الآلي لمستند (${proposalTitle}). يمكنني الإجابة على استفساراتك حول الميزانية، الجدول الزمني، نطاق العمل، والشروط الفنية.`,
+      text: `مرحباً بك عزيزي (${clientName})! أنا مستشار الذكاء الاصطناعي الخاص لمستند (${proposalTitle}). كيف يمكنني مساعدتك في الإجابة على استفساراتك وضمان تلبية العرض لكافة تطلعاتك؟`,
     },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
   const quickQuestions = [
-    "ما هو الجدول الزمني للمشروع؟",
-    "ما هي تفاصيل الميزانية والدفعات؟",
-    "ما هي شروط الضمان والدعم الفني؟",
-    "ما هي المخرجات الرئيسية المستلمة؟",
+    "لماذا اختيار NinuSoft هو الخيار الأفضل لهذا المشروع؟",
+    "ما هي تفاصيل الميزانية والعائد الاستثماري؟",
+    "ما هو الجدول الزمني والالتزام بالتسليم؟",
+    "ما هي ضامنات الجودة والدعم التقني المستمر؟",
   ];
 
-  const handleAsk = (queryText?: string) => {
+  const handleAsk = async (queryText?: string) => {
     const question = (queryText || input).trim();
     if (!question) return;
 
@@ -48,36 +50,36 @@ export function ProposalAiAssistant({
     if (!queryText) setInput("");
     setLoading(true);
 
-    setTimeout(() => {
+    try {
+      let answer = "";
+      if (proposalToken) {
+        const res = await askProposalAiApi(proposalToken, question);
+        answer = res.answer;
+      }
+
+      if (!answer) {
+        throw new Error("No response");
+      }
+      setMessages((prev) => [...prev, { sender: "bot", text: answer }]);
+    } catch {
+      // Fallback sales-oriented answer logic
       let answer = "";
       const lower = question.toLowerCase();
-      const lowerContent = content.toLowerCase();
 
-      if (lower.includes("جدول") || lower.includes("زمني") || lower.includes("مدة") || lower.includes("وقت")) {
-        answer = "يتضمن المقترح سقفاً زمنياً منظماً ومقسماً على مراحل تطوير واختبار وتسليم. يمكنك مراجعة قسم (الجدول الزمني) في الوثيقة للاطلاع على المواعيد الدقيقة.";
-      } else if (lower.includes("سعر") || lower.includes("ميزانية") || lower.includes("كلفة") || lower.includes("دفع") || lower.includes("مبلغ")) {
-        answer = "تفاصيل الميزانية والدفعات المالية موضحة في جدول الأسعار والتكاليف. جميع المبالغ تشمل التطوير، الضمان، والدعم الفني المحدد في العرض.";
-      } else if (lower.includes("ضمان") || lower.includes("دعم") || lower.includes("صيانة")) {
-        answer = "يتضمن العرض ضماناً فنياً ودعماً تقنياً مباشراً من فريق NinuSoft لمعالجة أي ملاحظات وضمان استقرار النظام بعد الإطلاق.";
-      } else if (lower.includes("مخرجات") || lower.includes("تسليم") || lower.includes("نطاق")) {
-        answer = "يشمل نطاق العمل تسليم كافة الكود المصدري (Source Code)، لوحات التحكم، التوثيق الفني، وتهيئة بيئة الاستضافة السحابية.";
+      if (lower.includes("أفضل") || lower.includes("لماذا") || lower.includes("خيار")) {
+        answer = "تقدم NinuSoft حلاً برمجياً متكاملاً يتفوق بالسرعة والأمان العالي، مع تسليم كافة حقوق الكود المصدري وضمان استقرار النظام بدعم فني مستمر لتأمين نجاح مشروعكم تماماً.";
+      } else if (lower.includes("جدول") || lower.includes("زمني") || lower.includes("مدة")) {
+        answer = "نلتزم في NinuSoft بجدول زمني صارم ومقسم إلى مراحل تسليم واضحة تضمن متابعتكم للتقدم خطوة بخطوة حتى الإطلاق النهائي.";
+      } else if (lower.includes("سعر") || lower.includes("ميزانية") || lower.includes("كلفة")) {
+        answer = "الميزانية المحددة صُممت لتمنحكم أفضل عائد استثماري (ROI) مقابل الجودة العالية والاستقرار التقني للأنظمة المقدمة.";
       } else {
-        // Keyword extraction match
-        const matchingLines = content
-          .split("\n")
-          .filter((line) => line.trim().length > 10 && question.split(" ").some((w) => w.length > 3 && line.includes(w)))
-          .slice(0, 2);
-
-        if (matchingLines.length > 0) {
-          answer = `وفقاً لبنود الوثيقة:\n${matchingLines.join("\n")}`;
-        } else {
-          answer = "جميع التفاصيل الفنية والمالية متوفرة في أقسام المقترح. يمكنك أيضاً ترك استفسار مباشر في قسم التعليقات ليقوم فريقنا بالرد عليك فوراً.";
-        }
+        answer = "فريق NinuSoft ملتزم بتقديم أفضل مستوى احترافي. جميع البنود مصممة لضمان نجاح المشروع وسرعة تنفيذه.";
       }
 
       setMessages((prev) => [...prev, { sender: "bot", text: answer }]);
+    } finally {
       setLoading(false);
-    }, 600);
+    }
   };
 
   if (!isOpen) return null;
