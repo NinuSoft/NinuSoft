@@ -10,6 +10,7 @@ import IntroScreen from "@/components/IntroScreen";
 
 const ProposalAdmin = lazy(() => import("@/pages/ProposalAdmin"));
 const ProposalView = lazy(() => import("@/pages/ProposalView"));
+const ShortlinksAdmin = lazy(() => import("@/pages/ShortlinksAdmin"));
 
 const queryClient = new QueryClient();
 
@@ -19,6 +20,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/proposals/admin" component={ProposalAdmin} />
       <Route path="/proposals/:token" component={ProposalView} />
+      <Route path="/shortlinks/admin" component={ShortlinksAdmin} />
       <Route component={NotFound} />
     </Switch>
   );

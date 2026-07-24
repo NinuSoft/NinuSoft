@@ -1,6 +1,6 @@
 export const PROPOSALS_API_URL = (
   import.meta.env.VITE_PROPOSALS_API_URL ||
-  "https://ninusoft-proposals.ninusoft.workers.dev"
+  "https://proposals.ninusoft.workers.dev"
 ).replace(/\/$/, "");
 
 export type Proposal = {
