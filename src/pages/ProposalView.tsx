@@ -540,22 +540,22 @@ export default function ProposalView() {
             <Lock className="w-8 h-8" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">العرض محمي برمز PIN</h1>
+            <h1 className="text-2xl font-bold text-foreground">وثيقة العرض محمية</h1>
             <p className="text-sm text-muted-foreground mt-2">
-              أدخل رمز PIN أو كلمة السر الخاصة بالعميل للوصول إلى تفاصيل هذا العرض.
+              يرجى إدخال رمز PIN أو كلمة السر الخاصة بكم للاطلاع على تفاصيل العرض الفني والمالي.
             </p>
           </div>
           <form className="space-y-4 text-right" onSubmit={unlock}>
             <div>
               <label htmlFor="proposal-password" className="text-xs font-bold text-foreground block mb-1.5">
-                رمز PIN / كلمة السر
+                رمز PIN / كلمة المرور
               </label>
               <Input
                 id="proposal-password"
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                placeholder="أدخل رمز PIN أو كلمة السر"
+                placeholder="أدخل رمز PIN أو كلمة السر الخاصة بك"
                 autoComplete="current-password"
                 autoFocus
                 required

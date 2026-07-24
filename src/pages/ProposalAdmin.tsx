@@ -17,7 +17,6 @@ import {
   serializeProposalSections,
   type ProposalSection,
 } from "@/lib/proposal-sections";
-import { Switch } from "@/components/ui/switch";
 import { ProposalSettingsManager } from "@/components/ProposalSettingsManager";
 import { ProposalAnalytics } from "@/components/ProposalAnalytics";
 import {
@@ -656,20 +655,20 @@ export default function ProposalAdmin() {
           <form onSubmit={saveProposal}>
             <div className="proposal-form-grid">
               <label>
-                <span>عنوان العرض</span>
+                <span>عنوان العرض الفني والمالي</span>
                 <Input
                   value={form.title}
                   onChange={(event) => updateField("title", event.target.value)}
-                  placeholder="مثال: عرض تطوير المنصة"
+                  placeholder="مثال: عرض تطوير المنصة الرقمية والتطبيق الذكي"
                   required
                 />
               </label>
               <label>
-                <span>اسم العميل</span>
+                <span>اسم العميل أو الجهة المستهدفة</span>
                 <Input
                   value={form.clientName}
                   onChange={(event) => updateField("clientName", event.target.value)}
-                  placeholder="الشركة أو الشخص"
+                  placeholder="مثال: شركة الحلول المتقدمة / م. أحمد علي"
                   required
                 />
               </label>
@@ -835,8 +834,8 @@ export default function ProposalAdmin() {
                         }}
                         placeholder={
                           protectionType === "pin"
-                            ? "أدخل رمز PIN من أرقام (مثال: 1234)"
-                            : "أدخل كلمة السر النصية (مثال: NinuPass#)"
+                            ? "أدخل رمز PIN من أرقام فقط (مثال: 4821)"
+                            : "أدخل كلمة سر نصية مخصصة (مثال: NinuSoft#2026)"
                         }
                         className="font-mono text-sm h-10"
                         autoFocus
@@ -887,36 +886,47 @@ export default function ProposalAdmin() {
             </div>
 
             {editorMode === "sections" ? (
-              <div className="proposal-sections-editor border border-border/60 rounded-xl p-4 bg-card/40 backdrop-blur-sm space-y-4">
-                {/* Section Tabs Bar */}
-                <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-border/40 scrollbar-none">
-                  {sections.map((sec, idx) => (
+              <div className="space-y-4">
+                {/* Sections Bar & Tab Selector */}
+                <div className="flex items-center justify-between gap-2 border-b border-border/40 pb-3 flex-wrap">
+                  <div className="flex items-center gap-1.5 overflow-x-auto py-1 max-w-full no-scrollbar">
+                    {sections.map((sec, idx) => (
+                      <button
+                        key={sec.id}
+                        type="button"
+                        className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap border ${
+                          activeSectionId === sec.id
+                            ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                            : "bg-card/60 text-muted-foreground hover:text-foreground border-border/50"
+                        }`}
+                        onClick={() => setActiveSectionId(sec.id)}
+                      >
+                        <span>{idx + 1}. {sec.title || "قسم جديد"}</span>
+                        {sec.hasSignature && <span className="text-[10px] text-amber-400 font-extrabold" title="يتطلب توقيع">✍️</span>}
+                      </button>
+                    ))}
                     <button
-                      key={sec.id}
                       type="button"
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 border ${activeSectionId === sec.id ? "bg-primary/20 border-primary text-primary shadow" : "bg-card/80 border-border/60 text-muted-foreground hover:text-foreground"}`}
-                      onClick={() => {
-                        setActiveSectionId(sec.id);
-                        setPreviewingSectionId(null);
-                      }}
+                      className="px-2.5 py-1.5 text-xs font-bold rounded-lg border border-dashed border-amber-500/40 text-amber-400 hover:bg-amber-500/10 transition-all flex items-center gap-1 shrink-0"
+                      onClick={addNewSection}
                     >
-                      <span className="w-4 h-4 rounded-full bg-muted flex items-center justify-center text-[10px]">{idx + 1}</span>
-                      <span>{sec.title || `قسم ${idx + 1}`}</span>
-                      {sec.hasSignature && <span title="يتطلب توقيع العميل" className="text-amber-400 text-[10px] font-semibold">(توقيع)</span>}
+                      <Plus className="w-3.5 h-3.5" /> قسم جديد
                     </button>
-                  ))}
-                  <Button type="button" variant="outline" size="sm" className="h-7 text-xs font-bold" onClick={addNewSection}>
-                    + إضافة قسم
-                  </Button>
+                  </div>
+
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-7 text-xs font-bold flex items-center gap-1 text-muted-foreground hover:text-foreground"
-                    onClick={() => void copyAllSectionsHyperlinks()}
-                    title="نسخ فهرس كافة الأقسام كروابط Hyperlinks"
+                    className="h-8 text-xs font-bold flex items-center gap-1.5 border-border/60"
+                    onClick={copySectionsIndex}
+                    title="نسخ قائمة كل الأقسام مع روابطها الداخلية كـ Hyperlinks"
                   >
-                    <Link className="w-3.5 h-3.5" />
+                    {indexCopied ? (
+                      <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+                    ) : (
+                      <Link className="w-3.5 h-3.5" />
+                    )}
                     <span>نسخ فهرس الأقسام</span>
                   </Button>
                 </div>
@@ -933,11 +943,11 @@ export default function ProposalAdmin() {
                       <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-center bg-card/60 p-3 rounded-lg border border-border/60">
                         <div className="space-y-2">
                           <div className="space-y-1">
-                            <span className="text-xs font-bold text-muted-foreground">عنوان هذا القسم</span>
+                            <span className="text-xs font-bold text-muted-foreground">عنوان القسم</span>
                             <Input
                               value={activeSec.title}
                               onChange={(e) => updateSectionTitle(activeSec.id, e.target.value)}
-                              placeholder="مثال: 1. نطاق العمل والتسليمات"
+                              placeholder="مثال: 01. الملخص التنفيذي ونطاق العمل"
                               className="font-bold text-sm"
                             />
                           </div>
@@ -1059,7 +1069,7 @@ export default function ProposalAdmin() {
                           dir="auto"
                           value={activeSec.content}
                           onChange={(e) => updateSectionContent(activeSec.id, e.target.value)}
-                          placeholder={`# ${activeSec.title}\n\nأكتب محتوى هذا القسم هنا...`}
+                          placeholder={`# ${activeSec.title}\n\nاكتب أو ألصق محتوى هذا القسم هنا باستخدام صيغة Markdown...`}
                         />
                       </div>
                     </div>
@@ -1072,7 +1082,7 @@ export default function ProposalAdmin() {
                 dir="auto"
                 value={form.markdown}
                 onChange={(event) => updateField("markdown", event.target.value)}
-                placeholder={"# عنوان العرض\n\nمرحباً بكم...\n\n## نطاق العمل"}
+                placeholder={"# عنوان العرض الفني والمالي\n\nمرحباً بكم في وثيقة العرض...\n\n## 01. نطاق العمل والتسليمات"}
                 required
               />
             )}
@@ -1131,7 +1141,7 @@ export default function ProposalAdmin() {
                   type="search"
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="ابحث بالعرض أو العميل"
+                  placeholder="بحث باسم العرض، العميل، أو رمز الرابط..."
                   aria-label="البحث في العروض"
                 />
               </label>
