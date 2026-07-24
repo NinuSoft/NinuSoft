@@ -75,9 +75,16 @@ export default function Mermaid({ chart }: MermaidProps) {
       if (!chart || !chart.trim()) return;
       try {
         setError(null);
-        const { svg: renderedSvg } = await mermaid.render(elementId, chart.trim());
+        const { svg: rawSvg } = await mermaid.render(elementId, chart.trim());
+        
+        // Remove hardcoded inline max-width from Mermaid's generated SVG string
+        // so it can dynamically scale to fit 100% of container width/height!
+        const cleanedSvg = rawSvg
+          .replace(/style="[^"]*max-width:[^"]*"/gi, 'style="width:100%; height:auto;"')
+          .replace(/max-width:\s*\d+px;/gi, "width: 100%; height: auto;");
+
         if (isMounted) {
-          setSvg(renderedSvg);
+          setSvg(cleanedSvg);
         }
       } catch (err) {
         if (isMounted) {
@@ -94,8 +101,8 @@ export default function Mermaid({ chart }: MermaidProps) {
     };
   }, [chart, elementId]);
 
-  const handleZoomIn = () => setZoom((prev) => Math.min(prev + 0.2, 3));
-  const handleZoomOut = () => setZoom((prev) => Math.max(prev - 0.2, 0.5));
+  const handleZoomIn = () => setZoom((prev) => Math.min(prev + 0.25, 4));
+  const handleZoomOut = () => setZoom((prev) => Math.max(prev - 0.25, 0.4));
   const handleZoomReset = () => setZoom(1);
 
   const handleCopyCode = async () => {
@@ -185,11 +192,11 @@ export default function Mermaid({ chart }: MermaidProps) {
             type="button"
             variant="outline"
             size="sm"
-            className="h-7 text-xs font-bold px-2.5 flex items-center gap-1"
+            className="h-7 text-xs font-bold px-2.5 flex items-center gap-1 bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20"
             onClick={() => setIsFullscreen(true)}
-            title="ملء الشاشة"
+            title="تكبير ملء الشاشة"
           >
-            <Maximize2 className="w-3.5 h-3.5" /> تكبير
+            <Maximize2 className="w-3.5 h-3.5" /> ملء الشاشة
           </Button>
 
           <Button
@@ -225,23 +232,26 @@ export default function Mermaid({ chart }: MermaidProps) {
       </div>
 
       {/* Rendered SVG Content */}
-      <div className="mermaid-viewport p-4 md:p-8 overflow-x-auto flex justify-center items-center min-h-[16rem] bg-black/20">
+      <div className="mermaid-viewport p-4 md:p-8 overflow-auto flex justify-center items-center min-h-[18rem] bg-black/20">
         <div
-          className="mermaid-svg-wrapper transition-transform duration-200 ease-out origin-center [&>svg]:max-w-full [&>svg]:h-auto [&>svg]:mx-auto [&>svg]:drop-shadow-md"
+          className="mermaid-svg-wrapper w-full flex justify-center items-center transition-transform duration-200 ease-out origin-center [&>svg]:w-full [&>svg]:max-w-full [&>svg]:h-auto [&>svg]:mx-auto [&>svg]:drop-shadow-md"
           style={{ transform: `scale(${zoom})` }}
           dangerouslySetInnerHTML={{ __html: svg }}
         />
       </div>
 
-      {/* Fullscreen Backdrop Modal */}
+      {/* Fullscreen Modal View */}
       {isFullscreen && (
-        <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-md flex flex-col p-4 md:p-6 dir-rtl animate-in fade-in duration-200">
-          <div className="flex items-center justify-between pb-4 border-b border-border/60">
+        <div className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-md flex flex-col p-4 md:p-6 dir-rtl animate-in fade-in duration-200">
+          {/* Header Controls Bar */}
+          <div className="flex items-center justify-between pb-4 border-b border-border/60 flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <span className="text-sm font-bold text-amber-400 flex items-center gap-1.5">
-                <BarChart className="w-4 h-4" /> معاينة كاملة للمخطط البياني
+                <BarChart className="w-5 h-5" /> معاينة كاملة للمخطط البياني (Full Screen View)
               </span>
-              <span className="text-xs text-muted-foreground font-mono">({Math.round(zoom * 100)}%)</span>
+              <span className="text-xs text-muted-foreground font-mono bg-muted/60 px-2 py-0.5 rounded-full">
+                {Math.round(zoom * 100)}%
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <Button type="button" variant="outline" size="sm" onClick={handleZoomOut}>-</Button>
@@ -250,14 +260,16 @@ export default function Mermaid({ chart }: MermaidProps) {
               <Button type="button" variant="outline" size="sm" onClick={handleDownloadSvg} className="flex items-center gap-1">
                 <Download className="w-3.5 h-3.5" /> تنزيل SVG
               </Button>
-              <Button type="button" variant="default" size="sm" onClick={() => setIsFullscreen(false)} className="flex items-center gap-1">
-                <XCircle className="w-3.5 h-3.5" /> إغلاق
+              <Button type="button" variant="default" size="sm" onClick={() => setIsFullscreen(false)} className="flex items-center gap-1 bg-amber-500 text-black hover:bg-amber-400 font-bold">
+                <XCircle className="w-4 h-4" /> إغلاق
               </Button>
             </div>
           </div>
-          <div className="flex-1 overflow-auto p-8 flex items-center justify-center">
+
+          {/* Fullscreen Dynamic Canvas */}
+          <div className="flex-1 w-full h-full overflow-auto p-4 md:p-10 flex items-center justify-center bg-black/40 rounded-xl my-4 border border-border/40">
             <div
-              className="transition-transform duration-200 ease-out origin-center [&>svg]:max-w-full [&>svg]:h-auto [&>svg]:mx-auto [&>svg]:drop-shadow-lg"
+              className="w-full max-w-5xl transition-transform duration-200 ease-out origin-center [&>svg]:w-full [&>svg]:h-auto [&>svg]:mx-auto [&>svg]:drop-shadow-2xl"
               style={{ transform: `scale(${zoom})` }}
               dangerouslySetInnerHTML={{ __html: svg }}
             />
