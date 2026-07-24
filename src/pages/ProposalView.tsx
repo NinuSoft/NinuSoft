@@ -21,6 +21,8 @@ import { ProposalExecutiveSummary } from "@/components/ProposalExecutiveSummary"
 import { ProposalExpiryCountdown } from "@/components/ProposalExpiryCountdown";
 import { ProposalAttachments } from "@/components/ProposalAttachments";
 import { ProposalIncentiveBanner } from "@/components/ProposalIncentiveBanner";
+import { ProposalCurrencyConverter, Currency } from "@/components/ProposalCurrencyConverter";
+import { ProposalPackageSwitcher } from "@/components/ProposalPackageSwitcher";
 import { ProposalComments } from "@/components/ProposalComments";
 import { Textarea } from "@/components/ui/textarea";
 import { Clock, Printer, Download, FileText, Globe, Layers, MessageSquare, XCircle, CheckCircle, Edit, Sparkles } from "@/components/Icons";
@@ -85,6 +87,7 @@ export default function ProposalView() {
   const [highlightCommentText, setHighlightCommentText] = useState("");
   const [showAiModal, setShowAiModal] = useState(false);
   const [showExecSummary, setShowExecSummary] = useState(false);
+  const [currency, setCurrency] = useState<Currency>("USD");
 
   useEffect(() => {
     const handleSettingsChange = () => setSettings(getProposalSettings());
@@ -625,6 +628,15 @@ export default function ProposalView() {
                   })()}
                 </div>
               )}
+
+              <ProposalCurrencyConverter
+                currentCurrency={currency}
+                onCurrencyChange={(c) => setCurrency(c)}
+              />
+
+              <ProposalPackageSwitcher
+                currency={currency}
+              />
 
               <ProposalAttachments />
 
