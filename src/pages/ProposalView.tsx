@@ -25,7 +25,7 @@ import { ProposalIncentiveBanner } from "@/components/ProposalIncentiveBanner";
 import { ProposalPackageSwitcher } from "@/components/ProposalPackageSwitcher";
 import { ProposalComments } from "@/components/ProposalComments";
 import { Textarea } from "@/components/ui/textarea";
-import { Clock, Printer, Download, FileText, Globe, Layers, MessageSquare, XCircle, CheckCircle, Edit, Sparkles, Shield } from "@/components/Icons";
+import { Clock, Printer, Download, FileText, Globe, Layers, MessageSquare, XCircle, CheckCircle, Edit, Sparkles, Shield, Lock } from "@/components/Icons";
 
 function Brand() {
   return (
@@ -534,28 +534,41 @@ export default function ProposalView() {
 
   if (status === "locked") {
     return (
-      <CenteredState
-        icon="⌁"
-        title="هذا العرض محمي"
-        description="أدخل كلمة السر التي أرسلها لك فريق NinuSoft للوصول إلى العرض."
-      >
-        <form className="proposal-password-form" onSubmit={unlock}>
-          <label htmlFor="proposal-password">كلمة السر</label>
-          <Input
-            id="proposal-password"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            autoComplete="current-password"
-            autoFocus
-            required
-          />
-          {error && <p className="proposal-form-error" role="alert">{error}</p>}
-          <Button type="submit" disabled={unlocking}>
-            {unlocking ? "جاري التحقق…" : "فتح العرض"}
-          </Button>
-        </form>
-      </CenteredState>
+      <div className="min-h-screen grid place-items-center bg-background px-4 py-8" dir="rtl">
+        <div className="w-full max-w-md p-8 rounded-2xl bg-card border border-border/60 shadow-2xl space-y-6 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto border border-primary/20">
+            <Lock className="w-8 h-8" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">العرض محمي برمز PIN</h1>
+            <p className="text-sm text-muted-foreground mt-2">
+              أدخل رمز PIN أو كلمة السر الخاصة بالعميل للوصول إلى تفاصيل هذا العرض.
+            </p>
+          </div>
+          <form className="space-y-4 text-right" onSubmit={unlock}>
+            <div>
+              <label htmlFor="proposal-password" className="text-xs font-bold text-foreground block mb-1.5">
+                رمز PIN / كلمة السر
+              </label>
+              <Input
+                id="proposal-password"
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="أدخل رمز PIN أو كلمة السر"
+                autoComplete="current-password"
+                autoFocus
+                required
+                className="text-center font-mono text-base h-11"
+              />
+            </div>
+            {error && <p className="text-xs font-bold text-destructive" role="alert">{error}</p>}
+            <Button type="submit" disabled={unlocking} className="w-full h-11 font-bold">
+              {unlocking ? "جاري التحقق…" : "فتح العرض"}
+            </Button>
+          </form>
+        </div>
+      </div>
     );
   }
 

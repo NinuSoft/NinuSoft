@@ -17,6 +17,7 @@ import {
   serializeProposalSections,
   type ProposalSection,
 } from "@/lib/proposal-sections";
+import { Switch } from "@/components/ui/switch";
 import { ProposalSettingsManager } from "@/components/ProposalSettingsManager";
 import { ProposalAnalytics } from "@/components/ProposalAnalytics";
 import {
@@ -39,6 +40,8 @@ import {
   Link,
   Shield,
   ArrowLeft,
+  LogOut,
+  Lock,
 } from "@/components/Icons";
 
 type FormState = {
@@ -83,6 +86,8 @@ export default function ProposalAdmin() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [isProtected, setIsProtected] = useState(false);
+  const [protectionType, setProtectionType] = useState<"pin" | "password">("pin");
   const [selectedAuditProposal, setSelectedAuditProposal] = useState<ProposalSummary | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [activeAdminTab, setActiveAdminTab] = useState<"editor" | "analytics" | "settings">("editor");
@@ -333,6 +338,7 @@ export default function ProposalAdmin() {
         `/proposals/${id}`,
       );
       const proposal = result.proposal;
+      setIsProtected(Boolean(proposal.protected));
       setForm({
         id: proposal.id,
         title: proposal.title,
@@ -533,8 +539,14 @@ export default function ProposalAdmin() {
             <strong>فريق NinuSoft</strong>
             <span>مسؤول النظام</span>
           </div>
-          <button type="button" onClick={logout} aria-label="تسجيل الخروج">
-            <ArrowLeft className="h-4 w-4" />
+          <button
+            type="button"
+            onClick={logout}
+            aria-label="تسجيل الخروج"
+            title="تسجيل الخروج"
+            className="flex items-center gap-1 text-xs font-bold text-red-400 hover:text-red-300 transition-colors px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20"
+          >
+            <LogOut className="h-4 w-4" />
           </button>
         </div>
       </aside>
@@ -572,6 +584,17 @@ export default function ProposalAdmin() {
                 عرض جديد
               </Button>
             )}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={logout}
+              className="h-9 px-3 text-xs font-bold text-red-400 border-red-500/30 bg-red-500/10 hover:bg-red-500/20 hover:text-red-300 flex items-center gap-1.5"
+              title="تسجيل الخروج من لوحة التحكم"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span>تسجيل الخروج</span>
+            </Button>
           </div>
         </header>
 
@@ -650,19 +673,21 @@ export default function ProposalAdmin() {
                   required
                 />
               </label>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-foreground">تاريخ ووقت انتهاء الصلاحية</span>
-                  <span className="text-[11px] font-mono text-amber-400 font-semibold">
-                    {form.expiresAt ? `ينتهي في: ${formatDate(form.expiresAt)}` : "غير محدد (رابط دائمی)"}
-                  </span>
+              <div className="p-4 rounded-xl border border-border/60 bg-card/40 space-y-3 flex flex-col justify-between">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-foreground">تاريخ ووقت انتهاء الصلاحية</span>
+                    <span className="text-[11px] font-mono text-amber-400 font-semibold">
+                      {form.expiresAt ? `ينتهي في: ${formatDate(form.expiresAt)}` : "غير محدد (رابط دائمی)"}
+                    </span>
+                  </div>
+                  <Input
+                    type="datetime-local"
+                    value={form.expiresAt}
+                    onChange={(event) => updateField("expiresAt", event.target.value)}
+                    className="font-mono text-xs"
+                  />
                 </div>
-                <Input
-                  type="datetime-local"
-                  value={form.expiresAt}
-                  onChange={(event) => updateField("expiresAt", event.target.value)}
-                  className="font-mono text-xs"
-                />
                 {/* Preset Duration Buttons */}
                 <div className="flex items-center gap-1.5 flex-wrap pt-1">
                   <span className="text-[11px] text-muted-foreground font-bold">اختصارات سريعة:</span>
@@ -713,17 +738,111 @@ export default function ProposalAdmin() {
                   )}
                 </div>
               </div>
-              <label>
-                <span>{form.id ? "كلمة سر جديدة (اتركها دون تغيير)" : "كلمة السر (اختيارية)"}</span>
-                <Input
-                  type="password"
-                  value={form.password}
-                  onChange={(event) => updateField("password", event.target.value)}
-                  minLength={8}
-                  disabled={form.removePassword}
-                  placeholder="8 أحرف على الأقل"
-                />
-              </label>
+
+              {/* PIN / Password Switch Card */}
+              <div className="p-4 rounded-xl border border-border/60 bg-card/40 space-y-3 flex flex-col justify-between">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center border border-primary/20 shrink-0">
+                      <Lock className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <label htmlFor="pin-protection-switch" className="text-xs font-bold text-foreground block cursor-pointer">
+                        حماية العرض برمز مرور
+                      </label>
+                      <span className="text-[11px] text-muted-foreground block">
+                        {form.id && isProtected && !form.removePassword
+                          ? "العرض محمي برمز مرور حالياً"
+                          : "طلب رمز PIN أو كلمة سر لفتح الوثيقة"}
+                      </span>
+                    </div>
+                  </div>
+                  <Switch
+                    id="pin-protection-switch"
+                    checked={!form.removePassword && isProtected}
+                    onCheckedChange={(checked) => {
+                      if (!checked) {
+                        updateField("removePassword", true);
+                        updateField("password", "");
+                        setIsProtected(false);
+                      } else {
+                        updateField("removePassword", false);
+                        setIsProtected(true);
+                      }
+                    }}
+                  />
+                </div>
+
+                {(!form.removePassword && isProtected) && (
+                  <div className="pt-3 border-t border-border/40 space-y-3">
+                    {/* PIN / Password Mode Switcher */}
+                    <div className="flex items-center justify-between gap-2 p-1 rounded-lg bg-muted/60 border border-border/40">
+                      <button
+                        type="button"
+                        className={`flex-1 py-1 px-2 text-xs font-bold rounded-md transition-all ${
+                          protectionType === "pin"
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                        onClick={() => {
+                          setProtectionType("pin");
+                          if (form.password && !/^\d+$/.test(form.password)) {
+                            updateField("password", "");
+                          }
+                        }}
+                      >
+                        رمز PIN عددي
+                      </button>
+                      <button
+                        type="button"
+                        className={`flex-1 py-1 px-2 text-xs font-bold rounded-md transition-all ${
+                          protectionType === "password"
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                        onClick={() => setProtectionType("password")}
+                      >
+                        كلمة سر نصية
+                      </button>
+                    </div>
+
+                    <div>
+                      <label htmlFor="proposal-pin-input" className="text-xs font-bold text-muted-foreground block mb-1">
+                        {protectionType === "pin"
+                          ? form.id ? "رمز PIN العددي الجديد" : "رمز PIN العددي"
+                          : form.id ? "كلمة السر النصية الجديدة" : "كلمة السر النصية"}
+                      </label>
+                      <Input
+                        id="proposal-pin-input"
+                        type="password"
+                        inputMode={protectionType === "pin" ? "numeric" : "text"}
+                        value={form.password}
+                        onChange={(event) => {
+                          const val = event.target.value;
+                          if (protectionType === "pin") {
+                            const onlyDigits = val.replace(/\D/g, "").slice(0, 8);
+                            updateField("password", onlyDigits);
+                          } else {
+                            updateField("password", val);
+                          }
+                        }}
+                        placeholder={
+                          protectionType === "pin"
+                            ? "أدخل رمز PIN من أرقام (مثال: 1234)"
+                            : "أدخل كلمة السر النصية (مثال: NinuPass#)"
+                        }
+                        className="font-mono text-sm h-10"
+                        autoFocus
+                      />
+                      <small className="text-[11px] text-muted-foreground block mt-1">
+                        {protectionType === "pin"
+                          ? "رمز رقمي خفيف ومناسب لفتح الوثيقة بسرعة."
+                          : "كلمة سر نصية تتيح أحرفاً ورموزاً عالي الأمان."}
+                      </small>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="proposal-markdown-label">
@@ -745,7 +864,7 @@ export default function ProposalAdmin() {
                     className={`px-3 py-1 text-xs font-bold rounded-md transition-all flex items-center gap-1.5 ${editorMode === "raw" ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}
                     onClick={() => setEditorMode("raw")}
                   >
-                    <Edit className="w-3.5 h-3.5" /> ماركداون خام
+                    <Edit className="w-3.5 h-3.5" /> سورس كود
                   </button>
                 </div>
                 <label className="proposal-file-button">
@@ -961,24 +1080,14 @@ export default function ProposalAdmin() {
                 الرابط فعّال
               </label>
               {form.id && (
-                <>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={form.removePassword}
-                      onChange={(event) => updateField("removePassword", event.target.checked)}
-                    />
-                    إزالة حماية كلمة السر
-                  </label>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={form.rotateToken}
-                      onChange={(event) => updateField("rotateToken", event.target.checked)}
-                    />
-                    إلغاء الرابط القديم وإنشاء رابط جديد
-                  </label>
-                </>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={form.rotateToken}
+                    onChange={(event) => updateField("rotateToken", event.target.checked)}
+                  />
+                  إلغاء الرابط القديم وإنشاء رابط جديد
+                </label>
               )}
               <Button type="button" variant="outline" onClick={() => setShowPreview((value) => !value)}>
                 {showPreview ? "إخفاء المعاينة" : "معاينة المحتوى"}
@@ -1074,23 +1183,23 @@ export default function ProposalAdmin() {
                           <div className="flex flex-col gap-1 items-start">
                             {sigStatus === "SIGNED" ? (
                               <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold flex items-center gap-1">
-                                <CheckCircle className="w-3.5 h-3.5" /> معتمد (Approved)
+                                <CheckCircle className="w-3.5 h-3.5" /> معتمد
                               </span>
                             ) : sigStatus === "REJECTED" ? (
                               <span className="text-xs px-2.5 py-0.5 rounded-full bg-destructive/20 text-destructive border border-destructive/30 font-bold flex items-center gap-1">
-                                <XCircle className="w-3.5 h-3.5" /> طلب تعديل (Revision)
+                                <XCircle className="w-3.5 h-3.5" /> طلب تعديل
                               </span>
                             ) : item.readCount > 0 ? (
                               <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold flex items-center gap-1">
-                                <BookOpen className="w-3.5 h-3.5" /> تمت القراءة (Read)
+                                <FileText className="w-3.5 h-3.5" /> تمت القراءة
                               </span>
                             ) : item.openCount > 0 ? (
                               <span className="text-xs px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30 font-bold flex items-center gap-1">
-                                <Eye className="w-3.5 h-3.5" /> تم الفتح (Opened)
+                                <Eye className="w-3.5 h-3.5" /> تم الفتح
                               </span>
                             ) : (
                               <span className="text-xs px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/40 font-bold flex items-center gap-1">
-                                <Send className="w-3.5 h-3.5" /> مرسل (Sent)
+                                <Send className="w-3.5 h-3.5" /> مرسل
                               </span>
                             )}
                             <small className="text-[11px] text-muted-foreground">
