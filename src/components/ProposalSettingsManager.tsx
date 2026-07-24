@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import {
   getProposalSettings,
   saveProposalSettings,
+  defaultProposalSettings,
   type ProposalSettings,
 } from "@/lib/proposal-settings";
 import { saveProposalSettingsBackendApi } from "@/lib/proposals-api";
@@ -271,30 +272,86 @@ export function ProposalSettingsManager() {
             </p>
           </div>
 
-          {/* Watermark */}
+          {/* Package Switcher Enable & Custom Editor */}
           <div
-            className={`p-5 rounded-xl border transition-all cursor-pointer ${
-              settings.enableWatermark
+            className={`p-5 rounded-xl border transition-all ${
+              settings.enablePackageSwitcher
                 ? "border-amber-500/40 bg-card/90 shadow-md"
                 : "border-border/40 bg-card/40 opacity-75"
             }`}
-            onClick={() => toggle("enableWatermark")}
           >
-            <div className="flex items-center justify-between mb-2">
+            <div
+              className="flex items-center justify-between mb-2 cursor-pointer"
+              onClick={() => toggle("enablePackageSwitcher")}
+            >
               <div className="flex items-center gap-2 text-base font-bold text-foreground">
                 <Tag className="w-5 h-5 text-amber-400" />
-                <span>العلامة المائية الشفافة (Confidential)</span>
+                <span>إتاحة باقات التنفيذ التفاعلية (Interactive Packages)</span>
               </div>
               <input
                 type="checkbox"
-                checked={settings.enableWatermark}
-                onChange={() => toggle("enableWatermark")}
+                checked={settings.enablePackageSwitcher}
+                onChange={() => toggle("enablePackageSwitcher")}
                 className="w-4 h-4 accent-amber-500 cursor-pointer"
               />
             </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              عرض خفي لختم سري باسم العميل وشركة NinuSoft في خلفية العرض.
+            <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+              عرض خيارات الباقات التفاعلية (أساسية، متقدمة، مؤسسات) مع حساب التكلفة المباشرة للعميل.
             </p>
+
+            {settings.enablePackageSwitcher && (
+              <div className="space-y-4 pt-3 border-t border-border/50">
+                <h4 className="font-bold text-xs text-amber-400">تخصيص الباقات والأسعار (USD):</h4>
+                <div className="space-y-4">
+                  {(settings.packageTiers || defaultProposalSettings.packageTiers).map((tier, idx) => (
+                    <div key={tier.id || idx} className="p-4 rounded-xl bg-background/60 border border-border/60 space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[11px] text-muted-foreground block mb-1 font-semibold">اسم الباقة</label>
+                          <input
+                            type="text"
+                            value={tier.name}
+                            onChange={(e) => {
+                              const nextTiers = [...(settings.packageTiers || defaultProposalSettings.packageTiers)];
+                              nextTiers[idx] = { ...nextTiers[idx], name: e.target.value };
+                              setSettings({ ...settings, packageTiers: nextTiers });
+                            }}
+                            className="w-full text-xs p-2 rounded-lg bg-card border border-border/60 text-foreground"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] text-muted-foreground block mb-1 font-semibold">السعر ($ USD)</label>
+                          <input
+                            type="number"
+                            value={tier.priceUsd}
+                            onChange={(e) => {
+                              const nextTiers = [...(settings.packageTiers || defaultProposalSettings.packageTiers)];
+                              nextTiers[idx] = { ...nextTiers[idx], priceUsd: Number(e.target.value) || 0 };
+                              setSettings({ ...settings, packageTiers: nextTiers });
+                            }}
+                            className="w-full text-xs p-2 rounded-lg bg-card border border-border/60 text-foreground font-mono"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] text-muted-foreground block mb-1 font-semibold">الوصف المختصر</label>
+                        <input
+                          type="text"
+                          value={tier.description}
+                          onChange={(e) => {
+                            const nextTiers = [...(settings.packageTiers || defaultProposalSettings.packageTiers)];
+                            nextTiers[idx] = { ...nextTiers[idx], description: e.target.value };
+                            setSettings({ ...settings, packageTiers: nextTiers });
+                          }}
+                          className="w-full text-xs p-2 rounded-lg bg-card border border-border/60 text-foreground"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Expiry Countdown */}
