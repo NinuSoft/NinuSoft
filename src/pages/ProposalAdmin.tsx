@@ -2,7 +2,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { proposalMarkdownComponents, remarkAlerts } from "@/components/ProposalMarkdown";
 
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, SyntheticEvent, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,6 +36,7 @@ import {
   Search,
   RefreshCw,
   Copy,
+  Link,
   Shield,
   ArrowLeft,
 } from "@/components/Icons";
@@ -125,6 +126,17 @@ export default function ProposalAdmin() {
     }));
   };
 
+  const updateSectionSignature = (id: string, hasSignature: boolean) => {
+    const updated = sections.map((sec) =>
+      sec.id === id ? { ...sec, hasSignature } : sec
+    );
+    setSections(updated);
+    setForm((current) => ({
+      ...current,
+      markdown: serializeProposalSections(updated),
+    }));
+  };
+
   const addNewSection = () => {
     const newId = `sec-${Date.now()}`;
     const newSec: ProposalSection = {
@@ -168,6 +180,46 @@ export default function ProposalAdmin() {
       ...current,
       markdown: serializeProposalSections(copy),
     }));
+  };
+
+  const [copiedSectionId, setCopiedSectionId] = useState<string | null>(null);
+  const [copiedSectionContentId, setCopiedSectionContentId] = useState<string | null>(null);
+
+  const copySectionHyperlink = async (sec: ProposalSection) => {
+    const hyperlink = `[${sec.title || "القسم"}](#${sec.id})`;
+    try {
+      await navigator.clipboard.writeText(hyperlink);
+      setCopiedSectionId(sec.id);
+      setMessage(`تم نسخ رابط القسم كـ Hyperlink: ${hyperlink}`);
+      setTimeout(() => setCopiedSectionId(null), 2500);
+    } catch {
+      setError("تعذر النسخ للحافظة.");
+    }
+  };
+
+  const copySingleSection = async (sec: ProposalSection) => {
+    const sigMeta = sec.hasSignature ? " | signature: true" : "";
+    const sectionBlock = `<!-- section: ${sec.title || "قسم"}${sigMeta} -->\n${sec.content || ""}`;
+    try {
+      await navigator.clipboard.writeText(sectionBlock);
+      setCopiedSectionContentId(sec.id);
+      setMessage(`تم نسخ نص ومحتوى القسم "${sec.title || "القسم"}" كـ Markdown.`);
+      setTimeout(() => setCopiedSectionContentId(null), 2500);
+    } catch {
+      setError("تعذر النسخ للحافظة.");
+    }
+  };
+
+  const copyAllSectionsHyperlinks = async () => {
+    const text = sections
+      .map((sec, idx) => `${idx + 1}. [${sec.title || `قسم ${idx + 1}`}](#${sec.id})`)
+      .join("\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      setMessage("تم نسخ فهرس جميع الأقسام كروابط Hyperlinks.");
+    } catch {
+      setError("تعذر النسخ للحافظة.");
+    }
   };
 
   const publicOrigin = useMemo(() => window.location.origin, []);
@@ -214,7 +266,7 @@ export default function ProposalAdmin() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const login = async (event: FormEvent) => {
+  const login = async (event: SyntheticEvent) => {
     event.preventDefault();
     setBusy(true);
     setError("");
@@ -302,7 +354,7 @@ export default function ProposalAdmin() {
     }
   };
 
-  const saveProposal = async (event: FormEvent) => {
+  const saveProposal = async (event: SyntheticEvent) => {
     event.preventDefault();
     setBusy(true);
     setError("");
@@ -724,10 +776,22 @@ export default function ProposalAdmin() {
                     >
                       <span className="w-4 h-4 rounded-full bg-muted flex items-center justify-center text-[10px]">{idx + 1}</span>
                       <span>{sec.title || `قسم ${idx + 1}`}</span>
+                      {sec.hasSignature && <span title="يتطلب توقيع العميل" className="text-amber-400 text-[10px] font-semibold">(توقيع)</span>}
                     </button>
                   ))}
                   <Button type="button" variant="outline" size="sm" className="h-7 text-xs font-bold" onClick={addNewSection}>
                     + إضافة قسم
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs font-bold flex items-center gap-1 text-muted-foreground hover:text-foreground"
+                    onClick={() => void copyAllSectionsHyperlinks()}
+                    title="نسخ فهرس كافة الأقسام كروابط Hyperlinks"
+                  >
+                    <Link className="w-3.5 h-3.5" />
+                    <span>نسخ فهرس الأقسام</span>
                   </Button>
                 </div>
 
@@ -741,16 +805,67 @@ export default function ProposalAdmin() {
                     <div className="space-y-4 pt-1">
                       {/* Section Header Controls */}
                       <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-center bg-card/60 p-3 rounded-lg border border-border/60">
-                        <div className="space-y-1">
-                          <span className="text-xs font-bold text-muted-foreground">عنوان هذا القسم</span>
-                          <Input
-                            value={activeSec.title}
-                            onChange={(e) => updateSectionTitle(activeSec.id, e.target.value)}
-                            placeholder="مثال: 1. نطاق العمل والتسليمات"
-                            className="font-bold text-sm"
-                          />
+                        <div className="space-y-2">
+                          <div className="space-y-1">
+                            <span className="text-xs font-bold text-muted-foreground">عنوان هذا القسم</span>
+                            <Input
+                              value={activeSec.title}
+                              onChange={(e) => updateSectionTitle(activeSec.id, e.target.value)}
+                              placeholder="مثال: 1. نطاق العمل والتسليمات"
+                              className="font-bold text-sm"
+                            />
+                          </div>
+                          <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-amber-400 select-none pt-1">
+                            <input
+                              type="checkbox"
+                              checked={Boolean(activeSec.hasSignature)}
+                              onChange={(e) => updateSectionSignature(activeSec.id, e.target.checked)}
+                              className="w-4 h-4 accent-amber-500 rounded cursor-pointer"
+                            />
+                            <span>يتطلب توقيع إلكتروني خاص بهذا القسم</span>
+                          </label>
                         </div>
                         <div className="flex items-center gap-1.5 self-end flex-wrap">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-9 text-xs font-bold flex items-center gap-1.5 border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20"
+                            onClick={() => void copySectionHyperlink(activeSec)}
+                            title="نسخ رابط هذا القسم كـ Hyperlink (لاستخدامه في نص العرض)"
+                          >
+                            {copiedSectionId === activeSec.id ? (
+                              <>
+                                <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+                                <span>تم النسخ!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Link className="w-3.5 h-3.5" />
+                                <span>نسخ رابط القسم (Hyperlink)</span>
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-9 text-xs font-bold flex items-center gap-1.5"
+                            onClick={() => void copySingleSection(activeSec)}
+                            title="نسخ نص ومحتوى هذا القسم بالكامل كـ Markdown"
+                          >
+                            {copiedSectionContentId === activeSec.id ? (
+                              <>
+                                <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+                                <span>تم نسخ المحتوى!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3.5 h-3.5" />
+                                <span>نسخ القسم</span>
+                              </>
+                            )}
+                          </Button>
                           <Button
                             type="button"
                             variant="outline"
