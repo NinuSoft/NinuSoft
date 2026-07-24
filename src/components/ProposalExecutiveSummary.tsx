@@ -1,5 +1,7 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
 import {
   CheckCircle,
@@ -11,6 +13,7 @@ import {
   Target,
   XCircle,
 } from "@/components/Icons";
+import { proposalMarkdownComponents, remarkAlerts } from "@/components/ProposalMarkdown";
 
 interface ProposalExecutiveSummaryProps {
   proposalTitle: string;
@@ -19,6 +22,7 @@ interface ProposalExecutiveSummaryProps {
   token: string;
   isOpen: boolean;
   onClose: () => void;
+  enablePrint?: boolean;
 }
 
 function cleanMarkdown(value: string) {
@@ -38,6 +42,7 @@ export function ProposalExecutiveSummary({
   token,
   isOpen,
   onClose,
+  enablePrint = true,
 }: ProposalExecutiveSummaryProps) {
   useEffect(() => {
     if (!isOpen) return;
@@ -48,10 +53,12 @@ export function ProposalExecutiveSummary({
     };
 
     document.body.style.overflow = "hidden";
+    document.body.classList.add("executive-summary-open");
     window.addEventListener("keydown", handleKeyDown);
 
     return () => {
       document.body.style.overflow = previousOverflow;
+      document.body.classList.remove("executive-summary-open");
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [isOpen, onClose]);
@@ -75,10 +82,11 @@ export function ProposalExecutiveSummary({
   const overview =
     content
       .split(/\n\s*\n/)
-      .map(cleanMarkdown)
+      .map((paragraph) => paragraph.replace(/<!--[\s\S]*?-->/g, "").trim())
       .find(
         (paragraph) =>
-          paragraph.length > 45 &&
+          paragraph.length > 20 &&
+          !paragraph.startsWith("#") &&
           !paragraph.startsWith("section:") &&
           !paragraph.includes("```"),
       ) ||
@@ -119,16 +127,18 @@ export function ProposalExecutiveSummary({
           </div>
 
           <div className="executive-summary-actions">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => window.print()}
-              className="executive-summary-print"
-            >
-              <Printer aria-hidden="true" />
-              <span>طباعة</span>
-            </Button>
+            {enablePrint && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => window.print()}
+                className="executive-summary-print"
+              >
+                <Printer aria-hidden="true" />
+                <span>طباعة</span>
+              </Button>
+            )}
             <Button
               type="button"
               variant="ghost"
@@ -188,7 +198,11 @@ export function ProposalExecutiveSummary({
                   <h3>ملخص العرض</h3>
                 </div>
               </div>
-              <p>{overview.slice(0, 650)}</p>
+              <div className="executive-summary-overview-content text-sm leading-relaxed text-foreground/90">
+                <ReactMarkdown remarkPlugins={[remarkGfm, remarkAlerts]} components={proposalMarkdownComponents}>
+                  {overview}
+                </ReactMarkdown>
+              </div>
             </section>
 
             <section className="executive-summary-grid">

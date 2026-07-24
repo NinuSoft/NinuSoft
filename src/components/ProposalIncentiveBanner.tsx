@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Sparkles, PenTool, RefreshCw } from "@/components/Icons";
 import { askProposalAiApi } from "@/lib/proposals-api";
+import { proposalMarkdownComponents, remarkAlerts } from "@/components/ProposalMarkdown";
 
 interface ProposalIncentiveBannerProps {
   content?: string;
@@ -67,9 +70,11 @@ export function ProposalIncentiveBanner({
               <span>جاري تجهيز التفاصيل...</span>
             </div>
           ) : (
-            <p className="text-xs text-foreground/90 font-medium leading-relaxed animate-in fade-in duration-300">
-              {incentiveText}
-            </p>
+            <div className="text-xs text-foreground/90 font-medium leading-relaxed animate-in fade-in duration-300 [&>p]:m-0 [&>p]:inline">
+              <ReactMarkdown remarkPlugins={[remarkGfm, remarkAlerts]} components={proposalMarkdownComponents}>
+                {incentiveText}
+              </ReactMarkdown>
+            </div>
           )}
         </div>
       </div>
