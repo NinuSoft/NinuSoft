@@ -23,6 +23,13 @@ interface Message {
   modelUsed?: string;
 }
 
+function formatTimestamp(): string {
+  return new Date().toLocaleTimeString("ar-EG-u-nu-latn", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export function ProposalAiAssistant({
   proposalTitle,
   clientName,
@@ -36,7 +43,7 @@ export function ProposalAiAssistant({
       id: "welcome",
       sender: "bot",
       text: `مرحباً بك عزيزي **${clientName}**! 👋\n\nأنا **مستشار الذكاء الاصطناعي الخبير** لمستند **(${proposalTitle})**.\n\nيسعدني الإجابة على أي استفسارات حول **الجدول الزمني، الميزانية، أو الضمانات الفنية**. كيف يمكنني مساعدتك اليوم؟`,
-      time: new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }),
+      time: formatTimestamp(),
     },
   ]);
   const [input, setInput] = useState("");
@@ -88,7 +95,7 @@ export function ProposalAiAssistant({
     const question = (queryText || input).trim();
     if (!question || loading) return;
 
-    const currentTime = new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+    const currentTime = formatTimestamp();
     const userMsg: Message = { id: `u-${Date.now()}`, sender: "user", text: question, time: currentTime };
 
     setMessages((prev) => [...prev, userMsg]);
@@ -116,7 +123,7 @@ export function ProposalAiAssistant({
           id: `b-${Date.now()}`,
           sender: "bot",
           text: answer,
-          time: new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }),
+          time: formatTimestamp(),
           modelUsed,
         },
       ]);
@@ -141,7 +148,7 @@ export function ProposalAiAssistant({
           id: `b-${Date.now()}`,
           sender: "bot",
           text: fallbackAnswer,
-          time: new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }),
+          time: formatTimestamp(),
         },
       ]);
     } finally {
