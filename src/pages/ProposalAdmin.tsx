@@ -1321,7 +1321,7 @@ export default function ProposalAdmin() {
                           <Button size="sm" variant="outline" onClick={() => void copyLink(item.token)} aria-label="نسخ رابط العرض">
                             <Copy className="h-3.5 w-3.5" />
                           </Button>
-                          <Button size="sm" variant="outline" onClick={() => { setShareProposal(item); setSharePassword(""); setShareCopied(false); }} className="flex items-center gap-1" aria-label="مشاركة العرض">
+                          <Button size="sm" variant="outline" onClick={() => { setShareProposal(item); setSharePassword(item.code ?? ""); setShareCopied(false); }} className="flex items-center gap-1" aria-label="مشاركة العرض">
                             <Share2 className="h-3.5 w-3.5" />
                           </Button>
                           <Button size="sm" variant="ghost" onClick={() => void editProposal(item.id)}>تعديل</Button>

@@ -15,6 +15,7 @@ export type Proposal = {
 
 export type ProposalSummary = Omit<Proposal, "markdown"> & {
   protected: boolean;
+  code: string | null;
   active: boolean;
   firstOpenedAt: string | null;
   lastOpenedAt: string | null;
