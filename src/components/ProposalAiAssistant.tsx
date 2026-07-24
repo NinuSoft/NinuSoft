@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
-import { XCircle, Send, Sparkles, CheckCircle, RefreshCw } from "@/components/Icons";
+import { XCircle, Send, Sparkles, CheckCircle, RefreshCw, Rocket, TrendingUp, Target, Shield } from "@/components/Icons";
 import { askProposalAiApi } from "@/lib/proposals-api";
 
 interface ProposalAiAssistantProps {
@@ -45,11 +45,31 @@ export function ProposalAiAssistant({
   const [engineStatus, setEngineStatus] = useState<string>("Cloudflare Workers AI Live");
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
-  const quickQuestions = [
-    "لماذا اختيار NinuSoft هو الخيار الأفضل لهذا المشروع؟",
-    "ما هي تفاصيل الميزانية والعائد الاستثماري؟",
-    "ما هو الجدول الزمني والالتزام بالتسليم؟",
-    "ما هي ضمانات الجودة والدعم التقني المستمر؟",
+  const structuredQuestions = [
+    {
+      icon: Rocket,
+      color: "text-amber-400 bg-amber-500/10 border-amber-500/30",
+      text: "لماذا اختيار NinuSoft هو الخيار الأفضل لهذا المشروع؟",
+      label: "رؤية ومزايا NinuSoft",
+    },
+    {
+      icon: TrendingUp,
+      color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
+      text: "ما هي تفاصيل الميزانية والعائد الاستثماري؟",
+      label: "التكلفة والعائد المالي",
+    },
+    {
+      icon: Target,
+      color: "text-sky-400 bg-sky-500/10 border-sky-500/30",
+      text: "ما هو الجدول الزمني والالتزام بالتسليم؟",
+      label: "الجدول والمراحل الزمنية",
+    },
+    {
+      icon: Shield,
+      color: "text-purple-400 bg-purple-500/10 border-purple-500/30",
+      text: "ما هي ضمانات الجودة والدعم التقني المستمر؟",
+      label: "الضمانات والدعم الفني",
+    },
   ];
 
   useEffect(() => {
@@ -162,20 +182,24 @@ export function ProposalAiAssistant({
           </Button>
         </div>
 
-        {/* Quick Suggestion Chips */}
-        <div className="p-3 bg-muted/20 border-b border-border/40 flex items-center gap-2 overflow-x-auto text-xs no-scrollbar">
-          <span className="text-muted-foreground font-bold whitespace-nowrap text-[11px]">أسئلة مقترحة:</span>
-          {quickQuestions.map((q, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => handleAsk(q)}
-              disabled={loading}
-              className="px-3 py-1.5 rounded-xl bg-card hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 whitespace-nowrap transition-all text-xs font-medium hover:border-amber-500/60 shadow-sm"
-            >
-              {q}
-            </button>
-          ))}
+        {/* Top Quick Suggestion Pills */}
+        <div className="p-2.5 bg-muted/20 border-b border-border/40 flex items-center gap-2 overflow-x-auto text-xs no-scrollbar">
+          <span className="text-muted-foreground font-bold whitespace-nowrap text-[11px] shrink-0">أسئلة سريعة:</span>
+          {structuredQuestions.map((q, i) => {
+            const IconComponent = q.icon;
+            return (
+              <button
+                key={i}
+                type="button"
+                onClick={() => handleAsk(q.text)}
+                disabled={loading}
+                className="px-3 py-1.5 rounded-full bg-card hover:bg-amber-500/10 text-foreground border border-amber-500/20 hover:border-amber-500/50 whitespace-nowrap transition-all text-xs font-medium flex items-center gap-1.5 shadow-sm hover:scale-[1.02] active:scale-95"
+              >
+                <IconComponent className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+                <span>{q.label}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Chat Body */}
@@ -239,6 +263,46 @@ export function ProposalAiAssistant({
               </div>
             </div>
           ))}
+
+          {/* Welcome Screen Interactive Suggestion Grid Cards */}
+          {messages.length === 1 && (
+            <div className="mt-6 pt-4 border-t border-border/40 space-y-3">
+              <p className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>اختر استفساراً شائعاً للبدء الفوري:</span>
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {structuredQuestions.map((q, i) => {
+                  const IconComponent = q.icon;
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => handleAsk(q.text)}
+                      disabled={loading}
+                      className="p-3.5 rounded-2xl bg-gradient-to-br from-card/90 to-muted/40 border border-border/80 hover:border-amber-500/50 text-right transition-all group hover:shadow-lg hover:scale-[1.02] active:scale-95 flex flex-col justify-between gap-2"
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <span className={`p-2 rounded-xl border ${q.color}`}>
+                          <IconComponent className="w-4 h-4" />
+                        </span>
+                        <span className="text-[10px] text-muted-foreground font-medium group-hover:text-amber-400 transition-colors">
+                          اضغط للسؤال ↵
+                        </span>
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-xs text-foreground group-hover:text-amber-300 transition-colors line-clamp-2">
+                          {q.text}
+                        </h4>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{q.label}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Thinking Indicator */}
           {loading && (
