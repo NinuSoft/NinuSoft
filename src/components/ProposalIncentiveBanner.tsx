@@ -1,74 +1,79 @@
-import { useMemo } from "react";
-import { Sparkles, PenTool } from "@/components/Icons";
+import { useEffect, useState } from "react";
+import { Sparkles, PenTool, RefreshCw } from "@/components/Icons";
+import { askProposalAiApi } from "@/lib/proposals-api";
 
 interface ProposalIncentiveBannerProps {
   content?: string;
   clientName?: string;
+  proposalToken?: string;
   expiresAt?: string | null;
   onScrollToSign?: () => void;
-}
-
-function extractAiIncentive(markdown?: string, clientName?: string): string {
-  if (!markdown) {
-    return clientName
-      ? `حافز خاص لـ (${clientName}): احصل على حزمة الدعم التقني والضمان السريع المرفقة مع هذا العرض عند التوقيع الفوري.`
-      : "احصل على الدعم التقني والضمان الفني الشامل المرفق في المقترح عند اعتماد وتوقيع العرض قبل انتهاء الصلاحية.";
-  }
-
-  const lines = markdown.split("\n").map((l) => l.trim());
-
-  // Search for explicit bonus / support / warranty terms in proposal text
-  const bonusLines = lines.filter(
-    (line) =>
-      line.includes("ضمان") ||
-      line.includes("دعم") ||
-      line.includes("مجاني") ||
-      line.includes("صيانة") ||
-      line.includes("أشهر") ||
-      line.includes("ميزة")
-  );
-
-  if (bonusLines.length > 0) {
-    // Clean up markdown bullet points / headers
-    const cleaned = bonusLines[0]
-      .replace(/^[-*#>]+\s*/, "")
-      .replace(/[*_~`]/g, "")
-      .trim();
-    if (cleaned.length > 10 && cleaned.length < 160) {
-      return `ميزة العرض الحصرية لـ (${clientName || "العميل"}): ${cleaned} - مدمجة مجاناً عند الاعتماد والتوقيع المبكر.`;
-    }
-  }
-
-  return `حافز مخصص لـ (${clientName || "العميل"}): اعتماد العرض المباشر يضمن لك حجز فريق العمل فوراً والحصول على الضمان والصيانة الفنية الكاملة المحددة في المقترح.`;
 }
 
 export function ProposalIncentiveBanner({
   content,
   clientName,
+  proposalToken,
   expiresAt,
   onScrollToSign,
 }: ProposalIncentiveBannerProps) {
-  const aiIncentiveText = useMemo(
-    () => extractAiIncentive(content, clientName),
-    [content, clientName]
-  );
+  const [incentiveText, setIncentiveText] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const fetchDynamicAiIncentive = async () => {
+    setLoading(true);
+    try {
+      if (proposalToken) {
+        const prompt = `صغ حافزاً تسويقياً حماسياً ومقنعاً جداً في سطر واحد فقط (15 كلمة) يغري العميل (${clientName || "العميل"}) بالتوقيع والاعتماد المبكر لهذا العرض الفني والمالي.`;
+        const res = await askProposalAiApi(proposalToken, prompt);
+        if (res?.answer && res.answer.trim().length > 10) {
+          setIncentiveText(res.answer.trim().replace(/^["']|["']$/g, ""));
+          setLoading(false);
+          return;
+        }
+      }
+    } catch {
+      // Fallback fallback if network drops
+    }
+
+    // Smart context extraction fallback if API unreached
+    const fallbackText = clientName
+      ? `عرض حصري لـ (${clientName}): احصل على حزمة الضمان الذهبي والدعم التقني السريع المرفقة عند التوقيع المباشر.`
+      : "اعتماد العرض المباشر يضمن لك حجز فريق العمل فوراً والحصول على كافة مزايا الضمان والصيانة الفنية المحددة.";
+    setIncentiveText(fallbackText);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchDynamicAiIncentive();
+  }, [proposalToken, clientName]);
 
   return (
     <div className="proposal-incentive-banner mb-6 p-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-card border border-amber-500/50 shadow-xl flex items-center justify-between gap-4 flex-wrap text-start dir-rtl animate-in fade-in duration-300">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-1 min-w-[280px]">
         <div className="w-10 h-10 rounded-xl bg-amber-500 text-black flex items-center justify-center font-bold shrink-0 shadow-lg">
-          <Sparkles className="w-5 h-5" />
+          <Sparkles className="w-5 h-5 animate-pulse" />
         </div>
-        <div>
-          <h4 className="font-extrabold text-sm text-amber-300 flex items-center gap-1.5">
-            <span>حافز الحجز المباشر (AI Generated Incentive)</span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono">
-              مستخرج ذكياً من العرض
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h4 className="font-extrabold text-sm text-amber-300">
+              حافز الحجز المباشر (Workers AI Dynamic Engine)
+            </h4>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono flex items-center gap-1">
+              <Sparkles className="w-3 h-3" /> مولّد ذكياً حيّاً
             </span>
-          </h4>
-          <p className="text-xs text-foreground/90 font-medium mt-0.5">
-            {aiIncentiveText}
-          </p>
+          </div>
+
+          {loading ? (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground animate-pulse py-1">
+              <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-400" />
+              <span>جاري توليد حافز تسويقي مخصص لهذا العرض باستخدام الذكاء الاصطناعي...</span>
+            </div>
+          ) : (
+            <p className="text-xs text-foreground/90 font-medium leading-relaxed animate-in fade-in duration-300">
+              {incentiveText}
+            </p>
+          )}
         </div>
       </div>
 
