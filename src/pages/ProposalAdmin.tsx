@@ -18,6 +18,7 @@ import {
   type ProposalSection,
 } from "@/lib/proposal-sections";
 import { ProposalSettingsManager } from "@/components/ProposalSettingsManager";
+import { ProposalAnalytics } from "@/components/ProposalAnalytics";
 
 type FormState = {
   id: string;
@@ -62,7 +63,7 @@ export default function ProposalAdmin() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [activeAdminTab, setActiveAdminTab] = useState<"editor" | "settings">("editor");
+  const [activeAdminTab, setActiveAdminTab] = useState<"editor" | "analytics" | "settings">("editor");
 
   const [sections, setSections] = useState<ProposalSection[]>(() =>
     parseProposalSections(emptyForm.markdown)
@@ -404,6 +405,17 @@ export default function ProposalAdmin() {
             <button
               type="button"
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                activeAdminTab === "analytics"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveAdminTab("analytics")}
+            >
+              📊 إحصائيات الأداء
+            </button>
+            <button
+              type="button"
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 activeAdminTab === "settings"
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
@@ -421,6 +433,10 @@ export default function ProposalAdmin() {
         {activeAdminTab === "settings" ? (
           <section className="proposal-editor">
             <ProposalSettingsManager />
+          </section>
+        ) : activeAdminTab === "analytics" ? (
+          <section className="proposal-editor">
+            <ProposalAnalytics proposalsCount={items.length} />
           </section>
         ) : (
           <>

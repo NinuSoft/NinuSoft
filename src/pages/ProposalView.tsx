@@ -15,6 +15,9 @@ import {
 import { parseProposalSections } from "@/lib/proposal-sections";
 import { ProposalSignature } from "@/components/ProposalSignature";
 import { getProposalSettings } from "@/lib/proposal-settings";
+import { ProposalWatermark } from "@/components/ProposalWatermark";
+import { ProposalExpiryCountdown } from "@/components/ProposalExpiryCountdown";
+import { ProposalComments } from "@/components/ProposalComments";
 
 function Brand() {
   return (
@@ -290,6 +293,9 @@ export default function ProposalView() {
 
   return (
     <div className="proposal-page" dir="rtl">
+      {settings.enableWatermark && (
+        <ProposalWatermark clientName={proposal.clientName} />
+      )}
       {settings.enableReadingTime && (
         <div
           className="proposal-reading-progress-bar"
@@ -316,6 +322,10 @@ export default function ProposalView() {
       </header>
 
       <main className="proposal-shell">
+        {settings.enableExpiryCountdown && (
+          <ProposalExpiryCountdown />
+        )}
+
         <div className="proposal-meta">
           <div>
             <span>عرض خاص إلى</span>
@@ -468,6 +478,10 @@ export default function ProposalView() {
                   allowUpload={settings.allowUploadSignature}
                   allowRejection={settings.allowRejection}
                 />
+              )}
+
+              {settings.enableInlineComments && (
+                <ProposalComments proposalTitle={proposal.title} />
               )}
             </article>
           </div>

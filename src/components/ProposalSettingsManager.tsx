@@ -236,6 +236,81 @@ export function ProposalSettingsManager() {
               إظهار أزرار الطباعة وتنزيل نسخة PDF للعميل من الشريط العلوي.
             </p>
           </div>
+
+          {/* Watermark */}
+          <div
+            className={`p-5 rounded-xl border transition-all cursor-pointer ${
+              settings.enableWatermark
+                ? "border-amber-500/40 bg-card/90 shadow-md"
+                : "border-border/40 bg-card/40 opacity-75"
+            }`}
+            onClick={() => toggle("enableWatermark")}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 text-base font-bold text-foreground">
+                <span>🏷️</span> العلامة المائية الشفافة (Confidential)
+              </div>
+              <input
+                type="checkbox"
+                checked={settings.enableWatermark}
+                onChange={() => toggle("enableWatermark")}
+                className="w-4 h-4 accent-amber-500 cursor-pointer"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              عرض خفي لختم سري باسم العميل وشركة NinuSoft في خلفية العرض.
+            </p>
+          </div>
+
+          {/* Expiry Countdown */}
+          <div
+            className={`p-5 rounded-xl border transition-all cursor-pointer ${
+              settings.enableExpiryCountdown
+                ? "border-amber-500/40 bg-card/90 shadow-md"
+                : "border-border/40 bg-card/40 opacity-75"
+            }`}
+            onClick={() => toggle("enableExpiryCountdown")}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 text-base font-bold text-foreground">
+                <span>⏰</span> عداد تنازلي لتاريخ الصلاحية
+              </div>
+              <input
+                type="checkbox"
+                checked={settings.enableExpiryCountdown}
+                onChange={() => toggle("enableExpiryCountdown")}
+                className="w-4 h-4 accent-amber-500 cursor-pointer"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              تنبيه العميل بالوقت المتبقي (بالأيام والساعات والدقائق) قبل انتهاء صلاحية العرض.
+            </p>
+          </div>
+
+          {/* Inline Comments */}
+          <div
+            className={`p-5 rounded-xl border transition-all cursor-pointer ${
+              settings.enableInlineComments
+                ? "border-amber-500/40 bg-card/90 shadow-md"
+                : "border-border/40 bg-card/40 opacity-75"
+            }`}
+            onClick={() => toggle("enableInlineComments")}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 text-base font-bold text-foreground">
+                <span>💬</span> التعليقات والأسئلة التفاعلية
+              </div>
+              <input
+                type="checkbox"
+                checked={settings.enableInlineComments}
+                onChange={() => toggle("enableInlineComments")}
+                className="w-4 h-4 accent-amber-500 cursor-pointer"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              السماح للعميل بكتابة استفسارات وملاحظات مباشرة أسفل الوثيقة.
+            </p>
+          </div>
         </div>
       </div>
 

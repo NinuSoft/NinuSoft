@@ -9,6 +9,11 @@ export type ProposalSettings = {
   enableSidebarNav: boolean;
   enablePdfExport: boolean;
   enableCopyCode: boolean;
+  enableWatermark: boolean;
+  enableExpiryCountdown: boolean;
+  enableInlineComments: boolean;
+  enableCustomBranding: boolean;
+  enableAnalyticsDashboard: boolean;
 };
 
 export const defaultProposalSettings: ProposalSettings = {
@@ -22,6 +27,11 @@ export const defaultProposalSettings: ProposalSettings = {
   enableSidebarNav: true,
   enablePdfExport: true,
   enableCopyCode: true,
+  enableWatermark: true,
+  enableExpiryCountdown: true,
+  enableInlineComments: true,
+  enableCustomBranding: true,
+  enableAnalyticsDashboard: true,
 };
 
 const SETTINGS_KEY = "ninusoft_proposal_admin_settings";
