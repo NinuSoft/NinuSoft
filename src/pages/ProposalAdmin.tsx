@@ -24,6 +24,7 @@ import {
   BarChart,
   Settings,
   Eye,
+  EyeOff,
   FileSpreadsheet,
   BookOpen,
   Send,
@@ -87,6 +88,7 @@ export default function ProposalAdmin() {
   const [busy, setBusy] = useState(false);
   const [isProtected, setIsProtected] = useState(false);
   const [protectionType, setProtectionType] = useState<"pin" | "password">("pin");
+  const [showPin, setShowPin] = useState(false);
   const [selectedAuditProposal, setSelectedAuditProposal] = useState<ProposalSummary | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [activeAdminTab, setActiveAdminTab] = useState<"editor" | "analytics" | "settings">("editor");
@@ -798,9 +800,8 @@ export default function ProposalAdmin() {
                             updateField("removePassword", false);
                             setIsProtected(true);
                             setProtectionType("pin");
-                            if (form.password && !/^\d+$/.test(form.password)) {
-                              updateField("password", "");
-                            }
+                            updateField("password", "");
+                            setShowPin(false);
                           }}
                         >
                           رمز PIN عددي
@@ -816,6 +817,8 @@ export default function ProposalAdmin() {
                             updateField("removePassword", false);
                             setIsProtected(true);
                             setProtectionType("password");
+                            updateField("password", "");
+                            setShowPin(false);
                           }}
                         >
                           كلمة سر نصية
@@ -829,28 +832,82 @@ export default function ProposalAdmin() {
                               ? form.id ? "رمز PIN العددي الجديد" : "رمز PIN العددي"
                               : form.id ? "كلمة السر النصية الجديدة" : "كلمة السر النصية"}
                           </label>
-                          <Input
-                            id="proposal-pin-input"
-                            type="password"
-                            inputMode={currentMode === "pin" ? "numeric" : "text"}
-                            value={form.password}
-                            onChange={(event) => {
-                              const val = event.target.value;
-                              if (currentMode === "pin") {
-                                const onlyDigits = val.replace(/\D/g, "").slice(0, 12);
-                                updateField("password", onlyDigits);
-                              } else {
-                                updateField("password", val);
-                              }
-                            }}
-                            placeholder={
-                              currentMode === "pin"
-                                ? "رمز PIN من 8 أرقام على الأقل (مثال: 48218210)"
-                                : "أدخل كلمة سر نصية مخصصة (مثال: NinuSoft#2026)"
-                            }
-                            className="font-mono text-sm h-10"
-                            autoFocus
-                          />
+                          <div className="flex items-center gap-2">
+                            <div className="relative flex-1">
+                              <Input
+                                id="proposal-pin-input"
+                                type={showPin ? "text" : "password"}
+                                inputMode={currentMode === "pin" ? "numeric" : "text"}
+                                value={form.password}
+                                onChange={(event) => {
+                                  const val = event.target.value;
+                                  if (currentMode === "pin") {
+                                    const onlyDigits = val.replace(/\D/g, "").slice(0, 12);
+                                    updateField("password", onlyDigits);
+                                  } else {
+                                    updateField("password", val);
+                                  }
+                                }}
+                                placeholder={
+                                  currentMode === "pin"
+                                    ? "رمز PIN من 8 أرقام على الأقل (مثال: 48218210)"
+                                    : "أدخل كلمة سر نصية مخصصة (مثال: NinuSoft#2026)"
+                                }
+                                className="font-mono text-sm h-10 pr-10 w-full"
+                                autoFocus
+                              />
+                              <button
+                                type="button"
+                                tabIndex={-1}
+                                onClick={() => setShowPin((v) => !v)}
+                                className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground transition-colors"
+                                title={showPin ? "إخفاء" : "إظهار"}
+                              >
+                                {showPin ? <EyeOff size={15} /> : <Eye size={15} />}
+                              </button>
+                            </div>
+                            <button
+                              type="button"
+                              title={currentMode === "pin" ? "توليد PIN عشوائي" : "توليد كلمة سر عشوائية"}
+                              onClick={() => {
+                                let generated = "";
+                                if (currentMode === "pin") {
+                                  generated = Array.from(
+                                    { length: 8 },
+                                    () => Math.floor(Math.random() * 10)
+                                  ).join("");
+                                } else {
+                                  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%&";
+                                  generated = Array.from(
+                                    { length: 12 },
+                                    () => chars[Math.floor(Math.random() * chars.length)]
+                                  ).join("");
+                                }
+                                updateField("password", generated);
+                              }}
+                              className="h-10 w-10 flex items-center justify-center rounded-md border border-border bg-muted hover:bg-muted/70 text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+                            >
+                              <RefreshCw size={15} />
+                            </button>
+                            <button
+                              type="button"
+                              title="نسخ"
+                              disabled={!form.password}
+                              onClick={() => {
+                                if (!form.password) return;
+                                navigator.clipboard.writeText(form.password).catch(() => {});
+                                const btn = document.getElementById("pin-copy-btn") as HTMLButtonElement | null;
+                                if (btn) {
+                                  btn.dataset.copied = "1";
+                                  setTimeout(() => { delete btn.dataset.copied; btn.innerHTML = btn.dataset.orig ?? ""; }, 1500);
+                                }
+                              }}
+                              id="pin-copy-btn"
+                              className="h-10 w-10 flex items-center justify-center rounded-md border border-border bg-muted hover:bg-muted/70 text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                              <Copy size={15} />
+                            </button>
+                          </div>
                           <small className="text-[11px] text-muted-foreground block mt-1">
                             {currentMode === "pin"
                               ? "يجب أن يتكون رمز PIN من 8 أرقام على الأقل."
