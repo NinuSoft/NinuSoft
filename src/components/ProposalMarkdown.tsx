@@ -9,6 +9,14 @@ function walkAst(node: any, visitor: (n: any) => void) {
   }
 }
 
+export function slugify(text: string): string {
+  return String(text || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\u0600-\u06FF\s-]/g, "")
+    .replace(/\s+/g, "-");
+}
+
 const ALERT_PATTERN = /^\s*\[!(NOTE|INFO|TIP|HINT|IMPORTANT|SUCCESS|DONE|CHECK|WARNING|CAUTION|DANGER|ERROR|QUESTION|HELP|FAQ)\]/i;
 const STRIP_PATTERN = /^\s*\[!(NOTE|INFO|TIP|HINT|IMPORTANT|SUCCESS|DONE|CHECK|WARNING|CAUTION|DANGER|ERROR|QUESTION|HELP|FAQ)\]\s*\n?/;
 
@@ -53,6 +61,52 @@ export function remarkAlerts() {
 }
 
 export const proposalMarkdownComponents = {
+  h1(props: any) {
+    const text = typeof props.children === "string" ? props.children : "";
+    const id = slugify(text);
+    return <h1 id={id || undefined} {...props} />;
+  },
+  h2(props: any) {
+    const text = typeof props.children === "string" ? props.children : "";
+    const id = slugify(text);
+    return <h2 id={id || undefined} {...props} />;
+  },
+  h3(props: any) {
+    const text = typeof props.children === "string" ? props.children : "";
+    const id = slugify(text);
+    return <h3 id={id || undefined} {...props} />;
+  },
+  a(props: any) {
+    const { href, children, ...rest } = props;
+    if (href && href.startsWith("#")) {
+      const targetId = href.slice(1).trim();
+      return (
+        <a
+          href={href}
+          {...rest}
+          onClick={(e) => {
+            e.preventDefault();
+            window.location.hash = targetId;
+            setTimeout(() => {
+              const targetEl = document.getElementById(targetId);
+              if (targetEl) {
+                targetEl.scrollIntoView({ behavior: "smooth" });
+              } else {
+                window.scrollTo({ top: 120, behavior: "smooth" });
+              }
+            }, 50);
+          }}
+        >
+          {children}
+        </a>
+      );
+    }
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" {...rest}>
+        {children}
+      </a>
+    );
+  },
   pre(props: any) {
     const { children } = props;
     if (

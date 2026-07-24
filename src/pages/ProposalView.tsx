@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { proposalMarkdownComponents, remarkAlerts } from "@/components/ProposalMarkdown";
+import { proposalMarkdownComponents, remarkAlerts, slugify } from "@/components/ProposalMarkdown";
 import { useParams } from "wouter";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -69,17 +69,46 @@ export default function ProposalView() {
   useEffect(() => {
     if (sections.length === 0) return;
 
+    const resolveSectionFromHash = (hash: string) => {
+      if (!hash) return null;
+      if (hash === "sec-all" || sections.some((s) => s.id === hash)) {
+        return hash;
+      }
+      const matched = sections.find(
+        (s) =>
+          s.title.trim().toLowerCase() === hash.toLowerCase() ||
+          slugify(s.title) === hash.toLowerCase(),
+      );
+      return matched ? matched.id : null;
+    };
+
     const rawHash = window.location.hash.replace("#", "").trim();
     const savedSec = localStorage.getItem(sectionStorageKey);
-    const candidate = rawHash || savedSec;
+    const resolvedFromHash = resolveSectionFromHash(rawHash);
+    const resolvedFromSaved = resolveSectionFromHash(savedSec || "");
 
-    if (candidate && (candidate === "sec-all" || sections.some((s) => s.id === candidate))) {
+    const candidate = resolvedFromHash || resolvedFromSaved;
+
+    if (candidate) {
       setActiveSectionId(candidate);
     } else if (sections.length > 1) {
       setActiveSectionId(sections[0].id);
     } else {
       setActiveSectionId("sec-all");
     }
+
+    const handleHashChange = () => {
+      const newHash = window.location.hash.replace("#", "").trim();
+      const newCandidate = resolveSectionFromHash(newHash);
+      if (newCandidate) {
+        setActiveSectionId(newCandidate);
+        localStorage.setItem(sectionStorageKey, newCandidate);
+        window.scrollTo({ top: 120, behavior: "smooth" });
+      }
+    };
+
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
   }, [sections, token, sectionStorageKey]);
 
   const handleSelectSection = (sectionId: string) => {
