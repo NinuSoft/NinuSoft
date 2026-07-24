@@ -33,6 +33,7 @@ export function ProposalAiAssistant({
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [engineStatus, setEngineStatus] = useState<"workers_ai" | "local" | "connecting">("workers_ai");
 
   const quickQuestions = [
     "لماذا اختيار NinuSoft هو الخيار الأفضل لهذا المشروع؟",
@@ -60,8 +61,10 @@ export function ProposalAiAssistant({
       if (!answer) {
         throw new Error("No response");
       }
+      setEngineStatus("workers_ai");
       setMessages((prev) => [...prev, { sender: "bot", text: answer }]);
     } catch {
+      setEngineStatus("local");
       // Fallback sales-oriented answer logic
       let answer = "";
       const lower = question.toLowerCase();
@@ -88,14 +91,20 @@ export function ProposalAiAssistant({
     <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200 dir-rtl">
       <div className="w-full max-w-lg h-[80vh] flex flex-col rounded-2xl bg-card border border-amber-500/50 shadow-2xl overflow-hidden text-start">
         {/* Header */}
-        <div className="p-4 bg-muted/60 border-b border-border/60 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-xs border border-amber-500/30">
-              AI
+        <div className="p-4 bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-card border-b border-border/60 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="w-10 h-10 rounded-xl bg-amber-500 text-black flex items-center justify-center font-bold shadow-lg">
+              <Sparkles className="w-5 h-5" />
             </span>
             <div>
-              <h3 className="font-bold text-sm text-foreground">مساعد العرض الذكي</h3>
-              <p className="text-[11px] text-muted-foreground">إجابات فورية مستندة لمحتوى المقترح</p>
+              <div className="flex items-center gap-2">
+                <h3 className="font-extrabold text-sm text-foreground">مستشار الذكاء الاصطناعي</h3>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono font-semibold flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  {engineStatus === "workers_ai" ? "Cloudflare Workers AI (Llama 3.1 8B Live)" : "البحث المباشر في العرض"}
+                </span>
+              </div>
+              <p className="text-[11px] text-muted-foreground">إجابات حية ومباشرة مستندة لمحتوى المقترح</p>
             </div>
           </div>
           <Button type="button" variant="ghost" size="sm" onClick={onClose}>
