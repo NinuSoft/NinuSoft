@@ -1,46 +1,55 @@
 import { useEffect, useId, useState } from "react";
 import mermaid from "mermaid";
 import { Button } from "@/components/ui/button";
+import {
+  BarChart,
+  Copy,
+  Download,
+  CheckCircle,
+  Plus,
+  Maximize2,
+  XCircle,
+} from "@/components/Icons";
 
 mermaid.initialize({
   startOnLoad: false,
   theme: "dark",
   themeVariables: {
-    fontFamily: "Inter, sans-serif",
+    fontFamily: "Inter, system-ui, sans-serif",
     darkMode: true,
     background: "transparent",
-    mainBkg: "hsl(220, 28%, 10%)",
-    nodeBorder: "hsl(43, 75%, 49%)",
-    nodeTextColor: "hsl(210, 40%, 95%)",
-    lineColor: "hsl(43, 75%, 60%)",
-    textColor: "hsl(210, 40%, 95%)",
-    primaryColor: "hsl(220, 25%, 15%)",
-    primaryTextColor: "hsl(210, 40%, 95%)",
-    primaryBorderColor: "hsl(43, 75%, 49%)",
-    secondaryColor: "hsl(220, 30%, 12%)",
-    secondaryTextColor: "hsl(210, 40%, 95%)",
-    secondaryBorderColor: "hsl(215, 25%, 25%)",
-    tertiaryColor: "hsl(220, 30%, 8%)",
-    tertiaryTextColor: "hsl(210, 40%, 95%)",
-    tertiaryBorderColor: "hsl(215, 25%, 25%)",
-    clusterBkg: "hsl(220, 30%, 8%)",
-    clusterBorder: "hsl(215, 25%, 25%)",
-    defaultLinkColor: "hsl(43, 75%, 60%)",
-    titleColor: "hsl(43, 75%, 60%)",
-    edgeLabelBackground: "hsl(220, 25%, 12%)",
-    actorBkg: "hsl(220, 28%, 10%)",
-    actorBorder: "hsl(43, 75%, 49%)",
-    actorTextColor: "hsl(210, 40%, 95%)",
-    actorLineColor: "hsl(43, 75%, 60%)",
-    signalColor: "hsl(43, 75%, 60%)",
-    signalTextColor: "hsl(210, 40%, 95%)",
-    labelBoxBkgColor: "hsl(220, 28%, 10%)",
-    labelBoxBorderColor: "hsl(215, 25%, 25%)",
-    labelTextColor: "hsl(210, 40%, 95%)",
-    loopTextColor: "hsl(210, 40%, 95%)",
-    noteBorderColor: "hsl(43, 75%, 49%)",
-    noteBkgColor: "hsl(220, 25%, 15%)",
-    noteTextColor: "hsl(210, 40%, 95%)",
+    mainBkg: "#141c28",
+    nodeBorder: "#e5c158",
+    nodeTextColor: "#f1f5f9",
+    lineColor: "#e5c158",
+    textColor: "#f1f5f9",
+    primaryColor: "#1b2536",
+    primaryTextColor: "#f1f5f9",
+    primaryBorderColor: "#e5c158",
+    secondaryColor: "#17202e",
+    secondaryTextColor: "#f1f5f9",
+    secondaryBorderColor: "#334155",
+    tertiaryColor: "#0f172a",
+    tertiaryTextColor: "#f1f5f9",
+    tertiaryBorderColor: "#334155",
+    clusterBkg: "#0f172a",
+    clusterBorder: "#334155",
+    defaultLinkColor: "#e5c158",
+    titleColor: "#e5c158",
+    edgeLabelBackground: "#1e293b",
+    actorBkg: "#141c28",
+    actorBorder: "#e5c158",
+    actorTextColor: "#f1f5f9",
+    actorLineColor: "#e5c158",
+    signalColor: "#e5c158",
+    signalTextColor: "#f1f5f9",
+    labelBoxBkgColor: "#141c28",
+    labelBoxBorderColor: "#334155",
+    labelTextColor: "#f1f5f9",
+    loopTextColor: "#f1f5f9",
+    noteBorderColor: "#e5c158",
+    noteBkgColor: "#1e293b",
+    noteTextColor: "#f1f5f9",
   },
   securityLevel: "loose",
 });
@@ -115,7 +124,9 @@ export default function Mermaid({ chart }: MermaidProps) {
   if (error) {
     return (
       <div className="mermaid-error border border-destructive/30 bg-destructive/10 text-destructive p-4 rounded-xl my-4 text-sm font-mono dir-ltr">
-        <p className="font-semibold mb-1">Mermaid Syntax Error</p>
+        <p className="font-semibold mb-1 flex items-center gap-1.5">
+          <XCircle className="w-4 h-4" /> Mermaid Syntax Error
+        </p>
         <p className="text-xs opacity-90">{error}</p>
         <pre className="mt-2 text-xs bg-background/50 p-2 rounded overflow-x-auto whitespace-pre-wrap">{chart}</pre>
       </div>
@@ -131,21 +142,22 @@ export default function Mermaid({ chart }: MermaidProps) {
   }
 
   return (
-    <div className="mermaid-container my-6 rounded-xl border border-border/60 bg-card/60 backdrop-blur-sm overflow-hidden shadow-lg">
+    <div className="mermaid-container my-6 rounded-2xl border border-border/70 bg-card/80 backdrop-blur-md overflow-hidden shadow-2xl transition-all">
       {/* Control Header Toolbar */}
-      <div className="mermaid-toolbar flex items-center justify-between gap-2 px-4 py-2 bg-card/80 border-b border-border/40 flex-wrap">
+      <div className="mermaid-toolbar flex items-center justify-between gap-2 px-4 py-2.5 bg-muted/40 border-b border-border/50 flex-wrap dir-rtl">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-primary flex items-center gap-1.5">
-            <span>📊</span> مخطط تفاعلي
+          <span className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
+            <BarChart className="w-4 h-4" />
+            <span>مخطط تفاعلي (Mermaid Diagram)</span>
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
           {/* Zoom Controls */}
-          <div className="inline-flex items-center gap-1 bg-muted/60 p-0.5 rounded-lg border border-border/40">
+          <div className="inline-flex items-center gap-1 bg-background/80 p-0.5 rounded-lg border border-border/50">
             <button
               type="button"
-              className="w-7 h-7 flex items-center justify-center rounded-md text-xs font-bold hover:bg-background transition-colors text-foreground"
+              className="w-7 h-7 flex items-center justify-center rounded-md text-xs font-bold hover:bg-muted transition-colors text-foreground"
               onClick={handleZoomOut}
               title="تصغير"
             >
@@ -153,7 +165,7 @@ export default function Mermaid({ chart }: MermaidProps) {
             </button>
             <button
               type="button"
-              className="px-2 h-7 flex items-center justify-center rounded-md text-[11px] font-mono hover:bg-background transition-colors text-muted-foreground"
+              className="px-2 h-7 flex items-center justify-center rounded-md text-[11px] font-mono hover:bg-muted transition-colors text-muted-foreground"
               onClick={handleZoomReset}
               title="إعادة ضبط الحجم"
             >
@@ -161,11 +173,11 @@ export default function Mermaid({ chart }: MermaidProps) {
             </button>
             <button
               type="button"
-              className="w-7 h-7 flex items-center justify-center rounded-md text-xs font-bold hover:bg-background transition-colors text-foreground"
+              className="w-7 h-7 flex items-center justify-center rounded-md text-xs font-bold hover:bg-muted transition-colors text-foreground"
               onClick={handleZoomIn}
               title="تكبير"
             >
-              +
+              <Plus className="w-3.5 h-3.5" />
             </button>
           </div>
 
@@ -173,41 +185,49 @@ export default function Mermaid({ chart }: MermaidProps) {
             type="button"
             variant="outline"
             size="sm"
-            className="h-7 text-xs font-bold px-2.5"
+            className="h-7 text-xs font-bold px-2.5 flex items-center gap-1"
             onClick={() => setIsFullscreen(true)}
             title="ملء الشاشة"
           >
-            ⛶ تكبير
+            <Maximize2 className="w-3.5 h-3.5" /> تكبير
           </Button>
 
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className="h-7 text-xs font-bold px-2.5"
+            className="h-7 text-xs font-bold px-2.5 flex items-center gap-1"
             onClick={handleDownloadSvg}
             title="تنزيل SVG"
           >
-            📥 SVG
+            <Download className="w-3.5 h-3.5" /> SVG
           </Button>
 
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className="h-7 text-xs font-bold px-2.5"
+            className="h-7 text-xs font-bold px-2.5 flex items-center gap-1"
             onClick={handleCopyCode}
             title="نسخ الكود"
           >
-            {copied ? "✓ تم النسخ" : "📋 الكود"}
+            {copied ? (
+              <>
+                <CheckCircle className="w-3.5 h-3.5 text-emerald-400" /> تم النسخ
+              </>
+            ) : (
+              <>
+                <Copy className="w-3.5 h-3.5" /> الكود
+              </>
+            )}
           </Button>
         </div>
       </div>
 
       {/* Rendered SVG Content */}
-      <div className="mermaid-viewport p-4 md:p-6 overflow-x-auto flex justify-center items-center min-h-[14rem]">
+      <div className="mermaid-viewport p-4 md:p-8 overflow-x-auto flex justify-center items-center min-h-[16rem] bg-black/20">
         <div
-          className="mermaid-svg-wrapper transition-transform duration-200 ease-out origin-center"
+          className="mermaid-svg-wrapper transition-transform duration-200 ease-out origin-center [&>svg]:max-w-full [&>svg]:h-auto [&>svg]:mx-auto [&>svg]:drop-shadow-md"
           style={{ transform: `scale(${zoom})` }}
           dangerouslySetInnerHTML={{ __html: svg }}
         />
@@ -215,23 +235,29 @@ export default function Mermaid({ chart }: MermaidProps) {
 
       {/* Fullscreen Backdrop Modal */}
       {isFullscreen && (
-        <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur-md flex flex-col p-4 md:p-6 dir-rtl animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-md flex flex-col p-4 md:p-6 dir-rtl animate-in fade-in duration-200">
           <div className="flex items-center justify-between pb-4 border-b border-border/60">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-primary">📊 معاينة كاملة للمخطط البياني</span>
+              <span className="text-sm font-bold text-amber-400 flex items-center gap-1.5">
+                <BarChart className="w-4 h-4" /> معاينة كاملة للمخطط البياني
+              </span>
               <span className="text-xs text-muted-foreground font-mono">({Math.round(zoom * 100)}%)</span>
             </div>
             <div className="flex items-center gap-2">
               <Button type="button" variant="outline" size="sm" onClick={handleZoomOut}>-</Button>
               <Button type="button" variant="outline" size="sm" onClick={handleZoomReset}>100%</Button>
               <Button type="button" variant="outline" size="sm" onClick={handleZoomIn}>+</Button>
-              <Button type="button" variant="outline" size="sm" onClick={handleDownloadSvg}>📥 تنزيل SVG</Button>
-              <Button type="button" variant="default" size="sm" onClick={() => setIsFullscreen(false)}>إغلاق ✕</Button>
+              <Button type="button" variant="outline" size="sm" onClick={handleDownloadSvg} className="flex items-center gap-1">
+                <Download className="w-3.5 h-3.5" /> تنزيل SVG
+              </Button>
+              <Button type="button" variant="default" size="sm" onClick={() => setIsFullscreen(false)}>
+                إغلاق ✕
+              </Button>
             </div>
           </div>
           <div className="flex-1 overflow-auto p-8 flex items-center justify-center">
             <div
-              className="transition-transform duration-200 ease-out origin-center"
+              className="transition-transform duration-200 ease-out origin-center [&>svg]:max-w-full [&>svg]:h-auto [&>svg]:mx-auto [&>svg]:drop-shadow-lg"
               style={{ transform: `scale(${zoom})` }}
               dangerouslySetInnerHTML={{ __html: svg }}
             />
