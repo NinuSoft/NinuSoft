@@ -75,7 +75,6 @@ export default function ProposalView() {
   const [selectionPos, setSelectionPos] = useState<{ top: number; left: number } | null>(null);
   const [showHighlightModal, setShowHighlightModal] = useState(false);
   const [highlightCommentText, setHighlightCommentText] = useState("");
-  const [highlightAuthor, setHighlightAuthor] = useState("");
 
   const [sectionApprovals, setSectionApprovals] = useState<Record<string, "APPROVED" | "REVISION">>(() => {
     try {
@@ -157,7 +156,7 @@ export default function ProposalView() {
 
     const newComment = {
       id: Math.random().toString(36).substring(2, 9),
-      author: highlightAuthor.trim() || "عميل NinuSoft",
+      author: proposal.clientName || "العميل",
       text: highlightCommentText.trim(),
       selectedText: selectedText,
       date: new Intl.DateTimeFormat("ar-IQ-u-nu-latn", { dateStyle: "short", timeStyle: "short" }).format(new Date()),
@@ -686,7 +685,7 @@ export default function ProposalView() {
               )}
 
               {settings.enableInlineComments && (
-                <ProposalComments proposalTitle={proposal.title} proposalToken={proposal.token} />
+                <ProposalComments proposalTitle={proposal.title} proposalToken={proposal.token} clientName={proposal.clientName} />
               )}
             </article>
           </div>
@@ -810,13 +809,6 @@ export default function ProposalView() {
             </div>
 
             <form onSubmit={submitHighlightComment} className="space-y-3">
-              <input
-                type="text"
-                value={highlightAuthor}
-                onChange={(e) => setHighlightAuthor(e.target.value)}
-                placeholder="اسمك الكريم (اختياري)"
-                className="w-full text-xs p-2.5 rounded-lg border border-border/60 bg-background text-foreground"
-              />
               <Textarea
                 value={highlightCommentText}
                 onChange={(e) => setHighlightCommentText(e.target.value)}

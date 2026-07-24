@@ -7,6 +7,7 @@ import { submitProposalCommentApi } from "@/lib/proposals-api";
 interface ProposalCommentsProps {
   proposalTitle: string;
   proposalToken?: string;
+  clientName?: string;
 }
 
 export interface CommentItem {
@@ -17,7 +18,7 @@ export interface CommentItem {
   selectedText?: string;
 }
 
-export function ProposalComments({ proposalTitle, proposalToken }: ProposalCommentsProps) {
+export function ProposalComments({ proposalTitle, proposalToken, clientName }: ProposalCommentsProps) {
   const storageKey = `ninusoft-comments:${proposalTitle}`;
   const [comments, setComments] = useState<CommentItem[]>(() => {
     try {
@@ -29,7 +30,6 @@ export function ProposalComments({ proposalTitle, proposalToken }: ProposalComme
   });
 
   const [commentText, setCommentText] = useState("");
-  const [authorName, setAuthorName] = useState("");
   const [isOpen, setIsOpen] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,7 +38,7 @@ export function ProposalComments({ proposalTitle, proposalToken }: ProposalComme
 
     const newComment: CommentItem = {
       id: Math.random().toString(36).substring(2, 9),
-      author: authorName.trim() || "عميل NinuSoft",
+      author: clientName || "العميل",
       text: commentText.trim(),
       date: new Intl.DateTimeFormat("ar-IQ-u-nu-latn", { dateStyle: "short", timeStyle: "short" }).format(new Date()),
     };
@@ -82,13 +82,6 @@ export function ProposalComments({ proposalTitle, proposalToken }: ProposalComme
 
       {isOpen && (
         <form onSubmit={handleSubmit} className="mb-6 space-y-3 p-4 rounded-xl bg-muted/40 border border-border/40">
-          <input
-            type="text"
-            value={authorName}
-            onChange={(e) => setAuthorName(e.target.value)}
-            placeholder="اسمك الكريم (اختياري)"
-            className="w-full text-xs p-2.5 rounded-lg border border-border/60 bg-background text-foreground"
-          />
           <Textarea
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
@@ -96,6 +89,7 @@ export function ProposalComments({ proposalTitle, proposalToken }: ProposalComme
             rows={3}
             className="text-xs"
             required
+            autoFocus
           />
           <div className="flex justify-end">
             <Button type="submit" size="sm" className="font-bold text-xs flex items-center gap-1.5">
