@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { type MouseEvent, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   getProposalSettings,
@@ -52,6 +52,10 @@ export function ProposalSettingsManager() {
     }));
   };
 
+  const stopCheckboxPropagation = (event: MouseEvent<HTMLInputElement>) => {
+    event.stopPropagation();
+  };
+
   const handleSave = async () => {
     saveProposalSettings(settings);
     const adminKey = sessionStorage.getItem("ninusoft-proposals-admin-key");
@@ -85,6 +89,7 @@ export function ProposalSettingsManager() {
               <span>تفعيل التوقيع الإلكتروني للعميل</span>
               <input
                 type="checkbox"
+                onClick={stopCheckboxPropagation}
                 checked={settings.enableDigitalSignature}
                 onChange={() => toggle("enableDigitalSignature")}
                 className="w-4 h-4 accent-amber-500"
@@ -108,6 +113,7 @@ export function ProposalSettingsManager() {
                   </span>
                   <input
                     type="checkbox"
+                    onClick={stopCheckboxPropagation}
                     checked={settings.allowDrawSignature}
                     onChange={() => toggle("allowDrawSignature")}
                     className="w-4 h-4 accent-amber-500"
@@ -130,6 +136,7 @@ export function ProposalSettingsManager() {
                   </span>
                   <input
                     type="checkbox"
+                    onClick={stopCheckboxPropagation}
                     checked={settings.allowTypeSignature}
                     onChange={() => toggle("allowTypeSignature")}
                     className="w-4 h-4 accent-amber-500"
@@ -152,6 +159,7 @@ export function ProposalSettingsManager() {
                   </span>
                   <input
                     type="checkbox"
+                    onClick={stopCheckboxPropagation}
                     checked={settings.allowUploadSignature}
                     onChange={() => toggle("allowUploadSignature")}
                     className="w-4 h-4 accent-amber-500"
@@ -174,6 +182,7 @@ export function ProposalSettingsManager() {
                   </span>
                   <input
                     type="checkbox"
+                    onClick={stopCheckboxPropagation}
                     checked={settings.allowRejection}
                     onChange={() => toggle("allowRejection")}
                     className="w-4 h-4 accent-amber-500"
@@ -203,6 +212,7 @@ export function ProposalSettingsManager() {
               </div>
               <input
                 type="checkbox"
+                onClick={stopCheckboxPropagation}
                 checked={settings.enablePricingCalculator}
                 onChange={() => toggle("enablePricingCalculator")}
                 className="w-4 h-4 accent-amber-500 cursor-pointer"
@@ -229,6 +239,7 @@ export function ProposalSettingsManager() {
               </div>
               <input
                 type="checkbox"
+                onClick={stopCheckboxPropagation}
                 checked={settings.enableReadingTime}
                 onChange={() => toggle("enableReadingTime")}
                 className="w-4 h-4 accent-amber-500 cursor-pointer"
@@ -255,6 +266,7 @@ export function ProposalSettingsManager() {
               </div>
               <input
                 type="checkbox"
+                onClick={stopCheckboxPropagation}
                 checked={settings.enableSidebarNav}
                 onChange={() => toggle("enableSidebarNav")}
                 className="w-4 h-4 accent-amber-500 cursor-pointer"
@@ -281,6 +293,7 @@ export function ProposalSettingsManager() {
               </div>
               <input
                 type="checkbox"
+                onClick={stopCheckboxPropagation}
                 checked={settings.enablePdfExport}
                 onChange={() => toggle("enablePdfExport")}
                 className="w-4 h-4 accent-amber-500 cursor-pointer"
@@ -307,6 +320,7 @@ export function ProposalSettingsManager() {
               </div>
               <input
                 type="checkbox"
+                onClick={stopCheckboxPropagation}
                 checked={settings.enablePrint}
                 onChange={() => toggle("enablePrint")}
                 className="w-4 h-4 accent-amber-500 cursor-pointer"
@@ -335,6 +349,7 @@ export function ProposalSettingsManager() {
               </div>
               <input
                 type="checkbox"
+                onClick={stopCheckboxPropagation}
                 checked={settings.enablePackageSwitcher}
                 onChange={() => toggle("enablePackageSwitcher")}
                 className="w-4 h-4 accent-amber-500 cursor-pointer"
@@ -415,6 +430,7 @@ export function ProposalSettingsManager() {
               </div>
               <input
                 type="checkbox"
+                onClick={stopCheckboxPropagation}
                 checked={settings.enableExpiryCountdown}
                 onChange={() => toggle("enableExpiryCountdown")}
                 className="w-4 h-4 accent-amber-500 cursor-pointer"
@@ -441,6 +457,7 @@ export function ProposalSettingsManager() {
               </div>
               <input
                 type="checkbox"
+                onClick={stopCheckboxPropagation}
                 checked={settings.enableInlineComments}
                 onChange={() => toggle("enableInlineComments")}
                 className="w-4 h-4 accent-amber-500 cursor-pointer"
