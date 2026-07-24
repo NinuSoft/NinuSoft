@@ -666,6 +666,23 @@ export default function ProposalView() {
         </footer>
       </main>
 
+      {/* Floating Eye-Catching AI Assistant Trigger (FAB) */}
+      <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 group">
+        <div className="hidden sm:flex items-center px-3 py-1.5 rounded-xl bg-card/90 border border-amber-500/50 shadow-2xl text-amber-300 text-xs font-bold font-mono opacity-90 group-hover:opacity-100 transition-opacity">
+          🤖 أسأل المساعد الذكي
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowAiModal(true)}
+          className="relative w-14 h-14 rounded-full bg-gradient-to-tr from-amber-600 via-amber-500 to-amber-300 text-black flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all ring-4 ring-amber-500/40 animate-pulse"
+          aria-label="المساعد الذكي"
+        >
+          <Sparkles className="w-7 h-7 stroke-[2.5]" />
+          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-background animate-ping" />
+          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-background" />
+        </button>
+      </div>
+
       {/* Mobile Floating Drawer Button */}
       {sections.length > 1 && (
         <div className="fixed bottom-6 left-6 z-40 lg:hidden">
