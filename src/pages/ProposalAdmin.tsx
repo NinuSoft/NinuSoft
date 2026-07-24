@@ -736,6 +736,15 @@ export default function ProposalAdmin() {
                 <tbody>
                   {items.map((item) => {
                     const expired = item.expiresAt && new Date(item.expiresAt) <= new Date();
+                    let sigStatus: "SIGNED" | "REJECTED" | null = null;
+                    try {
+                      const rawSig = localStorage.getItem(`ninusoft-documenso-sig:${item.title}`);
+                      if (rawSig) {
+                        const parsed = JSON.parse(rawSig);
+                        sigStatus = parsed.status || "SIGNED";
+                      }
+                    } catch {}
+
                     return (
                       <tr key={item.id}>
                         <td>
@@ -743,10 +752,32 @@ export default function ProposalAdmin() {
                           <span>{item.clientName}</span>
                         </td>
                         <td>
-                          <span className={`proposal-status ${!item.active || expired ? "is-off" : ""}`}>
-                            {!item.active ? "موقوف" : expired ? "منتهي" : item.protected ? "محمي" : "فعّال"}
-                          </span>
-                          <small>{item.expiresAt ? `ينتهي ${formatDate(item.expiresAt)}` : "دون تاريخ انتهاء"}</small>
+                          <div className="flex flex-col gap-1 items-start">
+                            {sigStatus === "SIGNED" ? (
+                              <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">
+                                ✓ معتمد (Approved)
+                              </span>
+                            ) : sigStatus === "REJECTED" ? (
+                              <span className="text-xs px-2.5 py-0.5 rounded-full bg-destructive/20 text-destructive border border-destructive/30 font-bold">
+                                ❌ طلب تعديل (Revision)
+                              </span>
+                            ) : item.readCount > 0 ? (
+                              <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold">
+                                📖 تمت القراءة (Read)
+                              </span>
+                            ) : item.openCount > 0 ? (
+                              <span className="text-xs px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30 font-bold">
+                                👁 تم الفتح (Opened)
+                              </span>
+                            ) : (
+                              <span className="text-xs px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/40 font-bold">
+                                📨 مرسل (Sent)
+                              </span>
+                            )}
+                            <small className="text-[11px] text-muted-foreground">
+                              {!item.active ? "موقوف" : expired ? "منتهي" : item.protected ? "محمي برمز" : "رابط فعّال"}
+                            </small>
+                          </div>
                         </td>
                         <td>
                           <strong>{item.openCount} / {item.readCount}</strong>

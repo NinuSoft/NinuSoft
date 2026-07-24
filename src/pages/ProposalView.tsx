@@ -67,6 +67,7 @@ export default function ProposalView() {
 
   const [settings, setSettings] = useState(getProposalSettings);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [lang, setLang] = useState<"ar" | "en">("ar");
 
   useEffect(() => {
     const handleSettingsChange = () => setSettings(getProposalSettings());
@@ -293,7 +294,7 @@ export default function ProposalView() {
   }
 
   return (
-    <div className="proposal-page" dir="rtl">
+    <div className="proposal-page" dir={lang === "ar" ? "rtl" : "ltr"}>
       {settings.enableWatermark && (
         <ProposalWatermark clientName={proposal.clientName} />
       )}
@@ -306,19 +307,28 @@ export default function ProposalView() {
       <header className="proposal-toolbar">
         <Brand />
         <div className="proposal-actions">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setLang((prev) => (prev === "ar" ? "en" : "ar"))}
+            className="text-xs font-mono font-bold"
+          >
+            🌐 {lang === "ar" ? "English" : "العربية"}
+          </Button>
+
           {settings.enableReadingTime && (
             <span className="proposal-reading-badge flex items-center gap-1">
               <Clock className="w-3.5 h-3.5" />
-              <span>{readTimeMinutes} د قراءة</span>
+              <span>{readTimeMinutes} {lang === "ar" ? "د قراءة" : "min read"}</span>
             </span>
           )}
           {settings.enablePdfExport && (
             <>
               <Button variant="outline" onClick={() => print("print")} className="flex items-center gap-1.5">
-                <Printer className="w-4 h-4" /> طباعة
+                <Printer className="w-4 h-4" /> {lang === "ar" ? "طباعة" : "Print"}
               </Button>
               <Button onClick={() => print("pdf")} className="flex items-center gap-1.5">
-                <Download className="w-4 h-4" /> تنزيل PDF
+                <Download className="w-4 h-4" /> {lang === "ar" ? "تنزيل PDF" : "Download PDF"}
               </Button>
             </>
           )}
