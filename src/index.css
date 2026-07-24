@@ -264,12 +264,11 @@ html {
     pointer-events: none;
   }
 
-  /* .no-default-hover-elevate/no-default-active-elevate is an escape hatch so consumers of
-   * buttons/badges can remove the automatic brightness adjustment on interactions
-   * and program their own. */
-  .no-default-hover-elevate {}
-
-  .no-default-active-elevate {}
+  /* .no-default-hover-elevate/no-default-active-elevate escape hatches */
+  .no-default-hover-elevate,
+  .no-default-active-elevate {
+    /* intentional escape hatch placeholder */
+  }
 
 
   /**
@@ -571,6 +570,7 @@ html {
   font-size: clamp(2rem, 5vw, 3rem);
   background: linear-gradient(135deg, #ffffff 40%, hsl(43 75% 60%));
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
