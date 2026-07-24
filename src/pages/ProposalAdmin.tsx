@@ -19,7 +19,7 @@ import {
 } from "@/lib/proposal-sections";
 import { ProposalSettingsManager } from "@/components/ProposalSettingsManager";
 import { ProposalAnalytics } from "@/components/ProposalAnalytics";
-import { FileText, BarChart, Settings, Eye } from "@/components/Icons";
+import { FileText, BarChart, Settings, Eye, FileSpreadsheet, BookOpen, Send, CheckCircle, XCircle } from "@/components/Icons";
 
 type FormState = {
   id: string;
@@ -742,8 +742,8 @@ export default function ProposalAdmin() {
             </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={() => void loadItems()} disabled={busy}>تحديث</Button>
-              <Button variant="secondary" size="sm" onClick={exportCSV} disabled={items.length === 0} className="font-bold text-xs">
-                📊 تصدير تقرير CSV
+              <Button variant="secondary" size="sm" onClick={exportCSV} disabled={items.length === 0} className="font-bold text-xs flex items-center gap-1.5">
+                <FileSpreadsheet className="w-4 h-4 text-emerald-400" /> تصدير تقرير CSV
               </Button>
             </div>
           </div>
@@ -790,24 +790,24 @@ export default function ProposalAdmin() {
                         <td>
                           <div className="flex flex-col gap-1 items-start">
                             {sigStatus === "SIGNED" ? (
-                              <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">
-                                ✓ معتمد (Approved)
+                              <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold flex items-center gap-1">
+                                <CheckCircle className="w-3.5 h-3.5" /> معتمد (Approved)
                               </span>
                             ) : sigStatus === "REJECTED" ? (
-                              <span className="text-xs px-2.5 py-0.5 rounded-full bg-destructive/20 text-destructive border border-destructive/30 font-bold">
-                                ❌ طلب تعديل (Revision)
+                              <span className="text-xs px-2.5 py-0.5 rounded-full bg-destructive/20 text-destructive border border-destructive/30 font-bold flex items-center gap-1">
+                                <XCircle className="w-3.5 h-3.5" /> طلب تعديل (Revision)
                               </span>
                             ) : item.readCount > 0 ? (
-                              <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold">
-                                📖 تمت القراءة (Read)
+                              <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold flex items-center gap-1">
+                                <BookOpen className="w-3.5 h-3.5" /> تمت القراءة (Read)
                               </span>
                             ) : item.openCount > 0 ? (
-                              <span className="text-xs px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30 font-bold">
-                                👁 تم الفتح (Opened)
+                              <span className="text-xs px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30 font-bold flex items-center gap-1">
+                                <Eye className="w-3.5 h-3.5" /> تم الفتح (Opened)
                               </span>
                             ) : (
-                              <span className="text-xs px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/40 font-bold">
-                                📨 مرسل (Sent)
+                              <span className="text-xs px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/40 font-bold flex items-center gap-1">
+                                <Send className="w-3.5 h-3.5" /> مرسل (Sent)
                               </span>
                             )}
                             <small className="text-[11px] text-muted-foreground">

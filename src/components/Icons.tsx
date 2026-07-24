@@ -576,3 +576,35 @@ export const Edit = (props: IconProps) => (
   </LucideIcon>
 );
 
+export const FileSpreadsheet = (props: IconProps) => (
+  <LucideIcon {...props}>
+    <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+    <path d="M14 2v4a1 1 0 0 0 1 1h4" />
+    <path d="M8 13h8" />
+    <path d="M8 17h8" />
+    <path d="M12 9v12" />
+  </LucideIcon>
+);
+
+export const BookOpen = (props: IconProps) => (
+  <LucideIcon {...props}>
+    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+    <path d="M22 3h-6a4 4 0 0 -1 -4 4v14a3 3 0 0 1 3-3h7z" />
+  </LucideIcon>
+);
+
+export const Send = (props: IconProps) => (
+  <LucideIcon {...props}>
+    <line x1="22" x2="11" y1="2" y2="13" />
+    <polygon points="22 2 15 22 11 13 2 9 22 2" />
+  </LucideIcon>
+);
+
+export const Layers = (props: IconProps) => (
+  <LucideIcon {...props}>
+    <polygon points="12 2 2 7 12 12 22 7 12 2" />
+    <polyline points="2 17 12 22 22 17" />
+    <polyline points="2 12 12 17 22 12" />
+  </LucideIcon>
+);
+

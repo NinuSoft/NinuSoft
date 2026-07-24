@@ -18,7 +18,7 @@ import { getProposalSettings } from "@/lib/proposal-settings";
 import { ProposalWatermark } from "@/components/ProposalWatermark";
 import { ProposalExpiryCountdown } from "@/components/ProposalExpiryCountdown";
 import { ProposalComments } from "@/components/ProposalComments";
-import { Clock, Printer, Download, FileText } from "@/components/Icons";
+import { Clock, Printer, Download, FileText, Globe, Layers } from "@/components/Icons";
 
 function Brand() {
   return (
@@ -312,9 +312,10 @@ export default function ProposalView() {
             variant="ghost"
             size="sm"
             onClick={() => setLang((prev) => (prev === "ar" ? "en" : "ar"))}
-            className="text-xs font-mono font-bold"
+            className="text-xs font-mono font-bold flex items-center gap-1.5"
           >
-            🌐 {lang === "ar" ? "English" : "العربية"}
+            <Globe className="w-3.5 h-3.5" />
+            <span>{lang === "ar" ? "English" : "العربية"}</span>
           </Button>
 
           {settings.enableReadingTime && (
@@ -540,7 +541,7 @@ export default function ProposalView() {
             <div className="space-y-1.5 pt-1">
               <button
                 type="button"
-                className={`w-full text-start px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+                className={`w-full text-start px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
                   activeSectionId === "sec-all"
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted/40 text-muted-foreground hover:text-foreground"
@@ -550,7 +551,8 @@ export default function ProposalView() {
                   setShowMobileNav(false);
                 }}
               >
-                📜 {lang === "ar" ? "عرض جميع الأقسام معاً" : "View All Sections"}
+                <Layers className="w-3.5 h-3.5" />
+                <span>{lang === "ar" ? "عرض جميع الأقسام معاً" : "View All Sections"}</span>
               </button>
 
               {sections.map((sec, idx) => (
