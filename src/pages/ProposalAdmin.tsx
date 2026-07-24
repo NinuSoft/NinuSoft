@@ -19,7 +19,7 @@ import {
 } from "@/lib/proposal-sections";
 import { ProposalSettingsManager } from "@/components/ProposalSettingsManager";
 import { ProposalAnalytics } from "@/components/ProposalAnalytics";
-import { FileText, BarChart, Settings } from "@/components/Icons";
+import { FileText, BarChart, Settings, Eye } from "@/components/Icons";
 
 type FormState = {
   id: string;
@@ -45,9 +45,9 @@ const emptyForm: FormState = {
   removePassword: false,
 };
 
-function formatDate(value: string | null) {
-  if (!value) return "—";
-  return new Intl.DateTimeFormat("ar-IQ", {
+function formatDate(value: string | null | undefined): string {
+  if (!value) return "لا يوجد";
+  return new Intl.DateTimeFormat("ar-IQ-u-nu-latn", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
@@ -776,8 +776,16 @@ export default function ProposalAdmin() {
                     return (
                       <tr key={item.id}>
                         <td>
-                          <strong>{item.title}</strong>
-                          <span>{item.clientName}</span>
+                          <a
+                            href={`/p/${item.token}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-bold text-foreground hover:text-amber-400 hover:underline flex items-center gap-1.5"
+                          >
+                            <Eye className="w-3.5 h-3.5 text-amber-400" />
+                            <span>{item.title}</span>
+                          </a>
+                          <span className="text-xs text-muted-foreground block">{item.clientName}</span>
                         </td>
                         <td>
                           <div className="flex flex-col gap-1 items-start">
@@ -816,6 +824,9 @@ export default function ProposalAdmin() {
                           <span>{item.firstOpenedAt ? `أول فتح ${formatDate(item.firstOpenedAt)}` : "لم يُفتح بعد"}</span>
                         </td>
                         <td className="proposal-actions-cell">
+                          <Button size="sm" variant="secondary" onClick={() => window.open(`/p/${item.token}`, "_blank")} className="flex items-center gap-1">
+                            <Eye className="w-3.5 h-3.5" /> معاينة
+                          </Button>
                           <Button size="sm" variant="outline" onClick={() => void copyLink(item.token)}>نسخ الرابط</Button>
                           <Button size="sm" variant="ghost" onClick={() => void editProposal(item.id)}>تعديل</Button>
                           <Button size="sm" variant="destructive" onClick={() => void deleteProposal(item.id, item.title)} disabled={busy}>حذف</Button>
