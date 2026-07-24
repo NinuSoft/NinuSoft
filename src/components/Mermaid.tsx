@@ -100,8 +100,8 @@ export default function Mermaid({ chart }: MermaidProps) {
     };
   }, [chart, elementId]);
 
-  const handleZoomIn = () => setZoom((prev) => Math.min(prev + 0.25, 4));
-  const handleZoomOut = () => setZoom((prev) => Math.max(prev - 0.25, 0.4));
+  const handleZoomIn = () => setZoom((prev) => Math.min(Number((prev + 0.05).toFixed(2)), 5));
+  const handleZoomOut = () => setZoom((prev) => Math.max(Number((prev - 0.05).toFixed(2)), 0.1));
   const handleZoomReset = () => setZoom(1);
 
   const handleCopyCode = async () => {
