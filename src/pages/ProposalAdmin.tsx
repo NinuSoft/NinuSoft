@@ -1129,10 +1129,15 @@ export default function ProposalAdmin() {
           </form>
 
           {showPreview && (
-            <div className="proposal-preview">
+            <div className="proposal-preview p-4 rounded-xl border border-border/60 bg-card/60 space-y-3">
+              <div className="text-xs font-bold text-amber-400 border-b border-border/40 pb-2 flex items-center justify-between">
+                <span>معاينة المستند الكلي للعرض ({editorMode === "sections" ? `${sections.length} أقسام` : "سورس كود"})</span>
+              </div>
               <article className="proposal-document">
                 <ReactMarkdown remarkPlugins={[remarkGfm, remarkAlerts]} components={proposalMarkdownComponents}>
-                  {form.markdown || "ستظهر معاينة النص هنا."}
+                  {editorMode === "sections"
+                    ? sections.map((sec) => `## ${sec.title}\n\n${sec.content}`).join("\n\n---\n\n") || "ستظهر معاينة النص هنا."
+                    : form.markdown || "ستظهر معاينة النص هنا."}
                 </ReactMarkdown>
               </article>
             </div>
@@ -1199,7 +1204,7 @@ export default function ProposalAdmin() {
                       <tr key={item.id}>
                         <td>
                           <a
-                            href={`/p/${item.token}`}
+                            href={`/proposals/${item.token}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="font-bold text-foreground hover:text-amber-400 hover:underline flex items-center gap-1.5"
@@ -1246,7 +1251,7 @@ export default function ProposalAdmin() {
                           <span>{item.firstOpenedAt ? `أول فتح ${formatDate(item.firstOpenedAt)}` : "لم يُفتح بعد"}</span>
                         </td>
                         <td className="proposal-actions-cell">
-                          <Button size="sm" variant="secondary" onClick={() => window.open(`/p/${item.token}`, "_blank")} className="flex items-center gap-1">
+                          <Button size="sm" variant="secondary" onClick={() => window.open(`/proposals/${item.token}`, "_blank")} className="flex items-center gap-1">
                             <Eye className="w-3.5 h-3.5" /> معاينة
                           </Button>
                           <Button size="sm" variant="outline" onClick={() => setSelectedAuditProposal(item)} className="flex items-center gap-1">
@@ -1349,7 +1354,7 @@ export default function ProposalAdmin() {
               {/* Token Access Info */}
               <div className="p-3 rounded-xl bg-card border border-border/60 space-y-1 text-xs font-mono">
                 <span className="text-[11px] text-muted-foreground block font-sans font-bold">رابط التتبع الفريد:</span>
-                <p className="text-amber-300 break-all">{window.location.origin}/p/{selectedAuditProposal.token}</p>
+                <p className="text-amber-300 break-all">{window.location.origin}/proposals/{selectedAuditProposal.token}</p>
               </div>
 
               <div className="flex justify-end pt-2">
