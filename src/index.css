@@ -412,7 +412,7 @@ html {
   align-items: center;
   justify-content: space-between;
   min-height: 4.5rem;
-  padding: 0.75rem max(1.25rem, calc((100vw - 84rem) / 2));
+  padding: 0.75rem max(1rem, calc((100vw - 98rem) / 2));
   border-bottom: 1px solid hsl(215 25% 18%);
   background: hsl(220 30% 8% / 0.85);
   backdrop-filter: blur(16px);
@@ -425,9 +425,16 @@ html {
 }
 
 .proposal-shell {
-  width: min(100% - 2rem, 84rem);
+  width: min(100% - 1.5rem, 98rem);
   margin: 0 auto;
-  padding: 3.5rem 0;
+  padding: 2.5rem 0;
+}
+
+@media (max-width: 768px) {
+  .proposal-shell {
+    width: 100%;
+    padding: 1.25rem 0.5rem;
+  }
 }
 
 .proposal-meta {
@@ -460,10 +467,10 @@ html {
 }
 
 .proposal-document {
-  min-height: 50rem;
-  padding: clamp(1.5rem, 4vw, 3.25rem);
+  min-height: 40rem;
+  padding: clamp(1.25rem, 3.5vw, 3.5rem);
   border: 1px solid hsl(215 25% 18%);
-  border-radius: 0.85rem;
+  border-radius: 1rem;
   background: hsl(220 28% 10% / 0.7);
   backdrop-filter: blur(12px);
   box-shadow:
@@ -473,6 +480,15 @@ html {
   font-size: 1.02rem;
   line-height: 1.95;
   color: hsl(210 40% 92%);
+  overflow-x: auto;
+}
+
+@media (max-width: 768px) {
+  .proposal-document {
+    padding: 1.25rem 0.85rem;
+    border-radius: 0.75rem;
+    font-size: 0.95rem;
+  }
 }
 
 .proposal-document > :first-child {

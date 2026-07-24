@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useState, useRef } from "react";
 import mermaid from "mermaid";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,38 +18,38 @@ mermaid.initialize({
     fontFamily: "Inter, system-ui, sans-serif",
     darkMode: true,
     background: "transparent",
-    mainBkg: "#141c28",
-    nodeBorder: "#e5c158",
-    nodeTextColor: "#f1f5f9",
-    lineColor: "#e5c158",
-    textColor: "#f1f5f9",
-    primaryColor: "#1b2536",
-    primaryTextColor: "#f1f5f9",
-    primaryBorderColor: "#e5c158",
-    secondaryColor: "#17202e",
-    secondaryTextColor: "#f1f5f9",
-    secondaryBorderColor: "#334155",
+    mainBkg: "#111827",
+    nodeBorder: "#f59e0b",
+    nodeTextColor: "#f9fafb",
+    lineColor: "#f59e0b",
+    textColor: "#f9fafb",
+    primaryColor: "#1e293b",
+    primaryTextColor: "#f9fafb",
+    primaryBorderColor: "#f59e0b",
+    secondaryColor: "#1e293b",
+    secondaryTextColor: "#f9fafb",
+    secondaryBorderColor: "#475569",
     tertiaryColor: "#0f172a",
-    tertiaryTextColor: "#f1f5f9",
-    tertiaryBorderColor: "#334155",
+    tertiaryTextColor: "#f9fafb",
+    tertiaryBorderColor: "#475569",
     clusterBkg: "#0f172a",
-    clusterBorder: "#334155",
-    defaultLinkColor: "#e5c158",
-    titleColor: "#e5c158",
+    clusterBorder: "#475569",
+    defaultLinkColor: "#f59e0b",
+    titleColor: "#f59e0b",
     edgeLabelBackground: "#1e293b",
-    actorBkg: "#141c28",
-    actorBorder: "#e5c158",
-    actorTextColor: "#f1f5f9",
-    actorLineColor: "#e5c158",
-    signalColor: "#e5c158",
-    signalTextColor: "#f1f5f9",
-    labelBoxBkgColor: "#141c28",
-    labelBoxBorderColor: "#334155",
-    labelTextColor: "#f1f5f9",
-    loopTextColor: "#f1f5f9",
-    noteBorderColor: "#e5c158",
+    actorBkg: "#111827",
+    actorBorder: "#f59e0b",
+    actorTextColor: "#f9fafb",
+    actorLineColor: "#f59e0b",
+    signalColor: "#f59e0b",
+    signalTextColor: "#f9fafb",
+    labelBoxBkgColor: "#111827",
+    labelBoxBorderColor: "#475569",
+    labelTextColor: "#f9fafb",
+    loopTextColor: "#f9fafb",
+    noteBorderColor: "#f59e0b",
     noteBkgColor: "#1e293b",
-    noteTextColor: "#f1f5f9",
+    noteTextColor: "#f9fafb",
   },
   securityLevel: "loose",
 });
@@ -77,8 +77,7 @@ export default function Mermaid({ chart }: MermaidProps) {
         setError(null);
         const { svg: rawSvg } = await mermaid.render(elementId, chart.trim());
         
-        // Remove hardcoded inline max-width from Mermaid's generated SVG string
-        // so it can dynamically scale to fit 100% of container width/height!
+        // Remove restrictive inline max-width/style so SVG scales dynamically 100%
         const cleanedSvg = rawSvg
           .replace(/style="[^"]*max-width:[^"]*"/gi, 'style="width:100%; height:auto;"')
           .replace(/max-width:\s*\d+px;/gi, "width: 100%; height: auto;");
@@ -149,19 +148,19 @@ export default function Mermaid({ chart }: MermaidProps) {
   }
 
   return (
-    <div className="mermaid-container my-6 rounded-2xl border border-border/70 bg-card/80 backdrop-blur-md overflow-hidden shadow-2xl transition-all">
+    <div className="mermaid-container my-6 rounded-2xl border border-border/70 bg-card/90 backdrop-blur-md overflow-hidden shadow-2xl transition-all">
       {/* Control Header Toolbar */}
-      <div className="mermaid-toolbar flex items-center justify-between gap-2 px-4 py-2.5 bg-muted/40 border-b border-border/50 flex-wrap dir-rtl">
+      <div className="mermaid-toolbar flex items-center justify-between gap-2 px-4 py-3 bg-muted/50 border-b border-border/60 flex-wrap dir-rtl">
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
             <BarChart className="w-4 h-4" />
-            <span>مخطط تفاعلي (Mermaid Diagram)</span>
+            <span>مخطط بياني تفاعلي (Mermaid)</span>
           </span>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
           {/* Zoom Controls */}
-          <div className="inline-flex items-center gap-1 bg-background/80 p-0.5 rounded-lg border border-border/50">
+          <div className="inline-flex items-center gap-1 bg-background/90 p-0.5 rounded-lg border border-border/60">
             <button
               type="button"
               className="w-7 h-7 flex items-center justify-center rounded-md text-xs font-bold hover:bg-muted transition-colors text-foreground"
@@ -172,7 +171,7 @@ export default function Mermaid({ chart }: MermaidProps) {
             </button>
             <button
               type="button"
-              className="px-2 h-7 flex items-center justify-center rounded-md text-[11px] font-mono hover:bg-muted transition-colors text-muted-foreground"
+              className="px-2 h-7 flex items-center justify-center rounded-md text-[11px] font-mono hover:bg-muted transition-colors text-amber-400 font-bold"
               onClick={handleZoomReset}
               title="إعادة ضبط الحجم"
             >
@@ -232,44 +231,44 @@ export default function Mermaid({ chart }: MermaidProps) {
       </div>
 
       {/* Rendered SVG Content */}
-      <div className="mermaid-viewport p-4 md:p-8 overflow-auto flex justify-center items-center min-h-[18rem] bg-black/20">
+      <div className="mermaid-viewport p-4 md:p-6 overflow-x-auto overflow-y-hidden flex justify-center items-center min-h-[16rem] bg-black/30">
         <div
-          className="mermaid-svg-wrapper w-full flex justify-center items-center transition-transform duration-200 ease-out origin-center [&>svg]:w-full [&>svg]:max-w-full [&>svg]:h-auto [&>svg]:mx-auto [&>svg]:drop-shadow-md"
+          className="mermaid-svg-wrapper w-full flex justify-center items-center transition-transform duration-200 ease-out origin-center [&>svg]:w-full [&>svg]:h-auto [&>svg]:max-w-full [&>svg]:mx-auto [&>svg]:drop-shadow-lg"
           style={{ transform: `scale(${zoom})` }}
           dangerouslySetInnerHTML={{ __html: svg }}
         />
       </div>
 
-      {/* Fullscreen Modal View */}
+      {/* Fullscreen Modal View (Full Screen Dynamic Scaling) */}
       {isFullscreen && (
-        <div className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-md flex flex-col p-4 md:p-6 dir-rtl animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[100] bg-background/98 backdrop-blur-lg flex flex-col p-4 md:p-6 dir-rtl animate-in fade-in duration-200 overflow-hidden">
           {/* Header Controls Bar */}
           <div className="flex items-center justify-between pb-4 border-b border-border/60 flex-wrap gap-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <span className="text-sm font-bold text-amber-400 flex items-center gap-1.5">
-                <BarChart className="w-5 h-5" /> معاينة كاملة للمخطط البياني (Full Screen View)
+                <BarChart className="w-5 h-5" /> معاينة المخطط البياني (Full Screen View)
               </span>
-              <span className="text-xs text-muted-foreground font-mono bg-muted/60 px-2 py-0.5 rounded-full">
+              <span className="text-xs font-mono text-amber-400 font-bold bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/30">
                 {Math.round(zoom * 100)}%
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={handleZoomOut}>-</Button>
-              <Button type="button" variant="outline" size="sm" onClick={handleZoomReset}>100%</Button>
-              <Button type="button" variant="outline" size="sm" onClick={handleZoomIn}>+</Button>
-              <Button type="button" variant="outline" size="sm" onClick={handleDownloadSvg} className="flex items-center gap-1">
-                <Download className="w-3.5 h-3.5" /> تنزيل SVG
+              <Button type="button" variant="outline" size="sm" onClick={handleZoomOut} className="font-mono font-bold">-</Button>
+              <Button type="button" variant="outline" size="sm" onClick={handleZoomReset} className="font-mono text-xs">100%</Button>
+              <Button type="button" variant="outline" size="sm" onClick={handleZoomIn} className="font-mono font-bold">+</Button>
+              <Button type="button" variant="outline" size="sm" onClick={handleDownloadSvg} className="flex items-center gap-1 text-xs">
+                <Download className="w-3.5 h-3.5 text-amber-400" /> تنزيل SVG
               </Button>
-              <Button type="button" variant="default" size="sm" onClick={() => setIsFullscreen(false)} className="flex items-center gap-1 bg-amber-500 text-black hover:bg-amber-400 font-bold">
+              <Button type="button" variant="default" size="sm" onClick={() => setIsFullscreen(false)} className="flex items-center gap-1 bg-amber-500 text-black hover:bg-amber-400 font-bold text-xs">
                 <XCircle className="w-4 h-4" /> إغلاق
               </Button>
             </div>
           </div>
 
           {/* Fullscreen Dynamic Canvas */}
-          <div className="flex-1 w-full h-full overflow-auto p-4 md:p-10 flex items-center justify-center bg-black/40 rounded-xl my-4 border border-border/40">
+          <div className="flex-1 w-full h-full overflow-auto p-4 md:p-12 flex items-center justify-center bg-black/60 rounded-2xl my-4 border border-border/50 shadow-2xl">
             <div
-              className="w-full max-w-5xl transition-transform duration-200 ease-out origin-center [&>svg]:w-full [&>svg]:h-auto [&>svg]:mx-auto [&>svg]:drop-shadow-2xl"
+              className="w-full h-full min-h-[60vh] flex items-center justify-center transition-transform duration-200 ease-out origin-center [&>svg]:w-full [&>svg]:h-auto [&>svg]:max-h-[85vh] [&>svg]:mx-auto [&>svg]:drop-shadow-2xl"
               style={{ transform: `scale(${zoom})` }}
               dangerouslySetInnerHTML={{ __html: svg }}
             />

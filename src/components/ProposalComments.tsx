@@ -40,7 +40,7 @@ export function ProposalComments({ proposalTitle, proposalToken, clientName }: P
       id: Math.random().toString(36).substring(2, 9),
       author: clientName || "العميل",
       text: commentText.trim(),
-      date: new Intl.DateTimeFormat("ar-IQ-u-nu-latn", { dateStyle: "short", timeStyle: "short" }).format(new Date()),
+      date: new Intl.DateTimeFormat("en-GB", { dateStyle: "short", timeStyle: "short" }).format(new Date()),
     };
 
     const updated = [newComment, ...comments];

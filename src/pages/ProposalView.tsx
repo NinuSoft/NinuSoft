@@ -55,6 +55,10 @@ function CenteredState({
   );
 }
 
+function toEnglishDigits(val: string | number): string {
+  return String(val).replace(/[٠-٩]/g, (d) => "٠١٢٣٤٥٦٧٨٩".indexOf(d).toString());
+}
+
 export default function ProposalView() {
   const { token = "" } = useParams<{ token: string }>();
   const [proposal, setProposal] = useState<Proposal | null>(null);
@@ -75,32 +79,6 @@ export default function ProposalView() {
   const [selectionPos, setSelectionPos] = useState<{ top: number; left: number } | null>(null);
   const [showHighlightModal, setShowHighlightModal] = useState(false);
   const [highlightCommentText, setHighlightCommentText] = useState("");
-
-  const [sectionApprovals, setSectionApprovals] = useState<Record<string, "APPROVED" | "REVISION">>(() => {
-    try {
-      const raw = localStorage.getItem(`ninusoft-section-approvals:${token}`);
-      return raw ? JSON.parse(raw) : {};
-    } catch {
-      return {};
-    }
-  });
-
-  const toggleSectionApproval = (sectionTitle: string, status: "APPROVED" | "REVISION") => {
-    const nextStatus = sectionApprovals[sectionTitle] === status ? undefined : status;
-    const updated = {
-      ...sectionApprovals,
-      [sectionTitle]: nextStatus,
-    };
-    setSectionApprovals(updated as any);
-    try {
-      localStorage.setItem(`ninusoft-section-approvals:${token}`, JSON.stringify(updated));
-      if (token) {
-        void recordProposalEvent(token, "SECTION_FEEDBACK", { sectionTitle, status: nextStatus || "REMOVED" });
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   useEffect(() => {
     const handleSettingsChange = () => setSettings(getProposalSettings());
@@ -447,7 +425,7 @@ export default function ProposalView() {
           {settings.enableReadingTime && (
             <span className="proposal-reading-badge flex items-center gap-1">
               <Clock className="w-3.5 h-3.5" />
-              <span>{readTimeMinutes} {lang === "ar" ? "د قراءة" : "min read"}</span>
+              <span>{toEnglishDigits(readTimeMinutes)} {lang === "ar" ? "د قراءة" : "min read"}</span>
             </span>
           )}
           {settings.enablePdfExport && (
@@ -475,7 +453,7 @@ export default function ProposalView() {
           </div>
           <div className="proposal-meta-date">
             <span>آخر تحديث</span>
-            <strong>{new Intl.DateTimeFormat("ar-IQ", { dateStyle: "medium" }).format(new Date(proposal.updatedAt))}</strong>
+            <strong>{new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(new Date(proposal.updatedAt))}</strong>
           </div>
         </div>
 
@@ -486,7 +464,7 @@ export default function ProposalView() {
               <div className="proposal-sidebar-card">
                 <div className="proposal-sidebar-header">
                   <h3>أقسام الوثيقة</h3>
-                  <span className="proposal-section-count">{sections.length} أقسام</span>
+                  <span className="proposal-section-count">{toEnglishDigits(sections.length)} أقسام</span>
                 </div>
 
                 <nav className="proposal-sidebar-nav" aria-label="أقسام العرض">
@@ -519,7 +497,7 @@ export default function ProposalView() {
                         window.scrollTo({ top: 120, behavior: "smooth" });
                       }}
                     >
-                      <span className="proposal-sidebar-num">{idx + 1}</span>
+                      <span className="proposal-sidebar-num">{toEnglishDigits(idx + 1)}</span>
                       <div className="proposal-sidebar-info">
                         <strong>{sec.title}</strong>
                       </div>
@@ -546,7 +524,7 @@ export default function ProposalView() {
                 const activeSec = sections[activeIdx];
                 return (
                   <div className="proposal-active-section-header">
-                    <span className="proposal-section-badge">القسم {activeIdx + 1} من {sections.length}</span>
+                    <span className="proposal-section-badge">القسم {toEnglishDigits(activeIdx + 1)} من {toEnglishDigits(sections.length)}</span>
                     <h2>{activeSec?.title}</h2>
                   </div>
                 );
@@ -560,35 +538,6 @@ export default function ProposalView() {
                       <ReactMarkdown remarkPlugins={[remarkGfm, remarkAlerts]} components={proposalMarkdownComponents}>
                         {sec.content}
                       </ReactMarkdown>
-
-                      {/* Section Approval Feedback Bar */}
-                      <div className="my-6 p-3 rounded-xl bg-card/60 border border-border/40 flex items-center justify-between gap-2 flex-wrap text-xs">
-                        <span className="text-muted-foreground font-bold">تقييم هذا البند:</span>
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 border ${
-                              sectionApprovals[sec.title] === "APPROVED"
-                                ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
-                                : "bg-muted/40 text-muted-foreground border-border/40 hover:text-foreground"
-                            }`}
-                            onClick={() => toggleSectionApproval(sec.title, "APPROVED")}
-                          >
-                            <CheckCircle className="w-3.5 h-3.5" /> موافق على البند
-                          </button>
-                          <button
-                            type="button"
-                            className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 border ${
-                              sectionApprovals[sec.title] === "REVISION"
-                                ? "bg-amber-500/20 text-amber-400 border-amber-500/40"
-                                : "bg-muted/40 text-muted-foreground border-border/40 hover:text-foreground"
-                            }`}
-                            onClick={() => toggleSectionApproval(sec.title, "REVISION")}
-                          >
-                            <Edit className="w-3.5 h-3.5" /> طلب تعديل
-                          </button>
-                        </div>
-                      </div>
                     </section>
                   ))}
                 </div>
@@ -605,35 +554,6 @@ export default function ProposalView() {
                         <ReactMarkdown remarkPlugins={[remarkGfm, remarkAlerts]} components={proposalMarkdownComponents}>
                           {activeSection.content}
                         </ReactMarkdown>
-
-                        {/* Section Approval Feedback Bar */}
-                        <div className="my-6 p-3 rounded-xl bg-card/60 border border-border/40 flex items-center justify-between gap-2 flex-wrap text-xs">
-                          <span className="text-muted-foreground font-bold">تقييم هذا البند:</span>
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 border ${
-                                sectionApprovals[activeSection.title] === "APPROVED"
-                                  ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
-                                  : "bg-muted/40 text-muted-foreground border-border/40 hover:text-foreground"
-                              }`}
-                              onClick={() => toggleSectionApproval(activeSection.title, "APPROVED")}
-                            >
-                              <CheckCircle className="w-3.5 h-3.5" /> موافق على البند
-                            </button>
-                            <button
-                              type="button"
-                              className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 border ${
-                                sectionApprovals[activeSection.title] === "REVISION"
-                                  ? "bg-amber-500/20 text-amber-400 border-amber-500/40"
-                                  : "bg-muted/40 text-muted-foreground border-border/40 hover:text-foreground"
-                              }`}
-                              onClick={() => toggleSectionApproval(activeSection.title, "REVISION")}
-                            >
-                              <Edit className="w-3.5 h-3.5" /> طلب تعديل
-                            </button>
-                          </div>
-                        </div>
 
                         {sections.length > 1 && (
                           <div className="proposal-section-pager">
@@ -706,7 +626,7 @@ export default function ProposalView() {
             className="shadow-2xl font-bold text-xs rounded-full px-5 py-3 flex items-center gap-2 bg-primary text-primary-foreground border border-amber-500/40"
           >
             <FileText className="w-4 h-4" />
-            <span>{lang === "ar" ? "أقسام الوثيقة" : "Sections"} ({sections.length})</span>
+            <span>{lang === "ar" ? "أقسام الوثيقة" : "Sections"} ({toEnglishDigits(sections.length)})</span>
           </Button>
         </div>
       )}
@@ -757,7 +677,7 @@ export default function ProposalView() {
                   }}
                 >
                   <span className="w-5 h-5 rounded-full bg-muted/80 flex items-center justify-center text-[10px] font-mono">
-                    {idx + 1}
+                    {toEnglishDigits(idx + 1)}
                   </span>
                   <span className="truncate">{sec.title}</span>
                 </button>
