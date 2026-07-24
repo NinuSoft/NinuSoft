@@ -1,33 +1,6 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import Mermaid from "@/components/Mermaid";
-
-const markdownComponents = {
-  pre(props: any) {
-    const { children } = props;
-    if (
-      children &&
-      typeof children === "object" &&
-      "props" in children &&
-      children.props?.className?.includes("language-mermaid")
-    ) {
-      const code = String(children.props.children || "");
-      return <Mermaid chart={code} />;
-    }
-    return <pre {...props}>{children}</pre>;
-  },
-  code(props: any) {
-    const { children, className, ...rest } = props;
-    if (className?.includes("language-mermaid")) {
-      return <Mermaid chart={String(children || "")} />;
-    }
-    return (
-      <code className={className} {...rest}>
-        {children}
-      </code>
-    );
-  },
-};
+import { proposalMarkdownComponents } from "@/components/ProposalMarkdown";
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -606,7 +579,7 @@ export default function ProposalAdmin() {
                         <div className="p-4 rounded-xl border border-primary/30 bg-card/80 shadow-lg space-y-2">
                           <span className="text-xs font-bold text-primary">معاينة مباشرة للقسم: {activeSec.title}</span>
                           <article className="proposal-document">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={proposalMarkdownComponents}>
                               {activeSec.content || "لا يوجد محتوى لهذا القسم بعد."}
                             </ReactMarkdown>
                           </article>
@@ -680,7 +653,7 @@ export default function ProposalAdmin() {
           {showPreview && (
             <div className="proposal-preview">
               <article className="proposal-document">
-                <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                <ReactMarkdown remarkPlugins={[remarkGfm]} components={proposalMarkdownComponents}>
                   {form.markdown || "ستظهر معاينة النص هنا."}
                 </ReactMarkdown>
               </article>

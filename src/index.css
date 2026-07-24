@@ -529,6 +529,93 @@ html {
   border-radius: 0.5rem;
 }
 
+/* GitHub Style Alert Callouts ([!NOTE], [!TIP], [!IMPORTANT], [!WARNING], [!CAUTION]) */
+.proposal-alert-box {
+  margin: 1.5rem 0;
+  padding: 1.1rem 1.35rem;
+  border-radius: 0.75rem;
+  border: 1px solid transparent;
+  border-inline-start-width: 4px;
+  background: hsl(220 25% 12% / 0.8);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.proposal-alert-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.proposal-alert-body {
+  font-size: 0.96rem;
+  line-height: 1.8;
+  color: hsl(210 40% 92%);
+}
+
+.proposal-alert-body > :first-child {
+  margin-top: 0;
+}
+
+.proposal-alert-body > :last-child {
+  margin-bottom: 0;
+}
+
+/* Note Alert */
+.proposal-alert-note {
+  border-color: hsl(205 85% 50% / 0.3);
+  border-inline-start-color: hsl(205 85% 55%);
+  background: hsl(215 35% 11% / 0.85);
+}
+.proposal-alert-note .proposal-alert-title {
+  color: hsl(205 85% 65%);
+}
+
+/* Tip Alert */
+.proposal-alert-tip {
+  border-color: hsl(150 75% 45% / 0.3);
+  border-inline-start-color: hsl(150 75% 48%);
+  background: hsl(150 30% 10% / 0.85);
+}
+.proposal-alert-tip .proposal-alert-title {
+  color: hsl(150 75% 60%);
+}
+
+/* Important Alert */
+.proposal-alert-important {
+  border-color: hsl(43 75% 49% / 0.4);
+  border-inline-start-color: hsl(43 75% 49%);
+  background: hsl(43 40% 10% / 0.85);
+  box-shadow: 0 0 20px rgba(201, 163, 58, 0.08);
+}
+.proposal-alert-important .proposal-alert-title {
+  color: hsl(43 75% 65%);
+}
+
+/* Warning Alert */
+.proposal-alert-warning {
+  border-color: hsl(35 90% 50% / 0.4);
+  border-inline-start-color: hsl(35 90% 55%);
+  background: hsl(30 35% 10% / 0.85);
+}
+.proposal-alert-warning .proposal-alert-title {
+  color: hsl(35 90% 65%);
+}
+
+/* Caution Alert */
+.proposal-alert-caution {
+  border-color: hsl(350 85% 55% / 0.4);
+  border-inline-start-color: hsl(350 85% 60%);
+  background: hsl(350 35% 10% / 0.85);
+}
+.proposal-alert-caution .proposal-alert-title {
+  color: hsl(350 85% 65%);
+}
+
 .proposal-document code {
   border-radius: 0.35rem;
   background: hsl(220 25% 15%);

@@ -1,32 +1,5 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import Mermaid from "@/components/Mermaid";
-
-const markdownComponents = {
-  pre(props: any) {
-    const { children } = props;
-    if (
-      children &&
-      typeof children === "object" &&
-      "props" in children &&
-      children.props?.className?.includes("language-mermaid")
-    ) {
-      const code = String(children.props.children || "");
-      return <Mermaid chart={code} />;
-    }
-    return <pre {...props}>{children}</pre>;
-  },
-  code(props: any) {
-    const { children, className, ...rest } = props;
-    if (className?.includes("language-mermaid")) {
-      return <Mermaid chart={String(children || "")} />;
-    }
-    return (
-      <code className={className} {...rest}>
-        {children}
-      </code>
-    );
-  },
-};
+import { proposalMarkdownComponents } from "@/components/ProposalMarkdown";
 import { useParams } from "wouter";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -336,7 +309,7 @@ export default function ProposalView() {
                   {sections.map((sec, idx) => (
                     <section key={sec.id} className="proposal-section-block">
                       {sections.length > 1 && idx > 0 && <hr className="my-8" />}
-                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={proposalMarkdownComponents}>
                         {sec.content}
                       </ReactMarkdown>
                     </section>
@@ -352,7 +325,7 @@ export default function ProposalView() {
 
                     return (
                       <>
-                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={proposalMarkdownComponents}>
                           {activeSection.content}
                         </ReactMarkdown>
 
