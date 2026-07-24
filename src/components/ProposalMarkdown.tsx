@@ -9,6 +9,9 @@ function walkAst(node: any, visitor: (n: any) => void) {
   }
 }
 
+const ALERT_PATTERN = /^\s*\[!(NOTE|INFO|TIP|HINT|IMPORTANT|SUCCESS|DONE|CHECK|WARNING|CAUTION|DANGER|ERROR|QUESTION|HELP|FAQ)\]/i;
+const STRIP_PATTERN = /^\s*\[!(NOTE|INFO|TIP|HINT|IMPORTANT|SUCCESS|DONE|CHECK|WARNING|CAUTION|DANGER|ERROR|QUESTION|HELP|FAQ)\]\s*\n?/;
+
 export function remarkAlerts() {
   return (tree: any) => {
     walkAst(tree, (node: any) => {
@@ -20,15 +23,25 @@ export function remarkAlerts() {
       const firstTextNode = firstPara.children[0];
       if (!firstTextNode || firstTextNode.type !== "text") return;
 
-      const match = firstTextNode.value.match(/^\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i);
+      const match = firstTextNode.value.match(ALERT_PATTERN);
       if (match) {
-        const alertType = match[1].toLowerCase();
+        const rawType = match[1].toUpperCase();
+        let alertType = "note";
+
+        if (rawType === "INFO" || rawType === "NOTE") alertType = "note";
+        else if (rawType === "TIP" || rawType === "HINT") alertType = "tip";
+        else if (rawType === "IMPORTANT") alertType = "important";
+        else if (rawType === "SUCCESS" || rawType === "DONE" || rawType === "CHECK") alertType = "success";
+        else if (rawType === "WARNING") alertType = "warning";
+        else if (rawType === "CAUTION" || rawType === "DANGER" || rawType === "ERROR") alertType = "caution";
+        else if (rawType === "QUESTION" || rawType === "HELP" || rawType === "FAQ") alertType = "question";
+
         node.data = node.data || {};
         node.data.hProperties = node.data.hProperties || {};
         node.data.hProperties["data-alert-type"] = alertType;
 
-        // Strip [!TYPE] marker from the text node
-        firstTextNode.value = firstTextNode.value.replace(/^\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*\n?/, "");
+        // Strip marker from the text node
+        firstTextNode.value = firstTextNode.value.replace(STRIP_PATTERN, "");
 
         // If text node is now empty, remove it from paragraph children
         if (!firstTextNode.value && firstPara.children.length > 1) {
@@ -75,8 +88,10 @@ export const proposalMarkdownComponents = {
       note: { icon: "ℹ️", label: "ملاحظة", class: "proposal-alert-note" },
       tip: { icon: "💡", label: "نصيحة", class: "proposal-alert-tip" },
       important: { icon: "📌", label: "هام جداً", class: "proposal-alert-important" },
+      success: { icon: "✅", label: "تم الإنجاز", class: "proposal-alert-success" },
       warning: { icon: "⚠️", label: "تحذير", class: "proposal-alert-warning" },
       caution: { icon: "🚨", label: "تنبيه", class: "proposal-alert-caution" },
+      question: { icon: "❓", label: "استفسار", class: "proposal-alert-question" },
     };
 
     const config = alertConfigs[alertType] || alertConfigs.note;

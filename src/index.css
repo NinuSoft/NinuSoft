@@ -616,6 +616,26 @@ html {
   color: hsl(350 85% 65%);
 }
 
+/* Success Alert */
+.proposal-alert-success {
+  border-color: hsl(140 75% 45% / 0.3);
+  border-inline-start-color: hsl(140 75% 50%);
+  background: hsl(140 35% 10% / 0.85);
+}
+.proposal-alert-success .proposal-alert-title {
+  color: hsl(140 75% 65%);
+}
+
+/* Question Alert */
+.proposal-alert-question {
+  border-color: hsl(270 75% 55% / 0.35);
+  border-inline-start-color: hsl(270 75% 60%);
+  background: hsl(270 35% 11% / 0.85);
+}
+.proposal-alert-question .proposal-alert-title {
+  color: hsl(270 75% 70%);
+}
+
 .mermaid-svg-wrapper svg {
   max-width: 100%;
   height: auto;
