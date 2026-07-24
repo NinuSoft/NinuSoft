@@ -503,14 +503,69 @@ export default function ProposalAdmin() {
                   required
                 />
               </label>
-              <label>
-                <span>انتهاء الصلاحية (اختياري)</span>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-foreground">تاريخ ووقت انتهاء الصلاحية</span>
+                  <span className="text-[11px] font-mono text-amber-400 font-semibold">
+                    {form.expiresAt ? `ينتهي في: ${formatDate(form.expiresAt)}` : "غير محدد (رابط دائمی)"}
+                  </span>
+                </div>
                 <Input
                   type="datetime-local"
                   value={form.expiresAt}
                   onChange={(event) => updateField("expiresAt", event.target.value)}
+                  className="font-mono text-xs"
                 />
-              </label>
+                {/* Preset Duration Buttons */}
+                <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                  <span className="text-[11px] text-muted-foreground font-bold">اختصارات سريعة:</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const d = new Date();
+                      d.setDate(d.getDate() + 7);
+                      const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                      updateField("expiresAt", iso);
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-card/80 hover:bg-muted text-[11px] font-mono font-bold text-amber-400 border border-amber-500/30 transition-all shadow-sm"
+                  >
+                    +7 أيام
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const d = new Date();
+                      d.setDate(d.getDate() + 14);
+                      const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                      updateField("expiresAt", iso);
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-card/80 hover:bg-muted text-[11px] font-mono font-bold text-amber-400 border border-amber-500/30 transition-all shadow-sm"
+                  >
+                    +14 يوم
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const d = new Date();
+                      d.setDate(d.getDate() + 30);
+                      const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                      updateField("expiresAt", iso);
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-card/80 hover:bg-muted text-[11px] font-mono font-bold text-amber-400 border border-amber-500/30 transition-all shadow-sm"
+                  >
+                    +30 يوم
+                  </button>
+                  {form.expiresAt && (
+                    <button
+                      type="button"
+                      onClick={() => updateField("expiresAt", "")}
+                      className="px-2.5 py-1 rounded-lg bg-destructive/10 hover:bg-destructive/20 text-[11px] font-bold text-destructive border border-destructive/30 transition-all"
+                    >
+                      إلغاء الانتهاء
+                    </button>
+                  )}
+                </div>
+              </div>
               <label>
                 <span>{form.id ? "كلمة سر جديدة (اتركها دون تغيير)" : "كلمة السر (اختيارية)"}</span>
                 <Input
