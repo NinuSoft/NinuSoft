@@ -57,14 +57,14 @@ export function ProposalIncentiveBanner({
         <div className="space-y-0.5">
           <div className="flex items-center gap-2 flex-wrap">
             <h4 className="font-extrabold text-sm text-amber-300">
-              عرض مخصص وحافز الحجز المباشر
+              ميزة خاصة بهذا العرض
             </h4>
           </div>
 
           {loading ? (
             <div className="flex items-center gap-2 text-xs text-muted-foreground animate-pulse py-1">
               <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-400" />
-              <span>جاري تخصيص الحافز الخاص بهذا العرض...</span>
+              <span>جاري تجهيز التفاصيل...</span>
             </div>
           ) : (
             <p className="text-xs text-foreground/90 font-medium leading-relaxed animate-in fade-in duration-300">
