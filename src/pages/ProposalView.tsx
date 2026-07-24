@@ -20,7 +20,7 @@ import { ProposalWatermark } from "@/components/ProposalWatermark";
 import { ProposalExpiryCountdown } from "@/components/ProposalExpiryCountdown";
 import { ProposalComments } from "@/components/ProposalComments";
 import { Textarea } from "@/components/ui/textarea";
-import { Clock, Printer, Download, FileText, Globe, Layers, MessageSquare } from "@/components/Icons";
+import { Clock, Printer, Download, FileText, Globe, Layers, MessageSquare, XCircle } from "@/components/Icons";
 
 function Brand() {
   return (
@@ -439,7 +439,9 @@ export default function ProposalView() {
                       window.scrollTo({ top: 120, behavior: "smooth" });
                     }}
                   >
-                    <span className="proposal-sidebar-icon">📑</span>
+                    <span className="proposal-sidebar-icon flex items-center justify-center">
+                      <Layers className="w-4 h-4 text-amber-400" />
+                    </span>
                     <div className="proposal-sidebar-info">
                       <strong>عرض كافة الأقسام</strong>
                       <small>الوثيقة الكاملة</small>
@@ -467,8 +469,9 @@ export default function ProposalView() {
                 </nav>
 
                 <div className="proposal-sidebar-footer">
-                  <Button variant="outline" size="sm" className="w-full" onClick={() => print("pdf")}>
-                    📥 تنزيل الوثيقة (PDF)
+                  <Button variant="outline" size="sm" className="w-full flex items-center justify-center gap-1.5 font-bold" onClick={() => print("pdf")}>
+                    <Download className="w-4 h-4 text-amber-400" />
+                    <span>تنزيل الوثيقة (PDF)</span>
                   </Button>
                 </div>
               </div>
@@ -601,7 +604,7 @@ export default function ProposalView() {
                 <span>{lang === "ar" ? "اختر القسم للتنقل" : "Select Section"}</span>
               </h3>
               <Button type="button" variant="ghost" size="sm" onClick={() => setShowMobileNav(false)}>
-                ✕
+                <XCircle className="w-4 h-4" />
               </Button>
             </div>
 
@@ -675,7 +678,7 @@ export default function ProposalView() {
                 <span>إضافة تعليق على النص المحدد</span>
               </h3>
               <Button type="button" variant="ghost" size="sm" onClick={() => setShowHighlightModal(false)}>
-                ✕
+                <XCircle className="w-4 h-4" />
               </Button>
             </div>
 

@@ -250,8 +250,8 @@ export default function Mermaid({ chart }: MermaidProps) {
               <Button type="button" variant="outline" size="sm" onClick={handleDownloadSvg} className="flex items-center gap-1">
                 <Download className="w-3.5 h-3.5" /> تنزيل SVG
               </Button>
-              <Button type="button" variant="default" size="sm" onClick={() => setIsFullscreen(false)}>
-                إغلاق ✕
+              <Button type="button" variant="default" size="sm" onClick={() => setIsFullscreen(false)} className="flex items-center gap-1">
+                <XCircle className="w-3.5 h-3.5" /> إغلاق
               </Button>
             </div>
           </div>

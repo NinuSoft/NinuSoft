@@ -19,7 +19,7 @@ import {
 } from "@/lib/proposal-sections";
 import { ProposalSettingsManager } from "@/components/ProposalSettingsManager";
 import { ProposalAnalytics } from "@/components/ProposalAnalytics";
-import { FileText, BarChart, Settings, Eye, FileSpreadsheet, BookOpen, Send, CheckCircle, XCircle } from "@/components/Icons";
+import { FileText, BarChart, Settings, Eye, FileSpreadsheet, BookOpen, Send, CheckCircle, XCircle, Layers, Edit, Trash2 } from "@/components/Icons";
 
 type FormState = {
   id: string;
@@ -532,17 +532,17 @@ export default function ProposalAdmin() {
                 <div className="inline-flex rounded-lg p-1 bg-muted border border-border/40">
                   <button
                     type="button"
-                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${editorMode === "sections" ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}
+                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all flex items-center gap-1.5 ${editorMode === "sections" ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}
                     onClick={() => setEditorMode("sections")}
                   >
-                    📑 الأقسام المستقلة ({sections.length})
+                    <Layers className="w-3.5 h-3.5" /> الأقسام المستقلة ({sections.length})
                   </button>
                   <button
                     type="button"
-                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${editorMode === "raw" ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}
+                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all flex items-center gap-1.5 ${editorMode === "raw" ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}
                     onClick={() => setEditorMode("raw")}
                   >
-                    📝 ماركداون خام
+                    <Edit className="w-3.5 h-3.5" /> ماركداون خام
                   </button>
                 </div>
                 <label className="proposal-file-button">
@@ -626,20 +626,22 @@ export default function ProposalAdmin() {
                             type="button"
                             variant={previewingSectionId === activeSec.id ? "default" : "outline"}
                             size="sm"
-                            className="h-9 text-xs"
+                            className="h-9 text-xs flex items-center gap-1"
                             onClick={() => setPreviewingSectionId((prev) => (prev === activeSec.id ? null : activeSec.id))}
                           >
-                            {previewingSectionId === activeSec.id ? "إخفاء المعاينة" : "👁 معاينة القسم"}
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>{previewingSectionId === activeSec.id ? "إخفاء المعاينة" : "معاينة القسم"}</span>
                           </Button>
                           {sections.length > 1 && (
                             <Button
                               type="button"
                               variant="destructive"
                               size="sm"
-                              className="h-9 text-xs"
+                              className="h-9 text-xs flex items-center gap-1"
                               onClick={() => removeSection(activeSec.id)}
                             >
-                              🗑 حذف القسم
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>حذف القسم</span>
                             </Button>
                           )}
                         </div>

@@ -1,6 +1,7 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Mermaid from "@/components/Mermaid";
+import { Tag, FileText, CheckCircle, XCircle } from "@/components/Icons";
 
 function walkAst(node: any, visitor: (n: any) => void) {
   visitor(node);
@@ -138,21 +139,21 @@ export const proposalMarkdownComponents = {
       return <blockquote {...props}>{children}</blockquote>;
     }
 
-    const alertConfigs: Record<string, { icon: string; label: string; class: string }> = {
-      note: { icon: "ℹ️", label: "ملاحظة", class: "proposal-alert-note" },
-      tip: { icon: "💡", label: "نصيحة", class: "proposal-alert-tip" },
-      important: { icon: "📌", label: "هام جداً", class: "proposal-alert-important" },
-      success: { icon: "✅", label: "تم الإنجاز", class: "proposal-alert-success" },
-      warning: { icon: "⚠️", label: "تحذير", class: "proposal-alert-warning" },
-      caution: { icon: "🚨", label: "تنبيه", class: "proposal-alert-caution" },
-      question: { icon: "❓", label: "استفسار", class: "proposal-alert-question" },
+    const alertConfigs: Record<string, { icon: React.ReactNode; label: string; class: string }> = {
+      note: { icon: <Tag className="w-4 h-4" />, label: "ملاحظة", class: "proposal-alert-note" },
+      tip: { icon: <FileText className="w-4 h-4" />, label: "نصيحة", class: "proposal-alert-tip" },
+      important: { icon: <CheckCircle className="w-4 h-4" />, label: "هام جداً", class: "proposal-alert-important" },
+      success: { icon: <CheckCircle className="w-4 h-4 text-emerald-400" />, label: "تم الإنجاز", class: "proposal-alert-success" },
+      warning: { icon: <XCircle className="w-4 h-4 text-amber-400" />, label: "تحذير", class: "proposal-alert-warning" },
+      caution: { icon: <XCircle className="w-4 h-4 text-destructive" />, label: "تنبيه", class: "proposal-alert-caution" },
+      question: { icon: <Tag className="w-4 h-4" />, label: "استفسار", class: "proposal-alert-question" },
     };
 
     const config = alertConfigs[alertType] || alertConfigs.note;
 
     return (
       <div className={`proposal-alert-box ${config.class}`}>
-        <div className="proposal-alert-header">
+        <div className="proposal-alert-header flex items-center gap-1.5">
           <span className="proposal-alert-icon">{config.icon}</span>
           <span className="proposal-alert-title">{config.label}</span>
         </div>

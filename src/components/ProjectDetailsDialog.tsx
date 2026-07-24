@@ -110,14 +110,14 @@ export default function ProjectDetailsDialog({ t, lang, project, onClose, onInqu
                         style={{ borderRight: idx % 2 === 0 ? "1px solid hsl(215 25% 18% / 0.6)" : undefined }}
                       >
                         <span
-                          className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-[10px] font-bold"
+                          className="w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0"
                           style={{
                             background: "hsl(43 75% 49% / 0.12)",
                             color: "hsl(43 75% 49%)",
                             border: "1px solid hsl(43 75% 49% / 0.3)",
                           }}
                         >
-                          ✓
+                          <CheckCircle2 className="w-3.5 h-3.5" />
                         </span>
                         <span>{f}</span>
                       </div>
