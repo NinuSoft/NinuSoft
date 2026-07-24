@@ -773,12 +773,14 @@ html {
 
 /* Proposal admin workspace */
 .proposal-admin {
+  --admin-canvas: hsl(222 32% 6%);
+  --admin-topbar-surface: hsl(222 32% 6%);
+  --admin-card-surface: hsl(220 27% 9%);
+  --admin-card-border: hsl(215 25% 17%);
   display: grid;
   grid-template-columns: 248px minmax(0, 1fr);
   min-height: 100dvh;
-  background:
-    radial-gradient(circle at 78% -10%, hsl(43 75% 49% / 0.07), transparent 28rem),
-    hsl(222 32% 6%);
+  background: var(--admin-canvas);
 }
 
 .proposal-admin-rail {
@@ -821,16 +823,40 @@ html {
 
 .proposal-admin-rail nav {
   display: grid;
-  gap: 0.35rem;
+  gap: 1.35rem;
   margin-top: 1.25rem;
 }
 
-.proposal-admin-rail nav::before {
-  content: "مساحة العمل";
+.proposal-admin-nav-group {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.proposal-admin-nav-label {
   margin: 0 0.65rem 0.45rem;
   color: hsl(215 15% 42%);
   font-size: 0.62rem;
   font-weight: 800;
+}
+
+.proposal-admin-nav-group.is-secondary {
+  position: relative;
+  gap: 0.2rem;
+  margin-top: -0.1rem;
+  margin-bottom: 0.35rem;
+  margin-right: 0.7rem;
+  padding-right: 0.7rem;
+}
+
+.proposal-admin-nav-group.is-secondary::before {
+  position: absolute;
+  top: 0.3rem;
+  right: 0;
+  bottom: 0.35rem;
+  width: 1px;
+  border-radius: 999px;
+  background: hsl(215 25% 19%);
+  content: "";
 }
 
 .proposal-admin-rail nav button {
@@ -846,6 +872,22 @@ html {
   font-weight: 700;
   text-align: start;
   transition: 160ms ease;
+}
+
+.proposal-admin-rail nav button.is-parent-active {
+  color: hsl(43 55% 62%);
+}
+
+.proposal-admin-nav-group.is-secondary button {
+  padding-block: 0.58rem;
+  color: hsl(215 15% 50%);
+  font-size: 0.7rem;
+}
+
+.proposal-admin-nav-group.is-secondary button.is-active {
+  border-color: hsl(43 75% 49% / 0.12);
+  background: hsl(43 75% 49% / 0.07);
+  color: hsl(43 70% 65%);
 }
 
 .proposal-admin-rail nav button:hover {
@@ -898,12 +940,27 @@ html {
 }
 
 .proposal-admin-rail-footer button {
-  display: grid;
-  width: 1.9rem;
+  display: flex;
+  width: auto;
   height: 1.9rem;
-  place-items: center;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0 0.5rem;
   border-radius: 0.5rem;
   color: hsl(215 15% 45%);
+}
+
+.proposal-admin-rail-footer button .proposal-admin-logout-label {
+  color: inherit;
+  font-size: 0.58rem;
+  font-weight: 800;
+}
+
+.proposal-admin-rail-footer .proposal-admin-rail-logout {
+  border: 1px solid hsl(0 60% 50% / 0.16);
+  background: hsl(0 60% 45% / 0.08);
+  color: hsl(0 65% 65%);
+  transition: 150ms ease;
 }
 
 .proposal-admin-rail-footer button:hover {
@@ -926,7 +983,7 @@ html {
   gap: 1.5rem;
   padding: 1rem clamp(1.25rem, 3vw, 2.5rem);
   border-bottom: 1px solid hsl(215 25% 16% / 0.9);
-  background: hsl(222 32% 6% / 0.88);
+  background: var(--admin-topbar-surface);
   backdrop-filter: blur(20px);
 }
 
@@ -954,6 +1011,10 @@ html {
   border-radius: 0.65rem;
   font-size: 0.72rem;
   font-weight: 800;
+}
+
+.proposal-admin-mobile-logout {
+  display: none !important;
 }
 
 .proposal-admin-live {
@@ -996,9 +1057,9 @@ html {
   min-height: 8.5rem;
   padding: 1.15rem;
   overflow: hidden;
-  border: 1px solid hsl(215 25% 17%);
+  border: 1px solid var(--admin-card-border);
   border-radius: 0.9rem;
-  background: hsl(220 27% 9% / 0.72);
+  background: var(--admin-card-surface);
 }
 
 .proposal-admin-overview p {
@@ -1205,6 +1266,69 @@ html {
   text-align: center;
 }
 
+.admin-session-loading {
+  position: relative;
+  display: grid;
+  width: min(100%, 25rem);
+  gap: 0.75rem;
+  padding: 2rem;
+  border: 1px solid hsl(215 25% 18%);
+  border-radius: 1.25rem;
+  background: hsl(220 28% 9% / 0.9);
+  box-shadow: 0 2rem 6rem hsl(0 0% 0% / 0.45);
+}
+
+.admin-session-loading .proposal-brand {
+  margin-bottom: 1.75rem;
+}
+
+.admin-session-loading-icon {
+  display: flex;
+  width: 2.75rem;
+  height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  margin-bottom: 0.4rem;
+  border-radius: 0.75rem;
+  background: hsl(43 75% 49% / 0.1);
+  color: hsl(43 80% 65%);
+}
+
+.admin-session-loading h1 {
+  color: hsl(210 40% 98%);
+  font-size: 1.45rem;
+  font-weight: 800;
+}
+
+.admin-session-loading p {
+  color: hsl(215 20% 65%);
+  font-size: 0.75rem;
+  line-height: 1.7;
+}
+
+.admin-session-loading-bar {
+  height: 0.2rem;
+  margin-top: 0.8rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: hsl(215 25% 16%);
+}
+
+.admin-session-loading-bar i {
+  display: block;
+  width: 45%;
+  height: 100%;
+  border-radius: inherit;
+  background: hsl(43 75% 49%);
+  animation: admin-session-loading 1.1s ease-in-out infinite;
+}
+
+@keyframes admin-session-loading {
+  from { transform: translateX(120%); }
+  to { transform: translateX(-230%); }
+}
+
 @media (max-width: 900px) {
   .proposal-admin {
     display: block;
@@ -1225,14 +1349,27 @@ html {
 
   .proposal-admin-rail > .proposal-brand,
   .proposal-admin-rail-footer,
-  .proposal-admin-rail nav::before {
+  .proposal-admin-nav-label {
     display: none;
   }
 
   .proposal-admin-rail nav {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 0.35rem;
     margin: 0;
+  }
+
+  .proposal-admin-nav-group,
+  .proposal-admin-nav-group.is-secondary {
+    display: contents;
+  }
+
+  .proposal-admin-nav-group.is-secondary::before {
+    display: none;
+  }
+
+  .shortlinks-admin .proposal-admin-rail nav {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .proposal-admin-rail nav button {
@@ -1240,12 +1377,471 @@ html {
     padding: 0.6rem;
   }
 
+  .proposal-admin-nav-group.is-secondary button {
+    padding: 0.6rem;
+    font-size: 0.78rem;
+  }
+
   .proposal-admin-topbar {
     min-height: 4.8rem;
   }
 
+  .proposal-admin-mobile-logout {
+    display: flex !important;
+  }
+
   .proposal-admin-overview {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Unified admin — shortlinks */
+.shortlinks-admin .proposal-admin-workspace > main {
+  max-width: 88rem;
+}
+
+.shortlinks-login-switch {
+  color: hsl(43 75% 62%);
+  font-size: 0.8rem;
+  font-weight: 750;
+  text-align: center;
+}
+
+.shortlinks-login-switch:hover {
+  color: hsl(43 85% 72%);
+  text-decoration: underline;
+}
+
+.shortlinks-notice {
+  padding: 0.8rem 1rem;
+  border: 1px solid;
+  border-radius: 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.shortlinks-notice.is-success {
+  border-color: hsl(145 60% 42% / 0.22);
+  background: hsl(145 60% 42% / 0.08);
+  color: hsl(145 58% 65%);
+}
+
+.shortlinks-notice.is-error {
+  border-color: hsl(0 62% 50% / 0.25);
+  background: hsl(0 62% 50% / 0.08);
+  color: hsl(0 75% 70%);
+}
+
+.shortlinks-create-card,
+.shortlinks-list-card {
+  border: 1px solid hsl(215 25% 17%);
+  border-radius: 1rem;
+  background: hsl(220 27% 9% / 0.72);
+}
+
+.shortlinks-create-card {
+  display: grid;
+  grid-template-columns: minmax(13rem, 0.65fr) minmax(0, 1.6fr);
+  gap: clamp(1.25rem, 3vw, 3rem);
+  padding: clamp(1.25rem, 2.5vw, 2rem);
+}
+
+.shortlinks-create-intro {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding-left: 1.5rem;
+  border-left: 1px solid hsl(215 25% 16%);
+}
+
+.shortlinks-create-intro small,
+.shortlinks-list-head > div > span {
+  color: hsl(43 75% 62% / 0.75);
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+
+.shortlinks-create-intro h2,
+.shortlinks-list-head h2 {
+  margin-top: 0.25rem;
+  color: hsl(210 35% 96%);
+  font-size: 1.1rem;
+  font-weight: 850;
+}
+
+.shortlinks-create-intro p {
+  max-width: 22rem;
+  margin-top: 0.55rem;
+  color: hsl(215 15% 48%);
+  font-size: 0.8rem;
+  line-height: 1.75;
+}
+
+.shortlinks-create-card form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.shortlinks-field {
+  display: grid;
+  align-content: start;
+  gap: 0.4rem;
+}
+
+.shortlinks-field.is-wide {
+  grid-column: 1 / -1;
+}
+
+.shortlinks-field > span {
+  color: hsl(215 16% 62%);
+  font-size: 0.8rem;
+  font-weight: 750;
+}
+
+.shortlinks-field em {
+  color: hsl(215 15% 38%);
+  font-size: 0.68rem;
+  font-style: normal;
+}
+
+.shortlinks-field input {
+  font-size: 0.8rem;
+}
+
+.shortlinks-code-input {
+  display: flex;
+  height: 2.25rem;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid hsl(var(--input));
+  border-radius: var(--radius-md);
+  background: hsl(222 30% 7%);
+}
+
+.shortlinks-code-input:focus-within {
+  border-color: hsl(43 75% 49% / 0.65);
+  box-shadow: 0 0 0 2px hsl(43 75% 49% / 0.1);
+}
+
+.shortlinks-code-input b {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  padding: 0 0.65rem;
+  border-right: 1px solid hsl(215 25% 18%);
+  color: hsl(215 15% 43%);
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+
+.shortlinks-code-input input {
+  min-width: 0;
+  flex: 1;
+  padding: 0 0.65rem;
+  outline: none;
+  background: transparent;
+  color: hsl(210 35% 92%);
+}
+
+.shortlinks-form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+}
+
+.shortlinks-form-actions button {
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.shortlinks-list-card {
+  padding: clamp(1.25rem, 2.5vw, 2rem);
+}
+
+.shortlinks-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1.15rem;
+  border-bottom: 1px solid hsl(215 25% 16%);
+}
+
+.shortlinks-list-tools,
+.shortlinks-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.shortlinks-filters {
+  padding: 0.2rem;
+  border: 1px solid hsl(215 25% 17%);
+  border-radius: 0.6rem;
+  background: hsl(222 30% 7%);
+}
+
+.shortlinks-filters button {
+  padding: 0.42rem 0.65rem;
+  border-radius: 0.42rem;
+  color: hsl(215 15% 48%);
+  font-size: 0.68rem;
+  font-weight: 750;
+  transition: 150ms ease;
+}
+
+.shortlinks-filters button:hover {
+  color: hsl(210 25% 88%);
+}
+
+.shortlinks-filters button.is-active {
+  background: hsl(43 75% 49% / 0.12);
+  color: hsl(43 80% 67%);
+}
+
+.shortlinks-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+  padding-top: 1rem;
+}
+
+.shortlink-card {
+  display: grid;
+  gap: 0.9rem;
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid hsl(215 25% 16%);
+  border-radius: 0.85rem;
+  background: hsl(222 30% 7% / 0.72);
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+
+.shortlink-card:hover {
+  border-color: hsl(43 75% 49% / 0.23);
+  transform: translateY(-1px);
+}
+
+.shortlink-card-top,
+.shortlink-code,
+.shortlink-meta,
+.shortlink-actions {
+  display: flex;
+  align-items: center;
+}
+
+.shortlink-card-top {
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.shortlink-code {
+  min-width: 0;
+  gap: 0.65rem;
+}
+
+.shortlink-code > div {
+  display: grid;
+  min-width: 0;
+}
+
+.shortlink-code strong {
+  overflow: hidden;
+  color: hsl(210 35% 94%);
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shortlink-code span {
+  margin-top: 0.15rem;
+  color: hsl(215 15% 38%);
+  font-size: 0.72rem;
+}
+
+.shortlink-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid hsl(215 25% 19%);
+  border-radius: 999px;
+  background: hsl(215 20% 13%);
+  color: hsl(215 15% 52%);
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.shortlink-status i {
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.shortlink-status.is-active {
+  border-color: hsl(145 60% 42% / 0.25);
+  background: hsl(145 60% 42% / 0.09);
+  color: hsl(145 58% 62%);
+}
+
+.shortlink-target {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  overflow: hidden;
+  border: 1px solid hsl(215 25% 15%);
+  border-radius: 0.6rem;
+  background: hsl(220 25% 10%);
+  color: hsl(215 16% 55%);
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shortlink-target:hover {
+  color: hsl(43 75% 65%);
+}
+
+.shortlink-target svg {
+  flex: none;
+}
+
+.shortlink-meta {
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  color: hsl(215 15% 44%);
+  font-size: 0.72rem;
+}
+
+.shortlink-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.shortlink-meta b {
+  color: hsl(210 25% 82%);
+}
+
+.shortlink-actions {
+  gap: 0.4rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid hsl(215 25% 14%);
+}
+
+.shortlink-actions > button,
+.shortlink-actions > a {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid hsl(215 25% 18%);
+  border-radius: 0.5rem;
+  color: hsl(215 15% 52%);
+}
+
+.shortlink-actions > button:first-child {
+  display: flex;
+  width: auto;
+  gap: 0.35rem;
+  margin-left: auto;
+  color: hsl(var(--primary-foreground));
+  font-size: 0.68rem;
+}
+
+.shortlink-actions > button:hover,
+.shortlink-actions > a:hover {
+  border-color: hsl(43 75% 49% / 0.3);
+  color: hsl(43 80% 67%);
+}
+
+.shortlink-actions > button.is-danger:hover {
+  border-color: hsl(0 62% 50% / 0.3);
+  background: hsl(0 62% 50% / 0.08);
+  color: hsl(0 75% 68%);
+}
+
+.shortlinks-empty {
+  display: grid;
+  min-height: 14rem;
+  place-items: center;
+  align-content: center;
+  gap: 0.4rem;
+  color: hsl(215 15% 38%);
+}
+
+.shortlinks-empty strong {
+  color: hsl(215 16% 58%);
+  font-size: 0.8rem;
+}
+
+.shortlinks-empty span {
+  font-size: 0.72rem;
+}
+
+@media (max-width: 1050px) {
+  .shortlinks-create-card {
+    grid-template-columns: 1fr;
+  }
+
+  .shortlinks-create-intro {
+    padding: 0 0 1rem;
+    border-left: 0;
+    border-bottom: 1px solid hsl(215 25% 16%);
+  }
+
+  .shortlinks-list-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .shortlinks-list-tools {
+    width: 100%;
+  }
+
+  .shortlinks-list-tools .proposal-list-search {
+    flex: 1;
+  }
+}
+
+@media (max-width: 720px) {
+  .shortlinks-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .shortlinks-create-card form {
+    grid-template-columns: 1fr;
+  }
+
+  .shortlinks-field.is-wide {
+    grid-column: auto;
+  }
+
+  .shortlinks-form-actions {
+    grid-column: auto;
+  }
+
+  .shortlinks-list-tools {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .shortlinks-filters {
+    overflow-x: auto;
+  }
+
+  .shortlinks-filters button {
+    flex: 1;
+    white-space: nowrap;
   }
 }
 
