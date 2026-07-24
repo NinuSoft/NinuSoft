@@ -739,7 +739,7 @@ export default function ProposalAdmin() {
                 </div>
               </div>
 
-              {/* PIN / Password Switch Card */}
+              {/* Protection Card */}
               <div className="p-4 rounded-xl border border-border/60 bg-card/40 space-y-3 flex flex-col justify-between">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-2.5">
@@ -747,65 +747,72 @@ export default function ProposalAdmin() {
                       <Lock className="w-4 h-4" />
                     </div>
                     <div>
-                      <label htmlFor="pin-protection-switch" className="text-xs font-bold text-foreground block cursor-pointer">
+                      <span className="text-xs font-bold text-foreground block">
                         حماية العرض برمز مرور
-                      </label>
+                      </span>
                       <span className="text-[11px] text-muted-foreground block">
                         {form.id && isProtected && !form.removePassword
                           ? "العرض محمي برمز مرور حالياً"
-                          : "طلب رمز PIN أو كلمة سر لفتح الوثيقة"}
+                          : "اختر نوع الحماية المطلوبة للوثيقة"}
                       </span>
                     </div>
                   </div>
-                  <Switch
-                    id="pin-protection-switch"
-                    checked={!form.removePassword && isProtected}
-                    onCheckedChange={(checked) => {
-                      if (!checked) {
+                </div>
+
+                <div className="pt-2 border-t border-border/40 space-y-3">
+                  {/* Protection Mode Options */}
+                  <div className="flex items-center justify-between gap-1.5 p-1 rounded-lg bg-muted/60 border border-border/40">
+                    <button
+                      type="button"
+                      className={`flex-1 py-1 px-2 text-[11px] font-bold rounded-md transition-all ${
+                        form.removePassword || (!isProtected && !form.password)
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                      onClick={() => {
                         updateField("removePassword", true);
                         updateField("password", "");
                         setIsProtected(false);
-                      } else {
+                      }}
+                    >
+                      بدون حماية
+                    </button>
+                    <button
+                      type="button"
+                      className={`flex-1 py-1 px-2 text-[11px] font-bold rounded-md transition-all ${
+                        (!form.removePassword || isProtected || form.password) && protectionType === "pin"
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                      onClick={() => {
                         updateField("removePassword", false);
                         setIsProtected(true);
-                      }
-                    }}
-                  />
-                </div>
+                        setProtectionType("pin");
+                        if (form.password && !/^\d+$/.test(form.password)) {
+                          updateField("password", "");
+                        }
+                      }}
+                    >
+                      رمز PIN عددي
+                    </button>
+                    <button
+                      type="button"
+                      className={`flex-1 py-1 px-2 text-[11px] font-bold rounded-md transition-all ${
+                        (!form.removePassword || isProtected || form.password) && protectionType === "password"
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                      onClick={() => {
+                        updateField("removePassword", false);
+                        setIsProtected(true);
+                        setProtectionType("password");
+                      }}
+                    >
+                      كلمة سر نصية
+                    </button>
+                  </div>
 
-                {(!form.removePassword && isProtected) && (
-                  <div className="pt-3 border-t border-border/40 space-y-3">
-                    {/* PIN / Password Mode Switcher */}
-                    <div className="flex items-center justify-between gap-2 p-1 rounded-lg bg-muted/60 border border-border/40">
-                      <button
-                        type="button"
-                        className={`flex-1 py-1 px-2 text-xs font-bold rounded-md transition-all ${
-                          protectionType === "pin"
-                            ? "bg-primary text-primary-foreground shadow-sm"
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
-                        onClick={() => {
-                          setProtectionType("pin");
-                          if (form.password && !/^\d+$/.test(form.password)) {
-                            updateField("password", "");
-                          }
-                        }}
-                      >
-                        رمز PIN عددي
-                      </button>
-                      <button
-                        type="button"
-                        className={`flex-1 py-1 px-2 text-xs font-bold rounded-md transition-all ${
-                          protectionType === "password"
-                            ? "bg-primary text-primary-foreground shadow-sm"
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
-                        onClick={() => setProtectionType("password")}
-                      >
-                        كلمة سر نصية
-                      </button>
-                    </div>
-
+                  {(!form.removePassword && (isProtected || form.password)) && (
                     <div>
                       <label htmlFor="proposal-pin-input" className="text-xs font-bold text-muted-foreground block mb-1">
                         {protectionType === "pin"
@@ -840,8 +847,8 @@ export default function ProposalAdmin() {
                           : "كلمة سر نصية تتيح أحرفاً ورموزاً عالي الأمان."}
                       </small>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
 
