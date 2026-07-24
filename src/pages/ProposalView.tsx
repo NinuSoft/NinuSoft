@@ -823,6 +823,7 @@ export default function ProposalView() {
           proposalTitle={proposal.title}
           clientName={proposal.clientName}
           proposalToken={proposal.token}
+          accessToken={accessToken.current}
           content={proposal.markdown}
           isOpen={showAiModal}
           onClose={() => setShowAiModal(false)}

@@ -84,11 +84,14 @@ export function unlockProposal(token: string, password: string) {
   );
 }
 
-export function askProposalAiApi(token: string, question: string) {
+export function askProposalAiApi(token: string, question: string, accessToken?: string) {
   return apiRequest<{ answer: string; modelUsed?: string }>(
     `/v1/proposals/${encodeURIComponent(token)}/ai-query`,
     {
       method: "POST",
+      headers: {
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
       body: JSON.stringify({ question }),
     },
   );

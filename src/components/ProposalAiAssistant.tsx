@@ -9,6 +9,7 @@ interface ProposalAiAssistantProps {
   proposalTitle: string;
   clientName: string;
   proposalToken?: string;
+  accessToken?: string;
   content: string;
   isOpen: boolean;
   onClose: () => void;
@@ -26,6 +27,7 @@ export function ProposalAiAssistant({
   proposalTitle,
   clientName,
   proposalToken,
+  accessToken,
   isOpen,
   onClose,
 }: ProposalAiAssistantProps) {
@@ -40,7 +42,7 @@ export function ProposalAiAssistant({
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [engineStatus, setEngineStatus] = useState<string>("Cloudflare Llama 3.3 70B");
+  const [engineStatus, setEngineStatus] = useState<string>("Cloudflare Workers AI Live");
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
   const quickQuestions = [
@@ -78,7 +80,7 @@ export function ProposalAiAssistant({
       let modelUsed = "";
 
       if (proposalToken) {
-        const res = await askProposalAiApi(proposalToken, question);
+        const res = await askProposalAiApi(proposalToken, question, accessToken);
         answer = res.answer;
         modelUsed = res.modelUsed || "Cloudflare Workers AI";
       }
