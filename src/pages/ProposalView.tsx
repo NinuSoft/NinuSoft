@@ -261,98 +261,140 @@ export default function ProposalView() {
           </div>
         </div>
 
-        {/* Section Tabs Navigation Bar */}
-        {sections.length > 1 && (
-          <nav className="proposal-section-nav" aria-label="أقسام العرض">
-            <div className="proposal-section-tabs">
-              <button
-                type="button"
-                className={`proposal-section-tab ${activeSectionId === "sec-all" ? "is-active" : ""}`}
-                onClick={() => setActiveSectionId("sec-all")}
-              >
-                <span>عرض كافة الأقسام ({sections.length})</span>
-              </button>
-              {sections.map((sec, idx) => (
-                <button
-                  key={sec.id}
-                  type="button"
-                  className={`proposal-section-tab ${activeSectionId === sec.id ? "is-active" : ""}`}
-                  onClick={() => {
-                    setActiveSectionId(sec.id);
-                    window.scrollTo({ top: 120, behavior: "smooth" });
-                  }}
-                >
-                  <span className="proposal-tab-num">{idx + 1}</span>
-                  <span>{sec.title}</span>
-                </button>
-              ))}
-            </div>
-          </nav>
-        )}
+        <div className="proposal-layout-grid">
+          {/* Right Panel Sidebar Navigation */}
+          {sections.length > 0 && (
+            <aside className="proposal-sidebar">
+              <div className="proposal-sidebar-card">
+                <div className="proposal-sidebar-header">
+                  <h3>أقسام الوثيقة</h3>
+                  <span className="proposal-section-count">{sections.length} أقسام</span>
+                </div>
 
-        <article className="proposal-document">
-          {activeSectionId === "sec-all" ? (
-            <div className="proposal-all-sections">
-              {sections.map((sec, idx) => (
-                <section key={sec.id} className="proposal-section-block">
-                  {sections.length > 1 && idx > 0 && <hr className="my-8" />}
-                  <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                    {sec.content}
-                  </ReactMarkdown>
-                </section>
-              ))}
-            </div>
-          ) : (
-            <div className="proposal-single-section">
-              {(() => {
-                const activeSection = sections.find((s) => s.id === activeSectionId) || sections[0];
-                const activeIdx = sections.findIndex((s) => s.id === activeSectionId);
-                const prevSection = activeIdx > 0 ? sections[activeIdx - 1] : null;
-                const nextSection = activeIdx >= 0 && activeIdx < sections.length - 1 ? sections[activeIdx + 1] : null;
+                <nav className="proposal-sidebar-nav" aria-label="أقسام العرض">
+                  <button
+                    type="button"
+                    className={`proposal-sidebar-item ${activeSectionId === "sec-all" ? "is-active" : ""}`}
+                    onClick={() => {
+                      setActiveSectionId("sec-all");
+                      window.scrollTo({ top: 120, behavior: "smooth" });
+                    }}
+                  >
+                    <span className="proposal-sidebar-icon">📑</span>
+                    <div className="proposal-sidebar-info">
+                      <strong>عرض كافة الأقسام</strong>
+                      <small>الوثيقة الكاملة</small>
+                    </div>
+                  </button>
 
-                return (
-                  <>
-                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                      {activeSection.content}
-                    </ReactMarkdown>
+                  <div className="proposal-sidebar-divider" />
 
-                    {sections.length > 1 && (
-                      <div className="proposal-section-pager">
-                        {prevSection ? (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setActiveSectionId(prevSection.id);
-                              window.scrollTo({ top: 120, behavior: "smooth" });
-                            }}
-                          >
-                            → القسم السابق: {prevSection.title}
-                          </Button>
-                        ) : <div />}
-
-                        {nextSection ? (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setActiveSectionId(nextSection.id);
-                              window.scrollTo({ top: 120, behavior: "smooth" });
-                            }}
-                          >
-                            القسم التالي: {nextSection.title} ←
-                          </Button>
-                        ) : <div />}
+                  {sections.map((sec, idx) => (
+                    <button
+                      key={sec.id}
+                      type="button"
+                      className={`proposal-sidebar-item ${activeSectionId === sec.id ? "is-active" : ""}`}
+                      onClick={() => {
+                        setActiveSectionId(sec.id);
+                        window.scrollTo({ top: 120, behavior: "smooth" });
+                      }}
+                    >
+                      <span className="proposal-sidebar-num">{idx + 1}</span>
+                      <div className="proposal-sidebar-info">
+                        <strong>{sec.title}</strong>
                       </div>
-                    )}
-                  </>
+                    </button>
+                  ))}
+                </nav>
+
+                <div className="proposal-sidebar-footer">
+                  <Button variant="outline" size="sm" className="w-full" onClick={() => print("pdf")}>
+                    📥 تنزيل الوثيقة (PDF)
+                  </Button>
+                </div>
+              </div>
+            </aside>
+          )}
+
+          {/* Main Content Area */}
+          <div className="proposal-content-area">
+            <article className="proposal-document">
+              {/* Active Section Header if single section mode */}
+              {sections.length > 1 && activeSectionId !== "sec-all" && (() => {
+                const activeIdx = sections.findIndex((s) => s.id === activeSectionId);
+                const activeSec = sections[activeIdx];
+                return (
+                  <div className="proposal-active-section-header">
+                    <span className="proposal-section-badge">القسم {activeIdx + 1} من {sections.length}</span>
+                    <h2>{activeSec?.title}</h2>
+                  </div>
                 );
               })()}
-            </div>
-          )}
-        </article>
+
+              {activeSectionId === "sec-all" ? (
+                <div className="proposal-all-sections">
+                  {sections.map((sec, idx) => (
+                    <section key={sec.id} className="proposal-section-block">
+                      {sections.length > 1 && idx > 0 && <hr className="my-8" />}
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                        {sec.content}
+                      </ReactMarkdown>
+                    </section>
+                  ))}
+                </div>
+              ) : (
+                <div className="proposal-single-section">
+                  {(() => {
+                    const activeSection = sections.find((s) => s.id === activeSectionId) || sections[0];
+                    const activeIdx = sections.findIndex((s) => s.id === activeSectionId);
+                    const prevSection = activeIdx > 0 ? sections[activeIdx - 1] : null;
+                    const nextSection = activeIdx >= 0 && activeIdx < sections.length - 1 ? sections[activeIdx + 1] : null;
+
+                    return (
+                      <>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                          {activeSection.content}
+                        </ReactMarkdown>
+
+                        {sections.length > 1 && (
+                          <div className="proposal-section-pager">
+                            {prevSection ? (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setActiveSectionId(prevSection.id);
+                                  window.scrollTo({ top: 120, behavior: "smooth" });
+                                }}
+                              >
+                                → القسم السابق: {prevSection.title}
+                              </Button>
+                            ) : <div />}
+
+                            {nextSection ? (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setActiveSectionId(nextSection.id);
+                                  window.scrollTo({ top: 120, behavior: "smooth" });
+                                }}
+                              >
+                                القسم التالي: {nextSection.title} ←
+                              </Button>
+                            ) : <div />}
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
+            </article>
+          </div>
+        </div>
 
         <footer className="proposal-footer">
           <Brand />
