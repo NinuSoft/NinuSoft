@@ -57,17 +57,14 @@ export function ProposalIncentiveBanner({
         <div className="space-y-0.5">
           <div className="flex items-center gap-2 flex-wrap">
             <h4 className="font-extrabold text-sm text-amber-300">
-              حافز الحجز المباشر (Workers AI Dynamic Engine)
+              عرض مخصص وحافز الحجز المباشر
             </h4>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono flex items-center gap-1">
-              <Sparkles className="w-3 h-3" /> مولّد ذكياً حيّاً
-            </span>
           </div>
 
           {loading ? (
             <div className="flex items-center gap-2 text-xs text-muted-foreground animate-pulse py-1">
               <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-400" />
-              <span>جاري توليد حافز تسويقي مخصص لهذا العرض باستخدام الذكاء الاصطناعي...</span>
+              <span>جاري تخصيص الحافز الخاص بهذا العرض...</span>
             </div>
           ) : (
             <p className="text-xs text-foreground/90 font-medium leading-relaxed animate-in fade-in duration-300">
