@@ -13,6 +13,18 @@
   'use strict';
 
   var intro = document.getElementById('ns-intro');
+  var isAdminRoute = window.location.pathname.replace(/\/+$/, '') === '/admin';
+
+  // Internal tools should open immediately; the public brand intro is only for the website.
+  if (isAdminRoute) {
+    if (intro && intro.parentNode) intro.parentNode.removeChild(intro);
+    document.body.classList.remove('ns-loading');
+    document.body.removeAttribute('style');
+    window.__nsReactMounted = function () {};
+    window.__nsReactReady = function () {};
+    return;
+  }
+
   var sessionBypass = (sessionStorage.getItem('intro_seen') === '1');
 
   /* ── Config ─────────────────────────────────────────────────────────── */
