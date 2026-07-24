@@ -1,59 +1,42 @@
-import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Mermaid from "@/components/Mermaid";
 
-function parseAlertBlockquote(children: React.ReactNode): {
-  type: "note" | "tip" | "important" | "warning" | "caution" | null;
-  content: React.ReactNode;
-} {
-  if (!children) return { type: null, content: children };
-
-  const childrenArray = React.Children.toArray(children);
-  if (childrenArray.length === 0) return { type: null, content: children };
-
-  const firstChild: any = childrenArray[0];
-
-  if (firstChild && typeof firstChild === "object" && firstChild.props) {
-    const pChildren = React.Children.toArray(firstChild.props.children);
-    if (pChildren.length > 0) {
-      const firstText = String(pChildren[0] || "");
-      const match = firstText.match(/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i);
-
-      if (match) {
-        const alertType = match[1].toLowerCase() as
-          | "note"
-          | "tip"
-          | "important"
-          | "warning"
-          | "caution";
-
-        const remainingText = firstText.replace(
-          /^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*/i,
-          "",
-        );
-
-        const newPChildren = remainingText
-          ? [remainingText, ...pChildren.slice(1)]
-          : pChildren.slice(1);
-
-        const newFirstChild = React.cloneElement(
-          firstChild,
-          firstChild.props,
-          newPChildren,
-        );
-
-        const newChildren = [newFirstChild, ...childrenArray.slice(1)];
-
-        return {
-          type: alertType,
-          content: newChildren,
-        };
-      }
-    }
+function walkAst(node: any, visitor: (n: any) => void) {
+  visitor(node);
+  if (node.children && Array.isArray(node.children)) {
+    node.children.forEach((child: any) => walkAst(child, visitor));
   }
+}
 
-  return { type: null, content: children };
+export function remarkAlerts() {
+  return (tree: any) => {
+    walkAst(tree, (node: any) => {
+      if (node.type !== "blockquote" || !node.children || node.children.length === 0) return;
+
+      const firstPara = node.children[0];
+      if (!firstPara || firstPara.type !== "paragraph" || !firstPara.children || firstPara.children.length === 0) return;
+
+      const firstTextNode = firstPara.children[0];
+      if (!firstTextNode || firstTextNode.type !== "text") return;
+
+      const match = firstTextNode.value.match(/^\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i);
+      if (match) {
+        const alertType = match[1].toLowerCase();
+        node.data = node.data || {};
+        node.data.hProperties = node.data.hProperties || {};
+        node.data.hProperties["data-alert-type"] = alertType;
+
+        // Strip [!TYPE] marker from the text node
+        firstTextNode.value = firstTextNode.value.replace(/^\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*\n?/, "");
+
+        // If text node is now empty, remove it from paragraph children
+        if (!firstTextNode.value && firstPara.children.length > 1) {
+          firstPara.children.shift();
+        }
+      }
+    });
+  };
 }
 
 export const proposalMarkdownComponents = {
@@ -82,14 +65,13 @@ export const proposalMarkdownComponents = {
     );
   },
   blockquote(props: any) {
-    const { children } = props;
-    const { type, content } = parseAlertBlockquote(children);
+    const { children, "data-alert-type": alertType } = props;
 
-    if (!type) {
+    if (!alertType) {
       return <blockquote {...props}>{children}</blockquote>;
     }
 
-    const alertConfigs = {
+    const alertConfigs: Record<string, { icon: string; label: string; class: string }> = {
       note: { icon: "ℹ️", label: "ملاحظة", class: "proposal-alert-note" },
       tip: { icon: "💡", label: "نصيحة", class: "proposal-alert-tip" },
       important: { icon: "📌", label: "هام جداً", class: "proposal-alert-important" },
@@ -97,7 +79,7 @@ export const proposalMarkdownComponents = {
       caution: { icon: "🚨", label: "تنبيه", class: "proposal-alert-caution" },
     };
 
-    const config = alertConfigs[type];
+    const config = alertConfigs[alertType] || alertConfigs.note;
 
     return (
       <div className={`proposal-alert-box ${config.class}`}>
@@ -105,7 +87,7 @@ export const proposalMarkdownComponents = {
           <span className="proposal-alert-icon">{config.icon}</span>
           <span className="proposal-alert-title">{config.label}</span>
         </div>
-        <div className="proposal-alert-body">{content}</div>
+        <div className="proposal-alert-body">{children}</div>
       </div>
     );
   },
@@ -114,7 +96,7 @@ export const proposalMarkdownComponents = {
 export function ProposalMarkdown({ children }: { children: string }) {
   return (
     <ReactMarkdown
-      remarkPlugins={[remarkGfm]}
+      remarkPlugins={[remarkGfm, remarkAlerts]}
       components={proposalMarkdownComponents}
     >
       {children}

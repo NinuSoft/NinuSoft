@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { proposalMarkdownComponents } from "@/components/ProposalMarkdown";
+import { proposalMarkdownComponents, remarkAlerts } from "@/components/ProposalMarkdown";
 import { useParams } from "wouter";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -309,7 +309,7 @@ export default function ProposalView() {
                   {sections.map((sec, idx) => (
                     <section key={sec.id} className="proposal-section-block">
                       {sections.length > 1 && idx > 0 && <hr className="my-8" />}
-                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={proposalMarkdownComponents}>
+                      <ReactMarkdown remarkPlugins={[remarkGfm, remarkAlerts]} components={proposalMarkdownComponents}>
                         {sec.content}
                       </ReactMarkdown>
                     </section>
@@ -325,7 +325,7 @@ export default function ProposalView() {
 
                     return (
                       <>
-                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={proposalMarkdownComponents}>
+                        <ReactMarkdown remarkPlugins={[remarkGfm, remarkAlerts]} components={proposalMarkdownComponents}>
                           {activeSection.content}
                         </ReactMarkdown>
 

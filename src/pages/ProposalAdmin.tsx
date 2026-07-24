@@ -1,6 +1,6 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { proposalMarkdownComponents } from "@/components/ProposalMarkdown";
+import { proposalMarkdownComponents, remarkAlerts } from "@/components/ProposalMarkdown";
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -579,7 +579,7 @@ export default function ProposalAdmin() {
                         <div className="p-4 rounded-xl border border-primary/30 bg-card/80 shadow-lg space-y-2">
                           <span className="text-xs font-bold text-primary">معاينة مباشرة للقسم: {activeSec.title}</span>
                           <article className="proposal-document">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={proposalMarkdownComponents}>
+                            <ReactMarkdown remarkPlugins={[remarkGfm, remarkAlerts]} components={proposalMarkdownComponents}>
                               {activeSec.content || "لا يوجد محتوى لهذا القسم بعد."}
                             </ReactMarkdown>
                           </article>
@@ -653,7 +653,7 @@ export default function ProposalAdmin() {
           {showPreview && (
             <div className="proposal-preview">
               <article className="proposal-document">
-                <ReactMarkdown remarkPlugins={[remarkGfm]} components={proposalMarkdownComponents}>
+                <ReactMarkdown remarkPlugins={[remarkGfm, remarkAlerts]} components={proposalMarkdownComponents}>
                   {form.markdown || "ستظهر معاينة النص هنا."}
                 </ReactMarkdown>
               </article>
