@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { SyntheticEvent, useEffect, useMemo, useRef, useState } from "react";
 import { proposalMarkdownComponents, remarkAlerts, slugify } from "@/components/ProposalMarkdown";
 import { useParams } from "wouter";
 import ReactMarkdown from "react-markdown";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import {
   ApiError,
   getProposal,
+  getPublicProposalSettingsApi,
   type Proposal,
   recordProposalEvent,
   unlockProposal,
@@ -15,7 +16,7 @@ import {
 } from "@/lib/proposals-api";
 import { parseProposalSections } from "@/lib/proposal-sections";
 import { ProposalSignature } from "@/components/ProposalSignature";
-import { getProposalSettings } from "@/lib/proposal-settings";
+import { defaultProposalSettings, getProposalSettings, saveProposalSettings, type ProposalSettings } from "@/lib/proposal-settings";
 import { ProposalAiAssistant } from "@/components/ProposalAiAssistant";
 import { ProposalExecutiveSummary } from "@/components/ProposalExecutiveSummary";
 import { ProposalExpiryCountdown } from "@/components/ProposalExpiryCountdown";
@@ -24,7 +25,7 @@ import { ProposalIncentiveBanner } from "@/components/ProposalIncentiveBanner";
 import { ProposalPackageSwitcher } from "@/components/ProposalPackageSwitcher";
 import { ProposalComments } from "@/components/ProposalComments";
 import { Textarea } from "@/components/ui/textarea";
-import { Clock, Printer, Download, FileText, Globe, Layers, MessageSquare, XCircle, CheckCircle, Edit, Sparkles } from "@/components/Icons";
+import { Clock, Printer, Download, FileText, Globe, Layers, MessageSquare, XCircle, CheckCircle, Edit, Sparkles, Shield } from "@/components/Icons";
 
 function Brand() {
   return (
@@ -64,6 +65,53 @@ function toEnglishDigits(val: string | number): string {
   return String(val).replace(/[٠-٩]/g, (d) => "٠١٢٣٤٥٦٧٨٩".indexOf(d).toString());
 }
 
+function waitForDelay(milliseconds: number) {
+  return new Promise<void>((resolve) => window.setTimeout(resolve, milliseconds));
+}
+
+async function waitForPrintableAssets() {
+  await Promise.race([
+    document.fonts?.ready ?? Promise.resolve(),
+    waitForDelay(4_000),
+  ]);
+
+  const printableImages = Array.from(
+    document.querySelectorAll<HTMLImageElement>(".proposal-page img"),
+  );
+  await Promise.allSettled(
+    printableImages.map(async (image) => {
+      await Promise.race([
+        image.complete
+          ? Promise.resolve()
+          : new Promise<void>((resolve) => {
+              image.addEventListener("load", () => resolve(), { once: true });
+              image.addEventListener("error", () => resolve(), { once: true });
+            }),
+        waitForDelay(4_000),
+      ]);
+
+      if (image.decode && image.naturalWidth > 0) {
+        await Promise.race([
+          image.decode().catch(() => undefined),
+          waitForDelay(2_000),
+        ]);
+      }
+    }),
+  );
+
+  const startedAt = performance.now();
+  while (
+    document.querySelector(".proposal-page .mermaid-loading") &&
+    performance.now() - startedAt < 7_000
+  ) {
+    await waitForDelay(100);
+  }
+
+  await new Promise<void>((resolve) => {
+    window.requestAnimationFrame(() => window.requestAnimationFrame(() => resolve()));
+  });
+}
+
 export default function ProposalView() {
   const { token = "" } = useParams<{ token: string }>();
   const [proposal, setProposal] = useState<Proposal | null>(null);
@@ -86,6 +134,7 @@ export default function ProposalView() {
   const [highlightCommentText, setHighlightCommentText] = useState("");
   const [showAiModal, setShowAiModal] = useState(false);
   const [showExecSummary, setShowExecSummary] = useState(false);
+  const [printStatus, setPrintStatus] = useState<"print" | "pdf" | null>(null);
 
   useEffect(() => {
     const handleSettingsChange = () => setSettings(getProposalSettings());
@@ -361,6 +410,20 @@ export default function ProposalView() {
         setProposal(result.proposal);
         document.title = `${result.proposal.title} | NinuSoft`;
         setStatus("ready");
+
+        if ((result as any).settings) {
+          const merged = { ...defaultProposalSettings, ...(result as any).settings };
+          setSettings(merged);
+          saveProposalSettings(merged);
+        } else {
+          getPublicProposalSettingsApi().then((res) => {
+            if (res && res.settings && typeof res.settings === "object") {
+              const merged = { ...defaultProposalSettings, ...(res.settings as Partial<ProposalSettings>) };
+              setSettings(merged);
+              saveProposalSettings(merged);
+            }
+          }).catch(() => {});
+        }
       }
     } catch (requestError) {
       if (requestError instanceof ApiError) {
@@ -396,7 +459,7 @@ export default function ProposalView() {
     return () => window.clearTimeout(timer);
   }, [sessionId, status, token]);
 
-  const unlock = async (event: FormEvent) => {
+  const unlock = async (event: SyntheticEvent) => {
     event.preventDefault();
     setError("");
     setUnlocking(true);
@@ -417,14 +480,50 @@ export default function ProposalView() {
     }
   };
 
-  const print = (type: "print" | "pdf") => {
+  const print = async (type: "print" | "pdf") => {
+    if (printStatus) return;
+    setPrintStatus(type);
+
     void recordProposalEvent(
       token,
       type,
       sessionId,
       accessToken.current,
     ).catch(() => undefined);
-    window.print();
+
+    const previousSectionId = activeSectionId;
+    const previousTitle = document.title;
+    const root = document.documentElement;
+    let cleanedUp = false;
+
+    const cleanup = () => {
+      if (cleanedUp) return;
+      cleanedUp = true;
+      delete root.dataset.printMode;
+      document.title = previousTitle;
+      if (previousSectionId !== "sec-all") setActiveSectionId(previousSectionId);
+      setPrintStatus(null);
+      window.removeEventListener("afterprint", cleanup);
+    };
+
+    root.dataset.printMode = type;
+    document.title =
+      type === "pdf"
+        ? `${proposal?.title || "Proposal"} - ${proposal?.clientName || "Client"} - NinuSoft`
+        : previousTitle;
+
+    if (activeSectionId !== "sec-all") {
+      setActiveSectionId("sec-all");
+    }
+
+    try {
+      await waitForPrintableAssets();
+      window.addEventListener("afterprint", cleanup, { once: true });
+      window.print();
+      window.setTimeout(cleanup, 60_000);
+    } catch {
+      cleanup();
+    }
   };
 
   if (status === "loading") {
@@ -461,7 +560,7 @@ export default function ProposalView() {
   }
 
   if (status === "expired") {
-    return <CenteredState icon="⌛" title="انتهت صلاحية الرابط" description="تواصل مع فريق NinuSoft للحصول على رابط محدّث لهذا العرض." />;
+    return <CenteredState icon="!" title="انتهت صلاحية الرابط" description="تواصل مع فريق NinuSoft للحصول على رابط محدّث لهذا العرض." />;
   }
 
   if (status === "missing") {
@@ -476,28 +575,108 @@ export default function ProposalView() {
     );
   }
 
+  const proposalIssueDate = new Intl.DateTimeFormat("ar-IQ-u-nu-latn", {
+    dateStyle: "long",
+  }).format(new Date(proposal.updatedAt));
+  const proposalReference = `NS-${proposal.id.replace(/[^a-zA-Z0-9]/g, "").slice(0, 8).toUpperCase()}`;
+  const proposalValidity = proposal.expiresAt
+    ? new Intl.DateTimeFormat("ar-IQ-u-nu-latn", { dateStyle: "long" }).format(
+        new Date(proposal.expiresAt),
+      )
+    : "حسب الشروط الواردة في العرض";
+
   return (
     <div className="proposal-page" dir={lang === "ar" ? "rtl" : "ltr"}>
-      {/* Branded PDF Cover Page (Only visible during print/PDF export) */}
-      <div className="hidden print:flex print:flex-col justify-between p-12 text-center bg-black text-white dir-rtl min-h-[95vh] border-b-2 border-amber-500 mb-8 page-break-after">
-        <div className="space-y-4 pt-12">
-          <div className="text-4xl font-black text-amber-400 font-mono tracking-widest">NINUSOFT</div>
-          <p className="text-sm text-gray-400 font-semibold">حلول البرمجيات والأنظمة الحسابية المتكاملة</p>
+      <section className="proposal-print-cover" aria-hidden="true">
+        <div className="proposal-print-cover-brand">
+          <img src="/logo.png" alt="" />
+          <div>
+            <strong>NinuSoft</strong>
+            <span>Digital Solutions</span>
+          </div>
         </div>
 
-        <div className="space-y-6 my-auto border-y border-gray-800 py-16">
-          <span className="text-xs uppercase tracking-widest text-amber-400 font-mono font-bold bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/30">
-            PROPOSAL DOCUMENT
-          </span>
-          <h1 className="text-4xl font-extrabold text-white leading-tight">{proposal.title}</h1>
-          <p className="text-xl text-gray-300 font-bold">مُعد خصيصاً لـ: {proposal.clientName}</p>
+        <div className="proposal-print-cover-content">
+          <span>PROPOSAL DOCUMENT</span>
+          <h1>{proposal.title}</h1>
+          <p>عرض مُعد خصيصاً لصالح</p>
+          <strong>{proposal.clientName}</strong>
         </div>
 
-        <div className="flex justify-between items-end border-t border-gray-800 pt-8 text-xs text-gray-400 font-mono">
-          <div>تاريخ الإصدار: {new Intl.DateTimeFormat("ar-IQ-u-nu-latn", { dateStyle: "medium" }).format(new Date())}</div>
-          <div>معرف العرض: {proposal.token}</div>
+        <div className="proposal-print-cover-meta">
+          <div>
+            <span>تاريخ الإصدار</span>
+            <strong>{proposalIssueDate}</strong>
+          </div>
+          <div>
+            <span>مرجع العرض</span>
+            <strong dir="ltr">{proposalReference}</strong>
+          </div>
         </div>
+      </section>
+
+      <div className="proposal-print-running-footer" aria-hidden="true">
+        <span>NinuSoft · وثيقة عرض خاصة</span>
+        <span>{proposal.title}</span>
       </div>
+
+      <section className="proposal-print-overview" aria-hidden="true">
+        <div className="proposal-print-overview-heading">
+          <span>DOCUMENT OVERVIEW</span>
+          <h2>بيانات العرض ومحتوياته</h2>
+          <p>نسخة مخصصة للمراجعة واتخاذ القرار، أعدتها NinuSoft لصالح {proposal.clientName}.</p>
+        </div>
+
+        <div className="proposal-print-overview-meta">
+          <div>
+            <span>العميل</span>
+            <strong>{proposal.clientName}</strong>
+          </div>
+          <div>
+            <span>تاريخ الإصدار</span>
+            <strong>{proposalIssueDate}</strong>
+          </div>
+          <div>
+            <span>صالح حتى</span>
+            <strong>{proposalValidity}</strong>
+          </div>
+          <div>
+            <span>مرجع الوثيقة</span>
+            <strong dir="ltr">{proposalReference}</strong>
+          </div>
+        </div>
+
+        <div className="proposal-print-contents">
+          <h3>محتويات الوثيقة</h3>
+          <ol>
+            {sections.map((section, index) => (
+              <li key={section.id}>
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <strong>{section.title}</strong>
+              </li>
+            ))}
+          </ol>
+        </div>
+
+        <div className="proposal-print-confidentiality">
+          <Shield className="w-4 h-4" />
+          <p>هذه الوثيقة خاصة وسرية، ومخصصة للجهة المذكورة أعلاه فقط.</p>
+        </div>
+      </section>
+
+      <header className="proposal-print-document-header" aria-hidden="true">
+        <div className="proposal-print-document-brand">
+          <img src="/logo.png" alt="" />
+          <div>
+            <strong>NinuSoft</strong>
+            <span>PROPOSAL</span>
+          </div>
+        </div>
+        <div className="proposal-print-document-info">
+          <strong>{proposal.title}</strong>
+          <span>{proposal.clientName} · {proposalIssueDate} · {proposalReference}</span>
+        </div>
+      </header>
 
       {settings.enableReadingTime && (
         <div
@@ -525,7 +704,7 @@ export default function ProposalView() {
             className="proposal-action-summary text-xs font-bold flex items-center gap-1.5 border-amber-500/30 text-amber-300 hover:bg-amber-500/10"
           >
             <FileText className="w-3.5 h-3.5" />
-            <span className="proposal-action-label">ملخص تنفيذي</span>
+            <span className="proposal-action-label">الملخص التنفيذي</span>
           </Button>
 
           {settings.enableReadingTime && (
@@ -534,17 +713,34 @@ export default function ProposalView() {
               <span>{toEnglishDigits(readTimeMinutes)} {lang === "ar" ? "د قراءة" : "min read"}</span>
             </span>
           )}
+          {settings.enablePrint && (
+            <Button
+              variant="outline"
+              disabled={Boolean(printStatus)}
+              onClick={() => void print("print")}
+              className="proposal-action-print flex items-center gap-1.5"
+            >
+              <Printer className="w-4 h-4" />
+              <span className="proposal-action-label">
+                {printStatus === "print"
+                  ? (lang === "ar" ? "جاري التجهيز…" : "Preparing…")
+                  : (lang === "ar" ? "طباعة" : "Print")}
+              </span>
+            </Button>
+          )}
           {settings.enablePdfExport && (
-            <>
-              <Button variant="outline" onClick={() => print("print")} className="proposal-action-print flex items-center gap-1.5">
-                <Printer className="w-4 h-4" />
-                <span className="proposal-action-label">{lang === "ar" ? "طباعة" : "Print"}</span>
-              </Button>
-              <Button onClick={() => print("pdf")} className="proposal-action-pdf flex items-center gap-1.5">
-                <Download className="w-4 h-4" />
-                <span className="proposal-action-label">{lang === "ar" ? "تنزيل PDF" : "Download PDF"}</span>
-              </Button>
-            </>
+            <Button
+              disabled={Boolean(printStatus)}
+              onClick={() => void print("pdf")}
+              className="proposal-action-pdf flex items-center gap-1.5"
+            >
+              <Download className="w-4 h-4" />
+              <span className="proposal-action-label">
+                {printStatus === "pdf"
+                  ? (lang === "ar" ? "جاري تجهيز PDF…" : "Preparing PDF…")
+                  : (lang === "ar" ? "حفظ PDF" : "Save PDF")}
+              </span>
+            </Button>
           )}
         </div>
       </header>
@@ -634,12 +830,20 @@ export default function ProposalView() {
                   ))}
                 </nav>
 
-                <div className="proposal-sidebar-footer">
-                  <Button variant="outline" size="sm" className="w-full flex items-center justify-center gap-1.5 font-bold" onClick={() => print("pdf")}>
-                    <Download className="w-4 h-4 text-amber-400" />
-                    <span>تنزيل الوثيقة (PDF)</span>
-                  </Button>
-                </div>
+                {settings.enablePdfExport && (
+                  <div className="proposal-sidebar-footer">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={Boolean(printStatus)}
+                      className="w-full flex items-center justify-center gap-1.5 font-bold"
+                      onClick={() => void print("pdf")}
+                    >
+                      <Download className="w-4 h-4 text-amber-400" />
+                      <span>{printStatus === "pdf" ? "جاري تجهيز PDF…" : "حفظ الوثيقة PDF"}</span>
+                    </Button>
+                  </div>
+                )}
               </div>
             </aside>
           )}
@@ -659,84 +863,123 @@ export default function ProposalView() {
                 );
               })()}
 
-              {activeSectionId === "sec-all" ? (
-                <div className="proposal-all-sections">
-                  {sections.map((sec, idx) => (
-                    <section
-                      key={sec.id}
-                      id={sec.id}
-                      data-proposal-section-id={sec.id}
-                      className="proposal-section-block"
-                    >
-                      {sections.length > 1 && idx > 0 && <hr className="my-8" />}
-                      <ReactMarkdown remarkPlugins={[remarkGfm, remarkAlerts]} components={proposalMarkdownComponents}>
-                        {sec.content}
-                      </ReactMarkdown>
-                    </section>
-                  ))}
-                </div>
-              ) : (
-                <div className="proposal-single-section">
-                  {(() => {
-                    const activeSection = sections.find((s) => s.id === activeSectionId) || sections[0];
-                    const activeIdx = sections.findIndex((s) => s.id === activeSectionId);
-                    const prevSection = activeIdx > 0 ? sections[activeIdx - 1] : null;
-                    const nextSection = activeIdx >= 0 && activeIdx < sections.length - 1 ? sections[activeIdx + 1] : null;
+              {(() => {
+                const hasAnySectionSignature = sections.some((s) => s.hasSignature);
+                return (
+                  <>
+                    {activeSectionId === "sec-all" ? (
+                      <div className="proposal-all-sections">
+                        {sections.map((sec, idx) => (
+                          <section
+                            key={sec.id}
+                            id={sec.id}
+                            data-proposal-section-id={sec.id}
+                            className="proposal-section-block"
+                          >
+                            <header className="proposal-print-section-heading">
+                              <span>SECTION {String(idx + 1).padStart(2, "0")}</span>
+                              <h2>{sec.title}</h2>
+                            </header>
+                            {sections.length > 1 && idx > 0 && <hr className="my-8" />}
+                            <ReactMarkdown remarkPlugins={[remarkGfm, remarkAlerts]} components={proposalMarkdownComponents}>
+                              {sec.content}
+                            </ReactMarkdown>
 
-                    return (
-                      <>
-                        <ReactMarkdown remarkPlugins={[remarkGfm, remarkAlerts]} components={proposalMarkdownComponents}>
-                          {activeSection.content}
-                        </ReactMarkdown>
+                            {settings.enableDigitalSignature && sec.hasSignature && (
+                              <div className="mt-8">
+                                <ProposalSignature
+                                  proposalTitle={proposal.title}
+                                  clientName={proposal.clientName}
+                                  proposalToken={proposal.token}
+                                  allowDraw={settings.allowDrawSignature}
+                                  allowType={settings.allowTypeSignature}
+                                  allowUpload={settings.allowUploadSignature}
+                                  allowRejection={settings.allowRejection}
+                                />
+                              </div>
+                            )}
+                          </section>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="proposal-single-section">
+                        {(() => {
+                          const activeSection = sections.find((s) => s.id === activeSectionId) || sections[0];
+                          const activeIdx = sections.findIndex((s) => s.id === activeSectionId);
+                          const prevSection = activeIdx > 0 ? sections[activeIdx - 1] : null;
+                          const nextSection = activeIdx >= 0 && activeIdx < sections.length - 1 ? sections[activeIdx + 1] : null;
 
-                        {sections.length > 1 && (
-                          <div className="proposal-section-pager">
-                            {prevSection ? (
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  handleSelectSection(prevSection.id);
-                                  window.scrollTo({ top: 120, behavior: "smooth" });
-                                }}
-                              >
-                                → القسم السابق: {prevSection.title}
-                              </Button>
-                            ) : <div />}
+                          return (
+                            <>
+                              <ReactMarkdown remarkPlugins={[remarkGfm, remarkAlerts]} components={proposalMarkdownComponents}>
+                                {activeSection.content}
+                              </ReactMarkdown>
 
-                            {nextSection ? (
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  handleSelectSection(nextSection.id);
-                                  window.scrollTo({ top: 120, behavior: "smooth" });
-                                }}
-                              >
-                                القسم التالي: {nextSection.title} ←
-                              </Button>
-                            ) : <div />}
-                          </div>
-                        )}
-                      </>
-                    );
-                  })()}
-                </div>
-              )}
+                              {settings.enableDigitalSignature && activeSection.hasSignature && (
+                                <div className="mt-8">
+                                  <ProposalSignature
+                                    proposalTitle={proposal.title}
+                                    clientName={proposal.clientName}
+                                    proposalToken={proposal.token}
+                                    allowDraw={settings.allowDrawSignature}
+                                    allowType={settings.allowTypeSignature}
+                                    allowUpload={settings.allowUploadSignature}
+                                    allowRejection={settings.allowRejection}
+                                  />
+                                </div>
+                              )}
 
-              {settings.enableDigitalSignature && (
-                <ProposalSignature
-                  proposalTitle={proposal.title}
-                  clientName={proposal.clientName}
-                  proposalToken={proposal.token}
-                  allowDraw={settings.allowDrawSignature}
-                  allowType={settings.allowTypeSignature}
-                  allowUpload={settings.allowUploadSignature}
-                  allowRejection={settings.allowRejection}
-                />
-              )}
+                              {sections.length > 1 && (
+                                <div className="proposal-section-pager">
+                                  {prevSection ? (
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        handleSelectSection(prevSection.id);
+                                        window.scrollTo({ top: 120, behavior: "smooth" });
+                                      }}
+                                    >
+                                      → القسم السابق: {prevSection.title}
+                                    </Button>
+                                  ) : <div />}
+
+                                  {nextSection ? (
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        handleSelectSection(nextSection.id);
+                                        window.scrollTo({ top: 120, behavior: "smooth" });
+                                      }}
+                                    >
+                                      القسم التالي: {nextSection.title} ←
+                                    </Button>
+                                  ) : <div />}
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </div>
+                    )}
+
+                    {settings.enableDigitalSignature && !hasAnySectionSignature && (
+                      <ProposalSignature
+                        proposalTitle={proposal.title}
+                        clientName={proposal.clientName}
+                        proposalToken={proposal.token}
+                        allowDraw={settings.allowDrawSignature}
+                        allowType={settings.allowTypeSignature}
+                        allowUpload={settings.allowUploadSignature}
+                        allowRejection={settings.allowRejection}
+                      />
+                    )}
+                  </>
+                );
+              })()}
 
               {settings.enableInlineComments && (
                 <ProposalComments proposalTitle={proposal.title} proposalToken={proposal.token} clientName={proposal.clientName} />
@@ -752,7 +995,7 @@ export default function ProposalView() {
       </main>
 
       {/* NinuSoft AI launcher */}
-      <div className="fixed bottom-5 right-4 z-50 sm:bottom-6 sm:right-6">
+      <div className="proposal-ai-launcher fixed bottom-5 right-4 z-50 sm:bottom-6 sm:right-6">
         <button
           type="button"
           onClick={() => setShowAiModal(true)}
@@ -772,7 +1015,7 @@ export default function ProposalView() {
 
       {/* Mobile Floating Drawer Button */}
       {sections.length > 1 && (
-        <div className="fixed bottom-6 left-6 z-40 lg:hidden">
+        <div className="proposal-mobile-sections-launcher fixed bottom-6 left-6 z-40 lg:hidden">
           <Button
             type="button"
             onClick={() => setShowMobileNav(!showMobileNav)}
@@ -932,6 +1175,7 @@ export default function ProposalView() {
           token={proposal.token}
           isOpen={showExecSummary}
           onClose={() => setShowExecSummary(false)}
+          enablePrint={settings.enablePrint}
         />
       )}
     </div>

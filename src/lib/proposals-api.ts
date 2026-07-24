@@ -173,3 +173,7 @@ export function getProposalSettingsBackendApi(adminKey: string) {
   return adminRequest<{ settings: unknown }>(adminKey, "/settings");
 }
 
+export function getPublicProposalSettingsApi() {
+  return apiRequest<{ settings: unknown }>("/v1/settings").catch(() => null);
+}
+

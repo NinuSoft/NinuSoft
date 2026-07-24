@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   getProposalSettings,
@@ -6,7 +6,10 @@ import {
   defaultProposalSettings,
   type ProposalSettings,
 } from "@/lib/proposal-settings";
-import { saveProposalSettingsBackendApi } from "@/lib/proposals-api";
+import {
+  saveProposalSettingsBackendApi,
+  getProposalSettingsBackendApi,
+} from "@/lib/proposals-api";
 import {
   Settings,
   PenTool,
@@ -17,6 +20,7 @@ import {
   Clock,
   FileText,
   Download,
+  Printer,
   Tag,
   MessageSquare,
   CheckCircle,
@@ -25,6 +29,21 @@ import {
 export function ProposalSettingsManager() {
   const [settings, setSettings] = useState<ProposalSettings>(getProposalSettings);
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    const adminKey = sessionStorage.getItem("ninusoft-proposals-admin-key");
+    if (adminKey) {
+      getProposalSettingsBackendApi(adminKey)
+        .then((res) => {
+          if (res && res.settings && typeof res.settings === "object") {
+            const merged = { ...defaultProposalSettings, ...(res.settings as Partial<ProposalSettings>) };
+            setSettings(merged);
+            saveProposalSettings(merged);
+          }
+        })
+        .catch(() => {});
+    }
+  }, []);
 
   const toggle = (key: keyof ProposalSettings) => {
     setSettings((prev) => ({
@@ -246,7 +265,7 @@ export function ProposalSettingsManager() {
             </p>
           </div>
 
-          {/* PDF Export */}
+          {/* PDF Export Download */}
           <div
             className={`p-5 rounded-xl border transition-all cursor-pointer ${
               settings.enablePdfExport
@@ -258,7 +277,7 @@ export function ProposalSettingsManager() {
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2 text-base font-bold text-foreground">
                 <Download className="w-5 h-5 text-amber-400" />
-                <span>إتاحة تنزيل PDF والطباعة</span>
+                <span>إتاحة تنزيل PDF</span>
               </div>
               <input
                 type="checkbox"
@@ -268,7 +287,33 @@ export function ProposalSettingsManager() {
               />
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              إظهار أزرار الطباعة وتنزيل نسخة PDF للعميل من الشريط العلوي.
+              إظهار أزرار تنزيل نسخة الـ PDF للعميل من الشريط العلوي والشريط الجانبي.
+            </p>
+          </div>
+
+          {/* Print Export */}
+          <div
+            className={`p-5 rounded-xl border transition-all cursor-pointer ${
+              settings.enablePrint
+                ? "border-amber-500/40 bg-card/90 shadow-md"
+                : "border-border/40 bg-card/40 opacity-75"
+            }`}
+            onClick={() => toggle("enablePrint")}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 text-base font-bold text-foreground">
+                <Printer className="w-5 h-5 text-amber-400" />
+                <span>إتاحة طباعة العرض</span>
+              </div>
+              <input
+                type="checkbox"
+                checked={settings.enablePrint}
+                onChange={() => toggle("enablePrint")}
+                className="w-4 h-4 accent-amber-500 cursor-pointer"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              إظهار أزرار طباعة الوثيقة للعميل من الشريط العلوي والملخص التنفيذي.
             </p>
           </div>
 

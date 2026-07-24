@@ -2,11 +2,12 @@ export type ProposalSection = {
   id: string;
   title: string;
   content: string;
+  hasSignature?: boolean;
 };
 
 /**
  * Parses markdown string into discrete sections.
- * Supports explicit `<!-- section: Title -->` markers,
+ * Supports explicit `<!-- section: Title | signature: true -->` markers,
  * or splits by top-level `# Title` headings if multiple exist.
  */
 export function parseProposalSections(markdown: string): ProposalSection[] {
@@ -35,7 +36,20 @@ export function parseProposalSections(markdown: string): ProposalSection[] {
 
     for (let i = 0; i < matches.length; i++) {
       const match = matches[i];
-      const title = match[1].trim() || `القسم ${i + 1}`;
+      const rawTitle = match[1].trim();
+      let title = rawTitle;
+      let hasSignature = false;
+
+      if (rawTitle.includes("|")) {
+        const parts = rawTitle.split("|");
+        title = parts[0].trim();
+        const metaStr = parts.slice(1).join("|").toLowerCase();
+        if (metaStr.includes("signature: true") || metaStr.includes("signature:true") || metaStr.includes("signature")) {
+          hasSignature = true;
+        }
+      }
+      if (!title) title = `القسم ${i + 1}`;
+
       const startIndex = match.index! + match[0].length;
       const endIndex = i < matches.length - 1 ? matches[i + 1].index! : normalized.length;
       const content = normalized.slice(startIndex, endIndex).trim();
@@ -43,6 +57,7 @@ export function parseProposalSections(markdown: string): ProposalSection[] {
         id: `sec-${i + 1}`,
         title,
         content,
+        hasSignature,
       });
     }
     
@@ -96,10 +111,13 @@ export function parseProposalSections(markdown: string): ProposalSection[] {
  */
 export function serializeProposalSections(sections: ProposalSection[]): string {
   if (!sections || sections.length === 0) return "";
-  if (sections.length === 1 && sections[0].title === "محتوى العرض") {
+  if (sections.length === 1 && sections[0].title === "محتوى العرض" && !sections[0].hasSignature) {
     return sections[0].content.trim();
   }
   return sections
-    .map((sec) => `<!-- section: ${sec.title.trim()} -->\n${sec.content.trim()}`)
+    .map((sec) => {
+      const sigMeta = sec.hasSignature ? " | signature: true" : "";
+      return `<!-- section: ${sec.title.trim()}${sigMeta} -->\n${sec.content.trim()}`;
+    })
     .join("\n\n");
 }

@@ -58,6 +58,18 @@ mermaid.initialize({
     noteBorderColor: "#f59e0b",
     noteBkgColor: "#1e293b",
     noteTextColor: "#f9fafb",
+    pie1: "#f59e0b",
+    pie2: "#06b6d4",
+    pie3: "#8b5cf6",
+    pie4: "#10b981",
+    pie5: "#f43f5e",
+    pie6: "#3b82f6",
+    pie7: "#eab308",
+    pie8: "#14b8a6",
+    pie9: "#d946ef",
+    pie10: "#84cc16",
+    pie11: "#f97316",
+    pie12: "#6366f1",
   },
   securityLevel: "loose",
 });
@@ -67,6 +79,127 @@ interface MermaidProps {
 }
 
 const INLINE_DEFAULT_ZOOM = 1;
+
+type TextDirection = "ltr" | "rtl";
+
+function sortPieChartSections(chart: string): string {
+  const lines = chart.split(/\r?\n/);
+  const pieDeclarationIndex = lines.findIndex((line) => /^\s*pie\b/i.test(line));
+  if (pieDeclarationIndex < 0) return chart;
+
+  const sectionPattern =
+    /^(\s*)(["'])(.*?)\2\s*:\s*([+-]?(?:\d+(?:\.\d+)?|\.\d+))\s*$/;
+  const sections = lines
+    .map((line, index) => {
+      const match = line.match(sectionPattern);
+      return match && index > pieDeclarationIndex
+        ? { index, line, value: Number(match[4]) }
+        : null;
+    })
+    .filter(
+      (section): section is { index: number; line: string; value: number } =>
+        Boolean(section),
+    );
+
+  if (sections.length < 2) return chart;
+
+  const sortedLines = [...sections]
+    .sort((a, b) => b.value - a.value)
+    .map(({ line }) => line);
+  const sortedChartLines = [...lines];
+
+  sections.forEach(({ index }, sortedIndex) => {
+    sortedChartLines[index] = sortedLines[sortedIndex];
+  });
+
+  return sortedChartLines.join("\n");
+}
+
+function getTextDirection(text: string): TextDirection | null {
+  const firstStrongCharacter = text.match(/[A-Za-z\u0590-\u05FF\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/)?.[0];
+  if (!firstStrongCharacter) return null;
+
+  return /[\u0590-\u05FF\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/.test(firstStrongCharacter)
+    ? "rtl"
+    : "ltr";
+}
+
+function applySvgTextDirections(root: Element) {
+  const pieLegendTexts = root.querySelector(".pieTitleText")
+    ? root.querySelectorAll<SVGTextElement>("g.legend text")
+    : [];
+  for (const textElement of pieLegendTexts) {
+    const legendText = textElement.textContent || "";
+    const valueMatch = legendText.match(
+      /^(.*?)\s*\[([+-]?(?:\d+(?:\.\d+)?|\.\d+))\]\s*$/,
+    );
+    if (valueMatch) {
+      const [, label] = valueMatch;
+      textElement.textContent = label.trim();
+    }
+  }
+
+  const textElements = Array.from(root.querySelectorAll<SVGTextElement>("text"));
+
+  for (const textElement of textElements) {
+    const direction = getTextDirection(textElement.textContent || "");
+    if (!direction) continue;
+
+    textElement.setAttribute("direction", direction);
+    textElement.style.direction = direction;
+    textElement.style.unicodeBidi = "plaintext";
+  }
+
+  const legendItems = Array.from(root.querySelectorAll<SVGGElement>("g.legend"))
+    .map((group) => ({
+      group,
+      rect: group.querySelector<SVGRectElement>("rect"),
+      text: group.querySelector<SVGTextElement>("text"),
+    }))
+    .filter(
+      (item): item is {
+        group: SVGGElement;
+        rect: SVGRectElement;
+        text: SVGTextElement;
+      } => Boolean(item.rect && item.text),
+    );
+
+  if (legendItems.length === 0) return;
+
+  const rtlItemCount = legendItems.filter(
+    ({ text }) => getTextDirection(text.textContent || "") === "rtl",
+  ).length;
+  const titleDirection = getTextDirection(
+    root.querySelector<SVGTextElement>(".pieTitleText")?.textContent || "",
+  );
+
+  if (titleDirection !== "rtl" && rtlItemCount <= legendItems.length / 2) return;
+
+  const measurementHost = document.createElement("div");
+  measurementHost.style.cssText =
+    "position:fixed;inset:0 auto auto -10000px;width:1200px;visibility:hidden;pointer-events:none;";
+  document.body.appendChild(measurementHost);
+
+  try {
+    measurementHost.appendChild(root);
+    const longestTextWidth = Math.max(
+      ...legendItems.map(({ text }) => text.getComputedTextLength()),
+    );
+
+    for (const { rect, text } of legendItems) {
+      const direction = getTextDirection(text.textContent || "") || "rtl";
+      const markerWidth = Number(rect.getAttribute("width")) || 18;
+      const gap = 4;
+
+      text.setAttribute("x", String(longestTextWidth));
+      text.setAttribute("text-anchor", direction === "rtl" ? "start" : "end");
+      rect.setAttribute("x", String(longestTextWidth + gap));
+      rect.setAttribute("width", String(markerWidth));
+    }
+  } finally {
+    measurementHost.remove();
+  }
+}
 
 function prepareSvg(rawSvg: string): { markup: string; aspectRatio: number } {
   const parser = new DOMParser();
@@ -94,6 +227,7 @@ function prepareSvg(rawSvg: string): { markup: string; aspectRatio: number } {
     "style",
     "display:block;width:100%;height:auto;max-width:100%;overflow:visible;",
   );
+  applySvgTextDirections(root);
 
   return {
     markup: new XMLSerializer().serializeToString(root),
@@ -166,7 +300,8 @@ export default function Mermaid({ chart }: MermaidProps) {
       try {
         setError(null);
         await document.fonts?.ready;
-        const { svg: rawSvg } = await mermaid.render(elementId, chart.trim());
+        const preparedChart = sortPieChartSections(chart.trim());
+        const { svg: rawSvg } = await mermaid.render(elementId, preparedChart);
         const preparedSvg = prepareSvg(rawSvg);
 
         if (isMounted) {

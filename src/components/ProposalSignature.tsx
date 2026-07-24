@@ -347,6 +347,36 @@ export function ProposalSignature({
 
   return (
     <section id="proposal-signature-section" className="proposal-signature-box mt-12 p-6 md:p-8 rounded-2xl border border-border/60 bg-card/70 backdrop-blur-md shadow-2xl text-start dir-rtl space-y-6">
+      <div className="proposal-signature-print-placeholder">
+        <div className="proposal-signature-print-heading">
+          <span>ACCEPTANCE</span>
+          <h2>اعتماد العرض</h2>
+          <p>بالتوقيع أدناه، يقر ممثل العميل بمراجعة العرض والموافقة على نطاقه وشروطه.</p>
+        </div>
+        <div className="proposal-signature-print-fields">
+          <div>
+            <span>اسم المعتمد</span>
+            <i />
+          </div>
+          <div>
+            <span>الصفة / المسمى الوظيفي</span>
+            <i />
+          </div>
+          <div>
+            <span>التوقيع</span>
+            <i />
+          </div>
+          <div>
+            <span>التاريخ</span>
+            <i />
+          </div>
+        </div>
+        <div className="proposal-signature-print-seal">
+          <strong>NinuSoft</strong>
+          <span>SEAL-VERIFIED-2026 · توقيع الشركة معتمد مسبقاً</span>
+        </div>
+      </div>
+
       {/* NinuSoft Pre-Signed Official Counter-Signature Stamp */}
       <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
