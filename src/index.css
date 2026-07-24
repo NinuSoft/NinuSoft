@@ -379,6 +379,31 @@ html {
   filter: drop-shadow(0 0 8px rgba(201, 163, 58, 0.3));
 }
 
+.proposal-reading-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, hsl(43 75% 49%), hsl(43 85% 65%));
+  z-index: 50;
+  transition: width 0.1s linear;
+  box-shadow: 0 0 10px rgba(201, 163, 58, 0.6);
+}
+
+.proposal-reading-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 9999px;
+  background: hsl(220 25% 15% / 0.8);
+  border: 1px solid hsl(215 25% 22%);
+  color: hsl(43 75% 60%);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
 .proposal-toolbar {
   position: sticky;
   top: 0;
@@ -395,6 +420,7 @@ html {
 
 .proposal-actions {
   display: flex;
+  align-items: center;
   gap: 0.6rem;
 }
 

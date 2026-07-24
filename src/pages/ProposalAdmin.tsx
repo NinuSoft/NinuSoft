@@ -17,6 +17,7 @@ import {
   serializeProposalSections,
   type ProposalSection,
 } from "@/lib/proposal-sections";
+import { ProposalSettingsManager } from "@/components/ProposalSettingsManager";
 
 type FormState = {
   id: string;
@@ -61,6 +62,7 @@ export default function ProposalAdmin() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [activeAdminTab, setActiveAdminTab] = useState<"editor" | "settings">("editor");
 
   const [sections, setSections] = useState<ProposalSection[]>(() =>
     parseProposalSections(emptyForm.markdown)
@@ -386,14 +388,43 @@ export default function ProposalAdmin() {
           <img src="/logo.png" alt="" />
           <span>NinuSoft</span>
         </a>
-        <div>
-          <span>لوحة عروض العملاء</span>
+        <div className="flex items-center gap-3">
+          <div className="inline-flex p-1 bg-muted/60 rounded-xl border border-border/40">
+            <button
+              type="button"
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                activeAdminTab === "editor"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveAdminTab("editor")}
+            >
+              📑 إدارة العروض
+            </button>
+            <button
+              type="button"
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                activeAdminTab === "settings"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveAdminTab("settings")}
+            >
+              ⚙️ الإعدادات والميزات
+            </button>
+          </div>
           <Button variant="ghost" size="sm" onClick={logout}>تسجيل الخروج</Button>
         </div>
       </header>
 
       <main>
-        <section className="proposal-editor">
+        {activeAdminTab === "settings" ? (
+          <section className="proposal-editor">
+            <ProposalSettingsManager />
+          </section>
+        ) : (
+          <>
+            <section className="proposal-editor">
           <div className="proposal-admin-section-title">
             <div>
               <span>{form.id ? "تعديل مباشر" : "عرض جديد"}</span>
@@ -721,6 +752,8 @@ export default function ProposalAdmin() {
             </div>
           )}
         </section>
+        </>
+        )}
       </main>
     </div>
   );

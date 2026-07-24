@@ -13,6 +13,8 @@ import {
   unlockProposal,
 } from "@/lib/proposals-api";
 import { parseProposalSections } from "@/lib/proposal-sections";
+import { ProposalSignature } from "@/components/ProposalSignature";
+import { getProposalSettings } from "@/lib/proposal-settings";
 
 function Brand() {
   return (
@@ -58,6 +60,32 @@ export default function ProposalView() {
   const readRecorded = useRef(false);
   const accessStorageKey = `ninusoft-proposal-access:${token}`;
   const accessToken = useRef(sessionStorage.getItem(accessStorageKey) || "");
+
+  const [settings, setSettings] = useState(getProposalSettings);
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  useEffect(() => {
+    const handleSettingsChange = () => setSettings(getProposalSettings());
+    window.addEventListener("ninusoft_settings_updated", handleSettingsChange);
+    return () => window.removeEventListener("ninusoft_settings_updated", handleSettingsChange);
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (totalHeight > 0) {
+        setScrollProgress(Math.min(100, Math.max(0, (window.scrollY / totalHeight) * 100)));
+      }
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const readTimeMinutes = useMemo(() => {
+    if (!proposal?.markdown) return 1;
+    const words = proposal.markdown.trim().split(/\s+/).length;
+    return Math.max(1, Math.ceil(words / 180));
+  }, [proposal?.markdown]);
 
   const sections = useMemo(
     () => parseProposalSections(proposal?.markdown || ""),
@@ -262,15 +290,28 @@ export default function ProposalView() {
 
   return (
     <div className="proposal-page" dir="rtl">
+      {settings.enableReadingTime && (
+        <div
+          className="proposal-reading-progress-bar"
+          style={{ width: `${scrollProgress}%` }}
+        />
+      )}
       <header className="proposal-toolbar">
         <Brand />
         <div className="proposal-actions">
-          <Button variant="outline" onClick={() => print("print")}>
-            <span aria-hidden="true">⌁</span> طباعة
-          </Button>
-          <Button onClick={() => print("pdf")}>
-            <span aria-hidden="true">↓</span> تنزيل PDF
-          </Button>
+          {settings.enableReadingTime && (
+            <span className="proposal-reading-badge">⏱️ {readTimeMinutes} د قراءة</span>
+          )}
+          {settings.enablePdfExport && (
+            <>
+              <Button variant="outline" onClick={() => print("print")}>
+                <span aria-hidden="true">⌁</span> طباعة
+              </Button>
+              <Button onClick={() => print("pdf")}>
+                <span aria-hidden="true">↓</span> تنزيل PDF
+              </Button>
+            </>
+          )}
         </div>
       </header>
 
@@ -288,7 +329,7 @@ export default function ProposalView() {
 
         <div className="proposal-layout-grid">
           {/* Right Panel Sidebar Navigation */}
-          {sections.length > 0 && (
+          {settings.enableSidebarNav && sections.length > 0 && (
             <aside className="proposal-sidebar">
               <div className="proposal-sidebar-card">
                 <div className="proposal-sidebar-header">
@@ -416,6 +457,13 @@ export default function ProposalView() {
                     );
                   })()}
                 </div>
+              )}
+
+              {settings.enableDigitalSignature && (
+                <ProposalSignature
+                  proposalTitle={proposal.title}
+                  clientName={proposal.clientName}
+                />
               )}
             </article>
           </div>
