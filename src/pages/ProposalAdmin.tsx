@@ -1321,7 +1321,7 @@ export default function ProposalAdmin() {
                           <Button size="sm" variant="outline" onClick={() => void copyLink(item.token)} aria-label="نسخ رابط العرض">
                             <Copy className="h-3.5 w-3.5" />
                           </Button>
-                          <Button size="sm" variant="outline" onClick={() => { setShareProposal(item); setSharePassword(item.code ?? ""); setShareCopied(false); }} className="flex items-center gap-1" aria-label="مشاركة العرض">
+                          <Button size="sm" variant="outline" onClick={() => { setShareProposal(item); setSharePassword(""); setShareCopied(false); }} className="flex items-center gap-1" aria-label="مشاركة العرض">
                             <Share2 className="h-3.5 w-3.5" />
                           </Button>
                           <Button size="sm" variant="ghost" onClick={() => void editProposal(item.id)}>تعديل</Button>
@@ -1465,7 +1465,7 @@ export default function ProposalAdmin() {
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-muted-foreground block">
                       <Lock className="inline w-3 h-3 mb-0.5 me-1" />
-                      أدخل رمز الدخول لتضمينه في الرسالة (اختياري)
+                      أدخل رمز الدخول لتضمينه في الرسالة (مطلوب لأن العرض محمي)
                     </label>
                     <input
                       type="text"
@@ -1487,6 +1487,7 @@ export default function ProposalAdmin() {
                   <Button
                     type="button"
                     size="sm"
+                    disabled={shareProposal.protected && !sharePassword.trim()}
                     onClick={() => {
                       navigator.clipboard.writeText(msg).catch(() => {});
                       setShareCopied(true);
