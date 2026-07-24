@@ -346,11 +346,32 @@ export function ProposalSignature({
   }
 
   return (
-    <section className="proposal-signature-box mt-12 p-6 md:p-8 rounded-2xl border border-border/60 bg-card/70 backdrop-blur-md shadow-2xl text-start dir-rtl">
+    <section id="proposal-signature-section" className="proposal-signature-box mt-12 p-6 md:p-8 rounded-2xl border border-border/60 bg-card/70 backdrop-blur-md shadow-2xl text-start dir-rtl space-y-6">
+      {/* NinuSoft Pre-Signed Official Counter-Signature Stamp */}
+      <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-bold text-lg font-mono">
+            NS
+          </div>
+          <div>
+            <h4 className="font-extrabold text-sm text-foreground flex items-center gap-1.5">
+              <span>توقيع وختم NinuSoft المعتمد (Pre-signed & Verified)</span>
+              <CheckCircle className="w-4 h-4 text-emerald-400" />
+            </h4>
+            <p className="text-xs text-muted-foreground">
+              موقع مسبقاً من المدير التنفيذي لشركة NinuSoft للحلول البرمجية.
+            </p>
+          </div>
+        </div>
+        <div className="text-left font-mono text-xs text-amber-400 font-semibold bg-background/60 px-3 py-1.5 rounded-lg border border-amber-500/30">
+          SEAL-VERIFIED-2026
+        </div>
+      </div>
+
       <div className="flex items-center justify-between gap-4 mb-2 flex-wrap">
         <div className="flex items-center gap-2.5 text-primary font-bold text-xl">
           <PenTool className="w-6 h-6" />
-          <span>الاعتماد والتوقيع الرقمي (Documenso Engine)</span>
+          <span>اعتماد العميل والتوقيع الرقمي (Documenso Engine)</span>
         </div>
         <div className="inline-flex p-1 bg-muted/60 rounded-xl border border-border/40 flex-wrap">
           {allowDraw && (

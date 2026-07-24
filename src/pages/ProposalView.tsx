@@ -19,6 +19,8 @@ import { getProposalSettings } from "@/lib/proposal-settings";
 import { ProposalAiAssistant } from "@/components/ProposalAiAssistant";
 import { ProposalExecutiveSummary } from "@/components/ProposalExecutiveSummary";
 import { ProposalExpiryCountdown } from "@/components/ProposalExpiryCountdown";
+import { ProposalAttachments } from "@/components/ProposalAttachments";
+import { ProposalIncentiveBanner } from "@/components/ProposalIncentiveBanner";
 import { ProposalComments } from "@/components/ProposalComments";
 import { Textarea } from "@/components/ui/textarea";
 import { Clock, Printer, Download, FileText, Globe, Layers, MessageSquare, XCircle, CheckCircle, Edit, Sparkles } from "@/components/Icons";
@@ -470,6 +472,14 @@ export default function ProposalView() {
           <ProposalExpiryCountdown />
         )}
 
+        <ProposalIncentiveBanner
+          expiresAt={proposal.expiresAt}
+          onScrollToSign={() => {
+            const sigEl = document.getElementById("proposal-signature-section");
+            if (sigEl) sigEl.scrollIntoView({ behavior: "smooth" });
+          }}
+        />
+
         <div className="proposal-meta">
           <div>
             <span>عرض خاص إلى</span>
@@ -615,6 +625,8 @@ export default function ProposalView() {
                   })()}
                 </div>
               )}
+
+              <ProposalAttachments />
 
               {settings.enableDigitalSignature && (
                 <ProposalSignature
