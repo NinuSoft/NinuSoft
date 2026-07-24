@@ -639,7 +639,7 @@ export default function ProposalView() {
 
 
 
-              <ProposalAttachments />
+
 
               {settings.enableDigitalSignature && (
                 <ProposalSignature
