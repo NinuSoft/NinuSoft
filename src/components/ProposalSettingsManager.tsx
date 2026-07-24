@@ -60,7 +60,7 @@ export function ProposalSettingsManager() {
           <div className="flex items-center justify-between border-b border-border/60 pb-3">
             <div className="flex items-center gap-2.5 text-lg font-bold text-amber-400">
               <PenTool className="w-5 h-5" />
-              <span>إعدادات التوقيع والاعتماد الإلكتروني (Documenso Engine)</span>
+              <span>إعدادات التوقيع والاعتماد الإلكتروني</span>
             </div>
             <label className="flex items-center gap-2 cursor-pointer font-bold text-xs">
               <span>تفعيل التوقيع الإلكتروني للعميل</span>

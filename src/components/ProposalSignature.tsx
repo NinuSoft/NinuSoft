@@ -282,7 +282,7 @@ export function ProposalSignature({
         <div className="flex items-center justify-between gap-4 border-b border-border/60 pb-4 flex-wrap">
           <div className="flex items-center gap-2.5 text-amber-400 font-bold text-lg">
             <PenTool className="w-5 h-5" />
-            <span>تم اعتماد وتوقيع المقترح (Documenso Certificate)</span>
+            <span>تم اعتماد وتوقيع المقترح</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono font-semibold flex items-center gap-1">
@@ -371,7 +371,7 @@ export function ProposalSignature({
       <div className="flex items-center justify-between gap-4 mb-2 flex-wrap">
         <div className="flex items-center gap-2.5 text-primary font-bold text-xl">
           <PenTool className="w-6 h-6" />
-          <span>اعتماد العميل والتوقيع الرقمي (Documenso Engine)</span>
+          <span>اعتماد العميل والتوقيع الرقمي</span>
         </div>
         <div className="inline-flex p-1 bg-muted/60 rounded-xl border border-border/40 flex-wrap">
           {allowDraw && (
@@ -417,7 +417,7 @@ export function ProposalSignature({
       </div>
 
       <p className="text-xs md:text-sm text-muted-foreground mb-6">
-        قم بالتوقيع باليد/الماوس أو رفع صورة توقيعك لتأكيد موافقتك الرسمية وتوليد شهادة الاعتماد الإلكترونية (Documenso Verified).
+        قم بالتوقيع باليد/الماوس أو رفع صورة توقيعك لتأكيد موافقتك الرسمية وتوليد شهادة الاعتماد الإلكترونية.
       </p>
 
       <form onSubmit={handleSign} className="space-y-6">
