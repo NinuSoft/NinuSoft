@@ -867,7 +867,7 @@ export default function ProposalAdmin() {
                                 className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground transition-colors"
                                 title={showPin ? "إخفاء" : "إظهار"}
                               >
-                                {showPin ? <EyeOff size={15} /> : <Eye size={15} />}
+                                {showPin ? <EyeOff width={15} height={15} /> : <Eye width={15} height={15} />}
                               </button>
                             </div>
                             <button
@@ -891,7 +891,7 @@ export default function ProposalAdmin() {
                               }}
                               className="h-10 w-10 flex items-center justify-center rounded-md border border-border bg-muted hover:bg-muted/70 text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
                             >
-                              <RefreshCw size={15} />
+                              <RefreshCw width={15} height={15} />
                             </button>
                             <button
                               type="button"
@@ -909,7 +909,7 @@ export default function ProposalAdmin() {
                               id="pin-copy-btn"
                               className="h-10 w-10 flex items-center justify-center rounded-md border border-border bg-muted hover:bg-muted/70 text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
                             >
-                              <Copy size={15} />
+                              <Copy width={15} height={15} />
                             </button>
                           </div>
                           <small className="text-[11px] text-muted-foreground block mt-1">
