@@ -19,6 +19,7 @@ import {
 } from "@/lib/proposal-sections";
 import { ProposalSettingsManager } from "@/components/ProposalSettingsManager";
 import { ProposalAnalytics } from "@/components/ProposalAnalytics";
+import { FileText, BarChart, Settings } from "@/components/Icons";
 
 type FormState = {
   id: string;
@@ -393,36 +394,36 @@ export default function ProposalAdmin() {
           <div className="inline-flex p-1 bg-muted/60 rounded-xl border border-border/40">
             <button
               type="button"
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                 activeAdminTab === "editor"
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               }`}
               onClick={() => setActiveAdminTab("editor")}
             >
-              📑 إدارة العروض
+              <FileText className="w-3.5 h-3.5" /> إدارة العروض
             </button>
             <button
               type="button"
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                 activeAdminTab === "analytics"
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               }`}
               onClick={() => setActiveAdminTab("analytics")}
             >
-              📊 إحصائيات الأداء
+              <BarChart className="w-3.5 h-3.5" /> إحصائيات الأداء
             </button>
             <button
               type="button"
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                 activeAdminTab === "settings"
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               }`}
               onClick={() => setActiveAdminTab("settings")}
             >
-              ⚙️ الإعدادات والميزات
+              <Settings className="w-3.5 h-3.5" /> الإعدادات والميزات
             </button>
           </div>
           <Button variant="ghost" size="sm" onClick={logout}>تسجيل الخروج</Button>

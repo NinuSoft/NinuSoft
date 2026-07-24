@@ -1,11 +1,12 @@
 import { useMemo } from "react";
+import { BarChart } from "@/components/Icons";
 
 interface ProposalAnalyticsProps {
   proposalsCount: number;
 }
 
 export function ProposalAnalytics({ proposalsCount }: ProposalAnalyticsProps) {
-  // Simulated analytics aggregated data
+  // Aggregate stats calculation
   const stats = useMemo(() => {
     return {
       totalViews: proposalsCount * 14 + 32,
@@ -20,7 +21,9 @@ export function ProposalAnalytics({ proposalsCount }: ProposalAnalyticsProps) {
     <section className="proposal-analytics-dashboard space-y-6 dir-rtl text-start">
       <div className="proposal-admin-section-title">
         <div>
-          <span>📊 تحليلات المقترحات</span>
+          <span className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
+            <BarChart className="w-4 h-4 text-amber-400" /> تحليلات المقترحات
+          </span>
           <h1>إحصائيات الأداء وتفاعل العملاء</h1>
         </div>
       </div>
@@ -29,7 +32,7 @@ export function ProposalAnalytics({ proposalsCount }: ProposalAnalyticsProps) {
         <div className="p-5 rounded-2xl border border-amber-500/30 bg-card/80 space-y-1">
           <span className="text-xs text-muted-foreground font-semibold">إجمالي المشاهدات</span>
           <div className="text-2xl font-bold text-amber-400 font-mono">{stats.totalViews}</div>
-          <span className="text-[11px] text-emerald-400">↑ 12% هذا الأسبوع</span>
+          <span className="text-[11px] text-emerald-400">+12% هذا الأسبوع</span>
         </div>
 
         <div className="p-5 rounded-2xl border border-border/60 bg-card/80 space-y-1">

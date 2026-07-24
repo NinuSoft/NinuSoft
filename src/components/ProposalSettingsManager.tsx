@@ -5,6 +5,20 @@ import {
   saveProposalSettings,
   type ProposalSettings,
 } from "@/lib/proposal-settings";
+import {
+  Settings,
+  PenTool,
+  Keyboard,
+  Upload,
+  XCircle,
+  Calculator,
+  Clock,
+  FileText,
+  Download,
+  Tag,
+  MessageSquare,
+  CheckCircle,
+} from "@/components/Icons";
 
 export function ProposalSettingsManager() {
   const [settings, setSettings] = useState<ProposalSettings>(getProposalSettings);
@@ -27,7 +41,9 @@ export function ProposalSettingsManager() {
     <div className="proposal-settings-manager space-y-6 dir-rtl text-start">
       <div className="proposal-admin-section-title">
         <div>
-          <span>⚙️ تحكّم الميزات</span>
+          <span className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
+            <Settings className="w-4 h-4 text-amber-400" /> تحكّم الميزات
+          </span>
           <h1>إعدادات النظام وخيارات التوقيع والاعتماد</h1>
         </div>
       </div>
@@ -37,7 +53,8 @@ export function ProposalSettingsManager() {
         <div className="p-6 rounded-2xl border border-amber-500/30 bg-card/80 space-y-4">
           <div className="flex items-center justify-between border-b border-border/60 pb-3">
             <div className="flex items-center gap-2.5 text-lg font-bold text-amber-400">
-              <span>✍️</span> إعدادات التوقيع والاعتماد الإلكتروني (Documenso Engine)
+              <PenTool className="w-5 h-5" />
+              <span>إعدادات التوقيع والاعتماد الإلكتروني (Documenso Engine)</span>
             </div>
             <label className="flex items-center gap-2 cursor-pointer font-bold text-xs">
               <span>تفعيل التوقيع الإلكتروني للعميل</span>
@@ -61,7 +78,9 @@ export function ProposalSettingsManager() {
                 onClick={() => toggle("allowDrawSignature")}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-bold text-xs text-foreground">✍️ رسم التوقيع باليد / الماوس</span>
+                  <span className="font-bold text-xs text-foreground flex items-center gap-1.5">
+                    <PenTool className="w-4 h-4 text-amber-400" /> رسم التوقيع باليد / الماوس
+                  </span>
                   <input
                     type="checkbox"
                     checked={settings.allowDrawSignature}
@@ -81,7 +100,9 @@ export function ProposalSettingsManager() {
                 onClick={() => toggle("allowTypeSignature")}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-bold text-xs text-foreground">⌨️ التوقيع بالنص المكتوب</span>
+                  <span className="font-bold text-xs text-foreground flex items-center gap-1.5">
+                    <Keyboard className="w-4 h-4 text-amber-400" /> التوقيع بالنص المكتوب
+                  </span>
                   <input
                     type="checkbox"
                     checked={settings.allowTypeSignature}
@@ -101,7 +122,9 @@ export function ProposalSettingsManager() {
                 onClick={() => toggle("allowUploadSignature")}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-bold text-xs text-foreground">📁 رفع صورة التوقيع</span>
+                  <span className="font-bold text-xs text-foreground flex items-center gap-1.5">
+                    <Upload className="w-4 h-4 text-amber-400" /> رفع صورة التوقيع
+                  </span>
                   <input
                     type="checkbox"
                     checked={settings.allowUploadSignature}
@@ -121,7 +144,9 @@ export function ProposalSettingsManager() {
                 onClick={() => toggle("allowRejection")}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-bold text-xs text-foreground">❌ خيار طلب التعديل / الرفض</span>
+                  <span className="font-bold text-xs text-foreground flex items-center gap-1.5">
+                    <XCircle className="w-4 h-4 text-destructive" /> خيار طلب التعديل / الرفض
+                  </span>
                   <input
                     type="checkbox"
                     checked={settings.allowRejection}
@@ -148,7 +173,8 @@ export function ProposalSettingsManager() {
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2 text-base font-bold text-foreground">
-                <span>🧮</span> حاسبة الأسعار والخدمات
+                <Calculator className="w-5 h-5 text-amber-400" />
+                <span>حاسبة الأسعار والخدمات</span>
               </div>
               <input
                 type="checkbox"
@@ -173,7 +199,8 @@ export function ProposalSettingsManager() {
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2 text-base font-bold text-foreground">
-                <span>⏱️</span> زمن القراءة وشريط التقدم
+                <Clock className="w-5 h-5 text-amber-400" />
+                <span>زمن القراءة وشريط التقدم</span>
               </div>
               <input
                 type="checkbox"
@@ -198,7 +225,8 @@ export function ProposalSettingsManager() {
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2 text-base font-bold text-foreground">
-                <span>📑</span> الشريط الجانبي للأقسام
+                <FileText className="w-5 h-5 text-amber-400" />
+                <span>الشريط الجانبي للأقسام</span>
               </div>
               <input
                 type="checkbox"
@@ -223,7 +251,8 @@ export function ProposalSettingsManager() {
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2 text-base font-bold text-foreground">
-                <span>📥</span> إتاحة تنزيل PDF والطباعة
+                <Download className="w-5 h-5 text-amber-400" />
+                <span>إتاحة تنزيل PDF والطباعة</span>
               </div>
               <input
                 type="checkbox"
@@ -248,7 +277,8 @@ export function ProposalSettingsManager() {
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2 text-base font-bold text-foreground">
-                <span>🏷️</span> العلامة المائية الشفافة (Confidential)
+                <Tag className="w-5 h-5 text-amber-400" />
+                <span>العلامة المائية الشفافة (Confidential)</span>
               </div>
               <input
                 type="checkbox"
@@ -273,7 +303,8 @@ export function ProposalSettingsManager() {
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2 text-base font-bold text-foreground">
-                <span>⏰</span> عداد تنازلي لتاريخ الصلاحية
+                <Clock className="w-5 h-5 text-amber-400" />
+                <span>عداد تنازلي لتاريخ الصلاحية</span>
               </div>
               <input
                 type="checkbox"
@@ -298,7 +329,8 @@ export function ProposalSettingsManager() {
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2 text-base font-bold text-foreground">
-                <span>💬</span> التعليقات والأسئلة التفاعلية
+                <MessageSquare className="w-5 h-5 text-amber-400" />
+                <span>التعليقات والأسئلة التفاعلية</span>
               </div>
               <input
                 type="checkbox"
@@ -319,8 +351,8 @@ export function ProposalSettingsManager() {
           حفظ الإعدادات
         </Button>
         {saved && (
-          <span className="text-xs text-emerald-400 font-bold animate-in fade-in">
-            ✓ تم حفظ الإعدادات وتطبيقها على النظام بنجاح!
+          <span className="text-xs text-emerald-400 font-bold animate-in fade-in flex items-center gap-1">
+            <CheckCircle className="w-4 h-4" /> تم حفظ الإعدادات وتطبيقها على النظام بنجاح!
           </span>
         )}
       </div>

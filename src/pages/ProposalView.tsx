@@ -18,6 +18,7 @@ import { getProposalSettings } from "@/lib/proposal-settings";
 import { ProposalWatermark } from "@/components/ProposalWatermark";
 import { ProposalExpiryCountdown } from "@/components/ProposalExpiryCountdown";
 import { ProposalComments } from "@/components/ProposalComments";
+import { Clock, Printer, Download } from "@/components/Icons";
 
 function Brand() {
   return (
@@ -306,15 +307,18 @@ export default function ProposalView() {
         <Brand />
         <div className="proposal-actions">
           {settings.enableReadingTime && (
-            <span className="proposal-reading-badge">⏱️ {readTimeMinutes} د قراءة</span>
+            <span className="proposal-reading-badge flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5" />
+              <span>{readTimeMinutes} د قراءة</span>
+            </span>
           )}
           {settings.enablePdfExport && (
             <>
-              <Button variant="outline" onClick={() => print("print")}>
-                <span aria-hidden="true">⌁</span> طباعة
+              <Button variant="outline" onClick={() => print("print")} className="flex items-center gap-1.5">
+                <Printer className="w-4 h-4" /> طباعة
               </Button>
-              <Button onClick={() => print("pdf")}>
-                <span aria-hidden="true">↓</span> تنزيل PDF
+              <Button onClick={() => print("pdf")} className="flex items-center gap-1.5">
+                <Download className="w-4 h-4" /> تنزيل PDF
               </Button>
             </>
           )}

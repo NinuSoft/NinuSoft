@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Clock, XCircle } from "@/components/Icons";
 
 interface ProposalExpiryCountdownProps {
   expiresAt?: string;
@@ -44,7 +45,9 @@ export function ProposalExpiryCountdown({ expiresAt }: ProposalExpiryCountdownPr
   if (timeLeft.isExpired) {
     return (
       <div className="proposal-expiry-banner mb-6 p-3 rounded-xl border border-destructive/40 bg-destructive/10 text-destructive text-xs font-bold flex items-center justify-between gap-2 dir-rtl">
-        <span>⚠️ انتهت صلاحية هذا المقترح الفني والمالي</span>
+        <span className="flex items-center gap-1.5">
+          <XCircle className="w-4 h-4" /> انتهت صلاحية هذا المقترح الفني والمالي
+        </span>
         <span className="text-[11px] opacity-80">يرجى التواصل مع NinuSoft لتحديث العرض</span>
       </div>
     );
@@ -53,7 +56,7 @@ export function ProposalExpiryCountdown({ expiresAt }: ProposalExpiryCountdownPr
   return (
     <div className="proposal-expiry-banner mb-6 p-3.5 rounded-xl border border-amber-500/40 bg-amber-500/10 text-foreground text-xs flex items-center justify-between gap-4 flex-wrap dir-rtl">
       <div className="flex items-center gap-2 text-amber-400 font-bold">
-        <span>⏰</span> صلاحية العرض:
+        <Clock className="w-4 h-4" /> صلاحية العرض:
       </div>
 
       <div className="flex items-center gap-3 font-mono text-xs">

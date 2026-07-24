@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { MessageSquare, Plus } from "@/components/Icons";
 
 interface ProposalCommentsProps {
   proposalTitle: string;
@@ -53,16 +54,23 @@ export function ProposalComments({ proposalTitle }: ProposalCommentsProps) {
     <section className="proposal-comments-section mt-10 p-6 rounded-2xl border border-border/60 bg-card/60 backdrop-blur-md shadow-xl text-start dir-rtl">
       <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
         <div className="flex items-center gap-2 text-primary font-bold text-lg">
-          <span>💬</span> الاستفسارات والتعليقات المباشرة ({comments.length})
+          <MessageSquare className="w-5 h-5" />
+          <span>الاستفسارات والتعليقات المباشرة ({comments.length})</span>
         </div>
         <Button
           type="button"
           variant="outline"
           size="sm"
           onClick={() => setIsOpen(!isOpen)}
-          className="text-xs font-bold"
+          className="text-xs font-bold flex items-center gap-1.5"
         >
-          {isOpen ? "إخفاء صندوق التعليقات" : "إضافة تعليق أو سؤال ➕"}
+          {isOpen ? (
+            "إخفاء صندوق التعليقات"
+          ) : (
+            <>
+              <Plus className="w-3.5 h-3.5" /> إضافة تعليق أو سؤال
+            </>
+          )}
         </Button>
       </div>
 
@@ -84,8 +92,8 @@ export function ProposalComments({ proposalTitle }: ProposalCommentsProps) {
             required
           />
           <div className="flex justify-end">
-            <Button type="submit" size="sm" className="font-bold text-xs">
-              إرسال التعليق 💬
+            <Button type="submit" size="sm" className="font-bold text-xs flex items-center gap-1.5">
+              <MessageSquare className="w-3.5 h-3.5" /> إرسال التعليق
             </Button>
           </div>
         </form>

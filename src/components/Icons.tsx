@@ -436,3 +436,143 @@ export const WhatsApp = (props: IconProps) => (
     <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.5-5.729-1.448L0 24zm6.59-4.846c1.6.95 2.51 1.442 4.415 1.443 5.485.002 9.953-4.464 9.956-9.953.002-2.661-1.029-5.163-2.906-7.042C16.177 1.721 13.68 .69 11.02.69 5.534.69 1.066 5.158 1.063 10.645c-.001 1.896.486 2.802 1.444 4.416l-.995 3.637 3.737-.98a10.87 10.87 0 0 0 2.808.436zm10.74-5.385c-.27-.136-1.602-.79-1.85-.88-.25-.09-.432-.136-.614.137-.182.273-.705.88-.863 1.058-.158.177-.317.2-.587.064a7.393 7.393 0 0 1-2.18-1.34 8.15 8.15 0 0 1-1.51-1.879c-.16-.272-.017-.42.119-.556.122-.122.27-.318.406-.477.135-.16.18-.272.271-.453.09-.182.046-.34-.022-.477-.068-.137-.614-1.477-.84-2.023-.223-.537-.468-.463-.643-.472-.166-.008-.356-.01-.546-.01-.19 0-.5.07-.762.355-.262.286-1 .977-1 2.385s1.02 2.766 1.163 2.956c.143.19 2.01 3.07 4.869 4.3.68.293 1.213.468 1.628.6a3.9 3.9 0 0 0 1.787.112c.55-.082 1.602-.654 1.828-1.285.227-.63.227-1.173.159-1.285-.068-.113-.25-.177-.52-.313z" />
   </svg>
 );
+
+export const FileText = (props: IconProps) => (
+  <LucideIcon {...props}>
+    <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+    <path d="M14 2v4a1 1 0 0 0 1 1h4" />
+    <path d="M10 9H8" />
+    <path d="M16 13H8" />
+    <path d="M16 17H8" />
+  </LucideIcon>
+);
+
+export const BarChart = (props: IconProps) => (
+  <LucideIcon {...props}>
+    <line x1="12" x2="12" y1="20" y2="10" />
+    <line x1="18" x2="18" y1="20" y2="4" />
+    <line x1="6" x2="6" y1="20" y2="16" />
+  </LucideIcon>
+);
+
+export const Keyboard = (props: IconProps) => (
+  <LucideIcon {...props}>
+    <rect width="20" height="12" x="2" y="6" rx="2" />
+    <path d="M6 10h.01" />
+    <path d="M10 10h.01" />
+    <path d="M14 10h.01" />
+    <path d="M18 10h.01" />
+    <path d="M6 14h12" />
+  </LucideIcon>
+);
+
+export const Upload = (props: IconProps) => (
+  <LucideIcon {...props}>
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="17 8 12 3 7 8" />
+    <line x1="12" x2="12" y1="3" y2="15" />
+  </LucideIcon>
+);
+
+export const Calculator = (props: IconProps) => (
+  <LucideIcon {...props}>
+    <rect width="16" height="20" x="4" y="2" rx="2" />
+    <line x1="8" x2="16" y1="6" y2="6" />
+    <line x1="16" x2="16" y1="14" y2="18" />
+    <path d="M16 10h.01" />
+    <path d="M12 10h.01" />
+    <path d="M8 10h.01" />
+    <path d="M12 14h.01" />
+    <path d="M8 14h.01" />
+    <path d="M12 18h.01" />
+    <path d="M8 18h.01" />
+  </LucideIcon>
+);
+
+export const Clock = (props: IconProps) => (
+  <LucideIcon {...props}>
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
+  </LucideIcon>
+);
+
+export const Download = (props: IconProps) => (
+  <LucideIcon {...props}>
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="7 10 12 15 17 10" />
+    <line x1="12" x2="12" y1="15" y2="3" />
+  </LucideIcon>
+);
+
+export const Copy = (props: IconProps) => (
+  <LucideIcon {...props}>
+    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+  </LucideIcon>
+);
+
+export const Tag = (props: IconProps) => (
+  <LucideIcon {...props}>
+    <path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z" />
+    <circle cx="7" cy="7" r="1.5" />
+  </LucideIcon>
+);
+
+export const MessageSquare = (props: IconProps) => (
+  <LucideIcon {...props}>
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+  </LucideIcon>
+);
+
+export const XCircle = (props: IconProps) => (
+  <LucideIcon {...props}>
+    <circle cx="12" cy="12" r="10" />
+    <path d="m15 9-6 6" />
+    <path d="m9 9 6 6" />
+  </LucideIcon>
+);
+
+export const Eye = (props: IconProps) => (
+  <LucideIcon {...props}>
+    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+    <circle cx="12" cy="12" r="3" />
+  </LucideIcon>
+);
+
+export const CheckCircle = (props: IconProps) => (
+  <LucideIcon {...props}>
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+    <polyline points="22 4 12 14.01 9 11.01" />
+  </LucideIcon>
+);
+
+export const RefreshCw = (props: IconProps) => (
+  <LucideIcon {...props}>
+    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+    <path d="M21 3v5h-5" />
+    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+    <path d="M8 16H3v5" />
+  </LucideIcon>
+);
+
+export const Printer = (props: IconProps) => (
+  <LucideIcon {...props}>
+    <polyline points="6 9 6 2 18 2 18 9" />
+    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+    <rect width="12" height="8" x="6" y="14" />
+  </LucideIcon>
+);
+
+export const Plus = (props: IconProps) => (
+  <LucideIcon {...props}>
+    <line x1="12" x2="12" y1="5" y2="19" />
+    <line x1="5" x2="19" y1="12" y2="12" />
+  </LucideIcon>
+);
+
+export const Edit = (props: IconProps) => (
+  <LucideIcon {...props}>
+    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+  </LucideIcon>
+);
+
