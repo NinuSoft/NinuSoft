@@ -1,5 +1,9 @@
 export type ProposalSettings = {
   enableDigitalSignature: boolean;
+  allowDrawSignature: boolean;
+  allowTypeSignature: boolean;
+  allowUploadSignature: boolean;
+  allowRejection: boolean;
   enablePricingCalculator: boolean;
   enableReadingTime: boolean;
   enableSidebarNav: boolean;
@@ -9,6 +13,10 @@ export type ProposalSettings = {
 
 export const defaultProposalSettings: ProposalSettings = {
   enableDigitalSignature: true,
+  allowDrawSignature: true,
+  allowTypeSignature: true,
+  allowUploadSignature: true,
+  allowRejection: true,
   enablePricingCalculator: true,
   enableReadingTime: true,
   enableSidebarNav: true,

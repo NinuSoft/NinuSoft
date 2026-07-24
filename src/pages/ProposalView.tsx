@@ -463,6 +463,10 @@ export default function ProposalView() {
                 <ProposalSignature
                   proposalTitle={proposal.title}
                   clientName={proposal.clientName}
+                  allowDraw={settings.allowDrawSignature}
+                  allowType={settings.allowTypeSignature}
+                  allowUpload={settings.allowUploadSignature}
+                  allowRejection={settings.allowRejection}
                 />
               )}
             </article>

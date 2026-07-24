@@ -6,6 +6,10 @@ import { Textarea } from "@/components/ui/textarea";
 interface ProposalSignatureProps {
   proposalTitle: string;
   clientName: string;
+  allowDraw?: boolean;
+  allowType?: boolean;
+  allowUpload?: boolean;
+  allowRejection?: boolean;
   onSigned?: (signatureData: SignatureRecord) => void;
 }
 
@@ -35,6 +39,10 @@ async function calculateSHA256(text: string): Promise<string> {
 export function ProposalSignature({
   proposalTitle,
   clientName,
+  allowDraw = true,
+  allowType = true,
+  allowUpload = true,
+  allowRejection = true,
   onSigned,
 }: ProposalSignatureProps) {
   const storageKey = `ninusoft-documenso-sig:${proposalTitle}`;
@@ -49,7 +57,8 @@ export function ProposalSignature({
 
   const [signerName, setSignerName] = useState(clientName || "");
   const [signerTitle, setSignerTitle] = useState("المدير التنفيذي / ممثل الشركة");
-  const [signMode, setSignMode] = useState<"draw" | "type" | "upload">("draw");
+  const initialMode = allowDraw ? "draw" : allowType ? "type" : "upload";
+  const [signMode, setSignMode] = useState<"draw" | "type" | "upload">(initialMode);
   const [uploadedImage, setUploadedImage] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasDrawn, setHasDrawn] = useState(false);
@@ -316,39 +325,45 @@ export function ProposalSignature({
           <span>✍️</span> الاعتماد والتوقيع الرقمي (Documenso Engine)
         </div>
         <div className="inline-flex p-1 bg-muted/60 rounded-xl border border-border/40 flex-wrap">
-          <button
-            type="button"
-            className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${
-              signMode === "draw"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-            onClick={() => setSignMode("draw")}
-          >
-            ✍️ رسم باليد
-          </button>
-          <button
-            type="button"
-            className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${
-              signMode === "type"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-            onClick={() => setSignMode("type")}
-          >
-            ⌨️ كتابة الاسم
-          </button>
-          <button
-            type="button"
-            className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${
-              signMode === "upload"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-            onClick={() => setSignMode("upload")}
-          >
-            📁 رفع صورة
-          </button>
+          {allowDraw && (
+            <button
+              type="button"
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${
+                signMode === "draw"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setSignMode("draw")}
+            >
+              ✍️ رسم باليد
+            </button>
+          )}
+          {allowType && (
+            <button
+              type="button"
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${
+                signMode === "type"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setSignMode("type")}
+            >
+              ⌨️ كتابة الاسم
+            </button>
+          )}
+          {allowUpload && (
+            <button
+              type="button"
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${
+                signMode === "upload"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setSignMode("upload")}
+            >
+              📁 رفع صورة
+            </button>
+          )}
         </div>
       </div>
 
@@ -380,7 +395,7 @@ export function ProposalSignature({
         </div>
 
         {/* Signature Pad */}
-        {signMode === "draw" ? (
+        {signMode === "draw" && allowDraw ? (
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
               <span>ارسم توقيعك في المربع أدناه (باستخدام الماوس أو اللمس):</span>
@@ -422,14 +437,14 @@ export function ProposalSignature({
               )}
             </div>
           </div>
-        ) : signMode === "type" ? (
+        ) : signMode === "type" && allowType ? (
           <div className="p-6 rounded-xl border-2 border-dashed border-amber-500/40 bg-black/40 text-center flex flex-col items-center justify-center min-h-[140px]">
             <span className="text-xs text-muted-foreground mb-2">معاينة التوقيع النصي:</span>
             <span className="font-serif italic text-3xl text-amber-400 tracking-wider">
               {signerName || "توقيع المعتمد"}
             </span>
           </div>
-        ) : (
+        ) : allowUpload ? (
           <div className="p-6 rounded-xl border-2 border-dashed border-amber-500/40 bg-black/40 text-center flex flex-col items-center justify-center space-y-3 min-h-[140px]">
             <span className="text-xs text-muted-foreground">اختر صورة التوقيع الخاص بك (PNG أو JPG):</span>
             <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary text-secondary-foreground text-xs font-bold hover:bg-secondary/80 transition-colors">
@@ -442,17 +457,19 @@ export function ProposalSignature({
               </div>
             )}
           </div>
-        )}
+        ) : null}
 
         <div className="pt-2 flex items-center justify-between gap-4 flex-wrap">
-          <Button
-            type="button"
-            variant="ghost"
-            className="text-xs text-destructive hover:bg-destructive/10"
-            onClick={() => setShowRejectModal(true)}
-          >
-            ❌ طلب تعديل / رفض المقترح
-          </Button>
+          {allowRejection ? (
+            <Button
+              type="button"
+              variant="ghost"
+              className="text-xs text-destructive hover:bg-destructive/10"
+              onClick={() => setShowRejectModal(true)}
+            >
+              ❌ طلب تعديل / رفض المقترح
+            </Button>
+          ) : <div />}
 
           <Button type="submit" className="w-full md:w-auto px-8 font-bold text-sm" disabled={isSubmitting}>
             {isSubmitting ? "جاري الاعتماد…" : "✍️ تأكيد واعتماد المقترح"}
