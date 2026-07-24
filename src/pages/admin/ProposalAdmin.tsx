@@ -13,12 +13,19 @@ import {
   type ProposalSummary,
 } from "@/lib/proposals-api";
 import {
+  ApiError as ShortlinksApiError,
+  createShortlink,
+  listShortlinks,
+  shortlinkUrl,
+} from "@/lib/shortlinks-api";
+import {
   parseProposalSections,
   serializeProposalSections,
   type ProposalSection,
 } from "@/lib/proposal-sections";
 import { ProposalSettingsManager } from "@/components/ProposalSettingsManager";
 import { ProposalAnalytics } from "@/components/ProposalAnalytics";
+import AdminLoading from "@/pages/admin/AdminLoading";
 import {
   FileText,
   BarChart,
@@ -77,12 +84,22 @@ function formatDate(value: string | null | undefined): string {
   }).format(new Date(value));
 }
 
-export default function ProposalAdmin() {
+type ProposalAdminProps = {
+  onNavigate?: (section: "proposals" | "shortlinks") => void;
+  onLogout?: () => void;
+};
+
+export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminProps) {
   const [adminKey, setAdminKey] = useState(
-    sessionStorage.getItem("ninusoft-proposals-admin-key") || "",
+    sessionStorage.getItem("ninusoft-admin-key") ||
+      sessionStorage.getItem("ninusoft-proposals-admin-key") ||
+      sessionStorage.getItem("ninusoft-shortlinks-admin-key") ||
+      "",
   );
   const [authenticated, setAuthenticated] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(Boolean(adminKey));
   const [items, setItems] = useState<ProposalSummary[]>([]);
+  const [proposalShortlinks, setProposalShortlinks] = useState<Record<string, string>>({});
   const [form, setForm] = useState<FormState>(emptyForm);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -94,6 +111,7 @@ export default function ProposalAdmin() {
   const [shareProposal, setShareProposal] = useState<ProposalSummary | null>(null);
   const [sharePassword, setSharePassword] = useState("");
   const [shareCopied, setShareCopied] = useState(false);
+  const [passwordCopied, setPasswordCopied] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [activeAdminTab, setActiveAdminTab] = useState<"editor" | "analytics" | "settings">("editor");
   const [searchQuery, setSearchQuery] = useState("");
@@ -260,7 +278,25 @@ export default function ProposalAdmin() {
       "/proposals",
     );
     setItems(result.proposals);
+    try {
+      const shortlinksResult = await listShortlinks(key);
+      const linksByToken: Record<string, string> = {};
+      shortlinksResult.shortlinks.forEach((shortlink) => {
+        try {
+          const pathname = new URL(shortlink.targetUrl, window.location.origin).pathname;
+          const match = pathname.match(/^\/proposals\/([^/]+)\/?$/);
+          if (match && shortlink.active) linksByToken[decodeURIComponent(match[1])] = shortlink.code;
+        } catch {
+          // Ignore malformed legacy destinations.
+        }
+      });
+      setProposalShortlinks(linksByToken);
+    } catch {
+      // Proposal administration remains available if the shortlinks service is offline.
+      setProposalShortlinks({});
+    }
     setAuthenticated(true);
+    sessionStorage.setItem("ninusoft-admin-key", key);
     sessionStorage.setItem("ninusoft-proposals-admin-key", key);
   };
 
@@ -268,9 +304,12 @@ export default function ProposalAdmin() {
     document.title = "إدارة العروض | NinuSoft";
     if (adminKey) {
       void loadItems().catch(() => {
+        sessionStorage.removeItem("ninusoft-admin-key");
         sessionStorage.removeItem("ninusoft-proposals-admin-key");
         setAuthenticated(false);
-      });
+      }).finally(() => setCheckingSession(false));
+    } else {
+      setCheckingSession(false);
     }
     return () => {
       document.title = "NinuSoft";
@@ -387,7 +426,8 @@ export default function ProposalAdmin() {
         active: form.active,
         rotateToken: form.rotateToken,
       };
-      const result = form.id
+      const wasEditing = Boolean(form.id);
+      const result = wasEditing
         ? await adminRequest<{ proposal: Proposal }>(
             adminKey,
             `/proposals/${form.id}`,
@@ -397,12 +437,36 @@ export default function ProposalAdmin() {
             adminKey,
             "/proposals",
             { method: "POST", body: JSON.stringify(payload) },
-          );
+      );
       const link = `${publicOrigin}/proposals/${result.proposal.token}`;
+      let compactLink = proposalShortlinks[result.proposal.token]
+        ? shortlinkUrl(proposalShortlinks[result.proposal.token])
+        : "";
+
+      if (!compactLink) {
+        try {
+          const shortlinkResult = await createShortlink(adminKey, {
+            targetUrl: link,
+            expiresAt: payload.expiresAt,
+          });
+          compactLink = shortlinkUrl(shortlinkResult.shortlink.code);
+          setProposalShortlinks((current) => ({
+            ...current,
+            [result.proposal.token]: shortlinkResult.shortlink.code,
+          }));
+        } catch (shortlinkError) {
+          const reason =
+            shortlinkError instanceof ShortlinksApiError
+              ? shortlinkError.message
+              : "تعذر الاتصال بخدمة الروابط المختصرة.";
+          setError(`تم حفظ العرض، لكن تعذر إنشاء الرابط المختصر: ${reason}`);
+        }
+      }
+
       setMessage(
-        form.id
-          ? `تم تحديث العرض فوراً. رابط العميل: ${link}`
-          : `تم إنشاء العرض. رابط العميل: ${link}`,
+        compactLink
+          ? `${wasEditing ? "تم تحديث" : "تم إنشاء"} العرض ورابطه المختصر: ${compactLink}`
+          : `${wasEditing ? "تم تحديث" : "تم إنشاء"} العرض. رابط العميل: ${link}`,
       );
       setForm(emptyForm);
       await loadItems();
@@ -418,8 +482,11 @@ export default function ProposalAdmin() {
   };
 
   const copyLink = async (token: string) => {
-    await navigator.clipboard.writeText(`${publicOrigin}/proposals/${token}`);
-    setMessage("تم نسخ رابط العميل.");
+    const link = proposalShortlinks[token]
+      ? shortlinkUrl(proposalShortlinks[token])
+      : `${publicOrigin}/proposals/${token}`;
+    await navigator.clipboard.writeText(link);
+    setMessage(proposalShortlinks[token] ? "تم نسخ الرابط المختصر." : "تم نسخ رابط العميل.");
   };
 
   const deleteProposal = async (id: string, title: string) => {
@@ -452,10 +519,14 @@ export default function ProposalAdmin() {
   };
 
   const logout = () => {
+    sessionStorage.removeItem("ninusoft-admin-key");
     sessionStorage.removeItem("ninusoft-proposals-admin-key");
+    sessionStorage.removeItem("ninusoft-shortlinks-admin-key");
     setAdminKey("");
     setAuthenticated(false);
     setItems([]);
+    setProposalShortlinks({});
+    onLogout?.();
   };
 
   const exportCSV = () => {
@@ -480,6 +551,10 @@ export default function ProposalAdmin() {
     link.click();
     document.body.removeChild(link);
   };
+
+  if (checkingSession) {
+    return <AdminLoading />;
+  }
 
   if (!authenticated) {
     return (
@@ -519,27 +594,47 @@ export default function ProposalAdmin() {
       <aside className="proposal-admin-rail">
         <a className="proposal-brand" href="/">
           <img src="/logo.png" alt="" />
-          <span>NinuSoft <small>Proposals</small></span>
+          <span>NinuSoft <small>Admin workspace</small></span>
         </a>
         <nav aria-label="التنقل الرئيسي">
-          {[
-            { id: "editor" as const, label: "العروض", icon: FileText },
-            { id: "analytics" as const, label: "التحليلات", icon: BarChart },
-            { id: "settings" as const, label: "الإعدادات", icon: Settings },
-          ].map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                className={activeAdminTab === tab.id ? "is-active" : ""}
-                onClick={() => setActiveAdminTab(tab.id)}
-              >
-                <Icon className="h-4 w-4" />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
+          <div className="proposal-admin-nav-group">
+            <span className="proposal-admin-nav-label">الأقسام الرئيسية</span>
+            <button
+              type="button"
+              className={
+                activeAdminTab === "editor"
+                  ? "is-active"
+                  : "is-parent-active"
+              }
+              onClick={() => setActiveAdminTab("editor")}
+            >
+              <FileText className="h-4 w-4" />
+              <span>العروض</span>
+            </button>
+            <div className="proposal-admin-nav-group is-secondary" aria-label="أدوات العروض">
+              {[
+                { id: "analytics" as const, label: "التحليلات", icon: BarChart },
+                { id: "settings" as const, label: "الإعدادات", icon: Settings },
+              ].map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    className={activeAdminTab === tab.id ? "is-active" : ""}
+                    onClick={() => setActiveAdminTab(tab.id)}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <button type="button" onClick={() => onNavigate?.("shortlinks")}>
+              <Link className="h-4 w-4" />
+              <span>الروابط المختصرة</span>
+            </button>
+          </div>
         </nav>
         <div className="proposal-admin-rail-footer">
           <div className="proposal-admin-avatar">NS</div>
@@ -552,9 +647,10 @@ export default function ProposalAdmin() {
             onClick={logout}
             aria-label="تسجيل الخروج"
             title="تسجيل الخروج"
-            className="flex items-center gap-1 text-xs font-bold text-red-400 hover:text-red-300 transition-colors px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20"
+            className="proposal-admin-rail-logout"
           >
             <LogOut className="h-4 w-4" />
+            <span className="proposal-admin-logout-label">خروج</span>
           </button>
         </div>
       </aside>
@@ -597,7 +693,7 @@ export default function ProposalAdmin() {
               variant="outline"
               size="sm"
               onClick={logout}
-              className="h-9 px-3 text-xs font-bold text-red-400 border-red-500/30 bg-red-500/10 hover:bg-red-500/20 hover:text-red-300 flex items-center gap-1.5"
+              className="proposal-admin-mobile-logout h-9 px-3 text-xs font-bold text-red-400 border-red-500/30 bg-red-500/10 hover:bg-red-500/20 hover:text-red-300 items-center gap-1.5"
               title="تسجيل الخروج من لوحة التحكم"
             >
               <LogOut className="h-3.5 w-3.5" />
@@ -851,6 +947,7 @@ export default function ProposalAdmin() {
                                   } else {
                                     updateField("password", val);
                                   }
+                                  setPasswordCopied(false);
                                 }}
                                 placeholder={
                                   currentMode === "pin"
@@ -888,6 +985,7 @@ export default function ProposalAdmin() {
                                   ).join("");
                                 }
                                 updateField("password", generated);
+                                setPasswordCopied(false);
                               }}
                               className="h-10 w-10 flex items-center justify-center rounded-md border border-border bg-muted hover:bg-muted/70 text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
                             >
@@ -895,21 +993,32 @@ export default function ProposalAdmin() {
                             </button>
                             <button
                               type="button"
-                              title="نسخ"
+                              title={passwordCopied ? "تم النسخ" : "نسخ"}
                               disabled={!form.password}
-                              onClick={() => {
+                              onClick={async () => {
                                 if (!form.password) return;
-                                navigator.clipboard.writeText(form.password).catch(() => {});
-                                const btn = document.getElementById("pin-copy-btn") as HTMLButtonElement | null;
-                                if (btn) {
-                                  btn.dataset.copied = "1";
-                                  setTimeout(() => { delete btn.dataset.copied; btn.innerHTML = btn.dataset.orig ?? ""; }, 1500);
+                                try {
+                                  await navigator.clipboard.writeText(form.password);
+                                  setPasswordCopied(true);
+                                  setTimeout(() => setPasswordCopied(false), 1800);
+                                } catch {
+                                  setError("تعذر نسخ كلمة السر.");
                                 }
                               }}
-                              id="pin-copy-btn"
-                              className="h-10 w-10 flex items-center justify-center rounded-md border border-border bg-muted hover:bg-muted/70 text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                              className={`h-10 flex items-center justify-center gap-1.5 rounded-md border transition-all flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed ${
+                                passwordCopied
+                                  ? "w-[5.5rem] px-2.5 border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                                  : "w-10 border-border bg-muted hover:bg-muted/70 text-muted-foreground hover:text-foreground"
+                              }`}
                             >
-                              <Copy width={15} height={15} />
+                              {passwordCopied ? (
+                                <>
+                                  <CheckCircle width={15} height={15} />
+                                  <span className="text-[11px] font-bold whitespace-nowrap">تم النسخ</span>
+                                </>
+                              ) : (
+                                <Copy width={15} height={15} />
+                              )}
                             </button>
                           </div>
                           <small className="text-[11px] text-muted-foreground block mt-1">
@@ -976,7 +1085,6 @@ export default function ProposalAdmin() {
                         onClick={() => setActiveSectionId(sec.id)}
                       >
                         <span>{idx + 1}. {sec.title || "قسم جديد"}</span>
-                        {sec.hasSignature && <span className="text-[10px] text-amber-400 font-extrabold" title="يتطلب توقيع">✍️</span>}
                       </button>
                     ))}
                     <button
@@ -1431,19 +1539,21 @@ export default function ProposalAdmin() {
         )}
         {/* Share Modal */}
         {shareProposal && (() => {
-          const link = `${window.location.origin}/proposals/${shareProposal.token}`;
+          const link = proposalShortlinks[shareProposal.token]
+            ? shortlinkUrl(proposalShortlinks[shareProposal.token])
+            : `${window.location.origin}/proposals/${shareProposal.token}`;
           const msg = [
             `السلام عليكم ورحمة الله وبركاته،`,
             ``,
             `يسعدنا مشاركتكم عرض ${shareProposal.title} المُعدّ خصيصاً لكم.`,
             ``,
-            `🔗 رابط العرض:`,
+            `رابط العرض:`,
             link,
-            ...(sharePassword ? [``, `🔑 ${shareProposal.protected ? "رمز الدخول" : "كلمة المرور"}:`, sharePassword] : []),
+            ...(sharePassword ? [``, `${shareProposal.protected ? "رمز الدخول" : "كلمة المرور"}:`, sharePassword] : []),
             ``,
             `نتطلع إلى تعليقاتكم وآرائكم الكريمة.`,
             ``,
-            `مع تحيات فريق نينوسوفت 🚀`,
+            `مع تحيات فريق نينوسوفت`,
           ].join("\n");
           return (
             <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">

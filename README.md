@@ -67,7 +67,7 @@ The site includes a read-only client proposal viewer and an internal management
 screen:
 
 - Client links: `https://ninusoft.com/proposals/<private-token>`
-- Management: `https://ninusoft.com/proposals/admin`
+- Unified management: `https://ninusoft.com/admin`
 - Markdown rendering supports tables, task lists, links, and code blocks.
 - Printing and browser-native “Save as PDF” use a dedicated A4 print layout.
 - Passwords, expiration checks, content, and open/read events are handled by a

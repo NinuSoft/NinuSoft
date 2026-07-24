@@ -8,9 +8,8 @@ import { lazy, Suspense, useEffect } from "react";
 
 import IntroScreen from "@/components/IntroScreen";
 
-const ProposalAdmin = lazy(() => import("@/pages/ProposalAdmin"));
+const Admin = lazy(() => import("@/pages/admin/Admin"));
 const ProposalView = lazy(() => import("@/pages/ProposalView"));
-const ShortlinksAdmin = lazy(() => import("@/pages/ShortlinksAdmin"));
 
 const queryClient = new QueryClient();
 
@@ -18,9 +17,8 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/proposals/admin" component={ProposalAdmin} />
+      <Route path="/admin" component={Admin} />
       <Route path="/proposals/:token" component={ProposalView} />
-      <Route path="/shortlinks/admin" component={ShortlinksAdmin} />
       <Route component={NotFound} />
     </Switch>
   );
