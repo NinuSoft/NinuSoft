@@ -18,7 +18,7 @@ import { getProposalSettings } from "@/lib/proposal-settings";
 import { ProposalWatermark } from "@/components/ProposalWatermark";
 import { ProposalExpiryCountdown } from "@/components/ProposalExpiryCountdown";
 import { ProposalComments } from "@/components/ProposalComments";
-import { Clock, Printer, Download } from "@/components/Icons";
+import { Clock, Printer, Download, FileText } from "@/components/Icons";
 
 function Brand() {
   return (
@@ -68,6 +68,7 @@ export default function ProposalView() {
   const [settings, setSettings] = useState(getProposalSettings);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [lang, setLang] = useState<"ar" | "en">("ar");
+  const [showMobileNav, setShowMobileNav] = useState(false);
 
   useEffect(() => {
     const handleSettingsChange = () => setSettings(getProposalSettings());
@@ -506,6 +507,75 @@ export default function ProposalView() {
           <p>هذه الوثيقة خاصة ومعدّة للقراءة فقط.</p>
         </footer>
       </main>
+
+      {/* Mobile Floating Drawer Button */}
+      {sections.length > 1 && (
+        <div className="fixed bottom-6 left-6 z-40 lg:hidden">
+          <Button
+            type="button"
+            onClick={() => setShowMobileNav(!showMobileNav)}
+            className="shadow-2xl font-bold text-xs rounded-full px-5 py-3 flex items-center gap-2 bg-primary text-primary-foreground border border-amber-500/40"
+          >
+            <FileText className="w-4 h-4" />
+            <span>{lang === "ar" ? "أقسام الوثيقة" : "Sections"} ({sections.length})</span>
+          </Button>
+        </div>
+      )}
+
+      {/* Mobile Drawer Overlay */}
+      {showMobileNav && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm lg:hidden flex flex-col justify-end p-4 animate-in fade-in duration-200">
+          <div className="bg-card border border-border/80 rounded-2xl p-5 space-y-3 max-h-[80vh] overflow-y-auto text-start dir-rtl shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border/40 pb-2">
+              <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
+                <FileText className="w-4 h-4 text-amber-400" />
+                <span>{lang === "ar" ? "اختر القسم للتنقل" : "Select Section"}</span>
+              </h3>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setShowMobileNav(false)}>
+                ✕
+              </Button>
+            </div>
+
+            <div className="space-y-1.5 pt-1">
+              <button
+                type="button"
+                className={`w-full text-start px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+                  activeSectionId === "sec-all"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted/40 text-muted-foreground hover:text-foreground"
+                }`}
+                onClick={() => {
+                  handleSelectSection("sec-all");
+                  setShowMobileNav(false);
+                }}
+              >
+                📜 {lang === "ar" ? "عرض جميع الأقسام معاً" : "View All Sections"}
+              </button>
+
+              {sections.map((sec, idx) => (
+                <button
+                  key={sec.id}
+                  type="button"
+                  className={`w-full text-start px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                    activeSectionId === sec.id
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted/40 text-muted-foreground hover:text-foreground"
+                  }`}
+                  onClick={() => {
+                    handleSelectSection(sec.id);
+                    setShowMobileNav(false);
+                  }}
+                >
+                  <span className="w-5 h-5 rounded-full bg-muted/80 flex items-center justify-center text-[10px] font-mono">
+                    {idx + 1}
+                  </span>
+                  <span className="truncate">{sec.title}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

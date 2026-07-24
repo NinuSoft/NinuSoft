@@ -354,6 +354,29 @@ export default function ProposalAdmin() {
     setItems([]);
   };
 
+  const exportCSV = () => {
+    if (items.length === 0) return;
+    const headers = ["العنوان", "العميل", "المشاهدات", "القراءات", "الحالة", "تاريخ الانشاء"];
+    const rows = items.map((item) => [
+      `"${item.title.replace(/"/g, '""')}"`,
+      `"${item.clientName.replace(/"/g, '""')}"`,
+      item.openCount,
+      item.readCount,
+      item.active ? "فعال" : "موقوف",
+      `"${new Date(item.updatedAt).toLocaleDateString("ar-IQ")}"`,
+    ]);
+
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `ninusoft_proposals_report_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (!authenticated) {
     return (
       <main className="proposal-admin-login" dir="rtl">
@@ -717,7 +740,12 @@ export default function ProposalAdmin() {
               <span>المتابعة</span>
               <h2>عروض العملاء</h2>
             </div>
-            <Button variant="outline" onClick={() => void loadItems()} disabled={busy}>تحديث</Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => void loadItems()} disabled={busy}>تحديث</Button>
+              <Button variant="secondary" size="sm" onClick={exportCSV} disabled={items.length === 0} className="font-bold text-xs">
+                📊 تصدير تقرير CSV
+              </Button>
+            </div>
           </div>
           {items.length === 0 ? (
             <div className="proposal-empty">لا توجد عروض بعد. أنشئ العرض الأول من النموذج أعلاه.</div>
