@@ -11,6 +11,7 @@ import {
   type Proposal,
   recordProposalEvent,
   unlockProposal,
+  submitProposalCommentApi,
 } from "@/lib/proposals-api";
 import { parseProposalSections } from "@/lib/proposal-sections";
 import { ProposalSignature } from "@/components/ProposalSignature";
@@ -18,7 +19,8 @@ import { getProposalSettings } from "@/lib/proposal-settings";
 import { ProposalWatermark } from "@/components/ProposalWatermark";
 import { ProposalExpiryCountdown } from "@/components/ProposalExpiryCountdown";
 import { ProposalComments } from "@/components/ProposalComments";
-import { Clock, Printer, Download, FileText, Globe, Layers } from "@/components/Icons";
+import { Textarea } from "@/components/ui/textarea";
+import { Clock, Printer, Download, FileText, Globe, Layers, MessageSquare } from "@/components/Icons";
 
 function Brand() {
   return (
@@ -70,11 +72,76 @@ export default function ProposalView() {
   const [lang, setLang] = useState<"ar" | "en">("ar");
   const [showMobileNav, setShowMobileNav] = useState(false);
 
+  const [selectedText, setSelectedText] = useState("");
+  const [selectionPos, setSelectionPos] = useState<{ top: number; left: number } | null>(null);
+  const [showHighlightModal, setShowHighlightModal] = useState(false);
+  const [highlightCommentText, setHighlightCommentText] = useState("");
+  const [highlightAuthor, setHighlightAuthor] = useState("");
+
   useEffect(() => {
     const handleSettingsChange = () => setSettings(getProposalSettings());
     window.addEventListener("ninusoft_settings_updated", handleSettingsChange);
     return () => window.removeEventListener("ninusoft_settings_updated", handleSettingsChange);
   }, []);
+
+  useEffect(() => {
+    const handleSelection = () => {
+      const selection = window.getSelection();
+      if (!selection || selection.isCollapsed) {
+        return;
+      }
+
+      const text = selection.toString().trim();
+      if (text.length > 2) {
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        setSelectedText(text);
+        setSelectionPos({
+          top: rect.top + window.scrollY - 50,
+          left: Math.max(20, rect.left + rect.width / 2 - 80),
+        });
+      }
+    };
+
+    document.addEventListener("mouseup", handleSelection);
+    return () => {
+      document.removeEventListener("mouseup", handleSelection);
+    };
+  }, []);
+
+  const submitHighlightComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!highlightCommentText.trim() || !selectedText || !proposal) return;
+
+    const newComment = {
+      id: Math.random().toString(36).substring(2, 9),
+      author: highlightAuthor.trim() || "عميل NinuSoft",
+      text: highlightCommentText.trim(),
+      selectedText: selectedText,
+      date: new Intl.DateTimeFormat("ar-IQ-u-nu-latn", { dateStyle: "short", timeStyle: "short" }).format(new Date()),
+    };
+
+    const storageKey = `ninusoft-comments:${proposal.title}`;
+    try {
+      const raw = localStorage.getItem(storageKey);
+      const existing = raw ? JSON.parse(raw) : [];
+      const updated = [newComment, ...existing];
+      localStorage.setItem(storageKey, JSON.stringify(updated));
+      if (proposal.token) {
+        await submitProposalCommentApi(proposal.token, newComment).catch(() => {});
+      }
+    } catch (err) {
+      console.error(err);
+    }
+
+    setShowHighlightModal(false);
+    setSelectionPos(null);
+    setSelectedText("");
+    setHighlightCommentText("");
+
+    const el = document.getElementById("proposal-comments");
+    if (el) el.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -576,6 +643,72 @@ export default function ProposalView() {
                 </button>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Selection Popover Button */}
+      {selectionPos && selectedText && !showHighlightModal && (
+        <div
+          className="fixed z-40 animate-in fade-in zoom-in duration-150"
+          style={{ top: `${selectionPos.top}px`, left: `${selectionPos.left}px` }}
+        >
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => setShowHighlightModal(true)}
+            className="shadow-2xl font-bold text-xs rounded-full px-4 py-2 flex items-center gap-1.5 bg-amber-500 text-black hover:bg-amber-400 border border-amber-300"
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span>تعليق على التحديد</span>
+          </Button>
+        </div>
+      )}
+
+      {/* Selection Comment Modal */}
+      {showHighlightModal && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-md p-6 rounded-2xl bg-card border border-amber-500/50 shadow-2xl space-y-4 text-start dir-rtl">
+            <div className="flex items-center justify-between border-b border-border/40 pb-2">
+              <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-amber-400" />
+                <span>إضافة تعليق على النص المحدد</span>
+              </h3>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setShowHighlightModal(false)}>
+                ✕
+              </Button>
+            </div>
+
+            <div className="p-3 rounded-xl bg-amber-500/10 border-r-2 border-amber-500 text-amber-300 text-xs font-mono italic max-h-24 overflow-y-auto">
+              &ldquo;{selectedText}&rdquo;
+            </div>
+
+            <form onSubmit={submitHighlightComment} className="space-y-3">
+              <input
+                type="text"
+                value={highlightAuthor}
+                onChange={(e) => setHighlightAuthor(e.target.value)}
+                placeholder="اسمك الكريم (اختياري)"
+                className="w-full text-xs p-2.5 rounded-lg border border-border/60 bg-background text-foreground"
+              />
+              <Textarea
+                value={highlightCommentText}
+                onChange={(e) => setHighlightCommentText(e.target.value)}
+                placeholder="اكتب ملاحظتك أو استفسارك بخصوص هذا النص المحدد..."
+                rows={3}
+                className="text-xs"
+                required
+                autoFocus
+              />
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => setShowHighlightModal(false)}>
+                  إلغاء
+                </Button>
+                <Button type="submit" size="sm" className="font-bold text-xs flex items-center gap-1.5">
+                  <MessageSquare className="w-3.5 h-3.5" /> حفظ التعليق
+                </Button>
+              </div>
+            </form>
           </div>
         </div>
       )}
