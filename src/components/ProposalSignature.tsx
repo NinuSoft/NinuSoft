@@ -35,6 +35,7 @@ interface ProposalSignatureProps {
   allowType?: boolean;
   allowUpload?: boolean;
   allowRejection?: boolean;
+  enablePromoCode?: boolean;
   onSigned?: (signatureData: SignatureRecord) => void;
 }
 
@@ -61,6 +62,7 @@ export function ProposalSignature({
   allowType = true,
   allowUpload = true,
   allowRejection = true,
+  enablePromoCode = true,
   onSigned,
 }: ProposalSignatureProps) {
   const { toast } = useToast();
@@ -534,56 +536,58 @@ export function ProposalSignature({
           </div>
         ) : null}
 
-        {/* Promo Code Box (Feature 4/6) */}
-        <div className="p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/5 space-y-2 dir-rtl text-start">
-          <label className="text-xs font-bold text-amber-400 block flex items-center gap-1.5">
-            <Tag className="w-3.5 h-3.5" />
-            <span>هل لديك كود خصم شريك من NinuSoft؟</span>
-          </label>
-          <div className="flex items-center gap-2">
-            <Input
-              value={promoCode}
-              onChange={(e) => {
-                setPromoCode(e.target.value.toUpperCase());
-                setPromoError("");
-              }}
-              placeholder="أدخل كود الخصم (مثال: NINU10)"
-              className="text-xs uppercase font-mono bg-background"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={async () => {
-                if (!promoCode.trim()) return;
-                try {
-                  const token = window.location.pathname.split("/").filter(Boolean).pop() || "";
-                  const res = await getProposalDiscountsApi(token);
-                  const match = (res.discounts || []).find((d) => d.code === promoCode.trim().toUpperCase() && d.active);
-                  if (match) {
-                    const label = match.discountType === "percentage" ? `${match.discountValue}%` : `$${match.discountValue}`;
-                    setAppliedDiscount({ code: match.code, label });
-                    setPromoError("");
-                  } else {
-                    setPromoError("كود الخصم غير صالح أو منتهي الصلاحية.");
+        {/* Promo Code Box */}
+        {enablePromoCode && (
+          <div className="p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/5 space-y-2 dir-rtl text-start">
+            <label className="text-xs font-bold text-amber-400 block flex items-center gap-1.5">
+              <Tag className="w-3.5 h-3.5" />
+              <span>هل لديك كود خصم؟</span>
+            </label>
+            <div className="flex items-center gap-2">
+              <Input
+                value={promoCode}
+                onChange={(e) => {
+                  setPromoCode(e.target.value.toUpperCase());
+                  setPromoError("");
+                }}
+                placeholder="أدخل كود الخصم (مثال: NINU10)"
+                className="text-xs uppercase font-mono bg-background"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  if (!promoCode.trim()) return;
+                  try {
+                    const token = window.location.pathname.split("/").filter(Boolean).pop() || "";
+                    const res = await getProposalDiscountsApi(token);
+                    const match = (res.discounts || []).find((d) => d.code === promoCode.trim().toUpperCase() && d.active);
+                    if (match) {
+                      const label = match.discountType === "percentage" ? `${match.discountValue}%` : `$${match.discountValue}`;
+                      setAppliedDiscount({ code: match.code, label });
+                      setPromoError("");
+                    } else {
+                      setPromoError("كود الخصم غير صالح أو منتهي الصلاحية.");
+                    }
+                  } catch {
+                    setPromoError("تعذر التحقق من كود الخصم.");
                   }
-                } catch {
-                  setPromoError("تعذر التحقق من كود الخصم.");
-                }
-              }}
-              className="text-xs font-bold shrink-0 border-amber-500/40 text-amber-300 hover:bg-amber-500/10"
-            >
-              تطبيق الخصم
-            </Button>
-          </div>
-          {appliedDiscount && (
-            <div className="p-2 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center justify-between">
-              <span>تم تطبيق خصم {appliedDiscount.label} بنجاح</span>
-              <span className="font-mono text-[10px] bg-emerald-500/20 px-1.5 py-0.5 rounded">{appliedDiscount.code}</span>
+                }}
+                className="text-xs font-bold shrink-0 border-amber-500/40 text-amber-300 hover:bg-amber-500/10"
+              >
+                تطبيق الخصم
+              </Button>
             </div>
-          )}
-          {promoError && <p className="text-[11px] text-destructive font-semibold">{promoError}</p>}
-        </div>
+            {appliedDiscount && (
+              <div className="p-2 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center justify-between">
+                <span>تم تطبيق خصم {appliedDiscount.label} بنجاح</span>
+                <span className="font-mono text-[10px] bg-emerald-500/20 px-1.5 py-0.5 rounded">{appliedDiscount.code}</span>
+              </div>
+            )}
+            {promoError && <p className="text-[11px] text-destructive font-semibold">{promoError}</p>}
+          </div>
+        )}
 
         {/* The decision is final server-side (409 on any second attempt), so it
             has to be unmistakable before the client commits to it. */}

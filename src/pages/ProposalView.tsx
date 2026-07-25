@@ -1144,6 +1144,7 @@ export default function ProposalView() {
                                     allowType={settings.allowTypeSignature}
                                     allowUpload={settings.allowUploadSignature}
                                     allowRejection={settings.allowRejection}
+                                    enablePromoCode={settings.enablePromoCode}
                                   />
                                 </div>
                               )}
@@ -1204,6 +1205,7 @@ export default function ProposalView() {
                         allowType={settings.allowTypeSignature}
                         allowUpload={settings.allowUploadSignature}
                         allowRejection={settings.allowRejection}
+                        enablePromoCode={settings.enablePromoCode}
                       />
                     )}
                   </>

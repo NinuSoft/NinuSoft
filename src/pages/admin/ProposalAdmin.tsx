@@ -1498,6 +1498,7 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                     { key: "allowUploadSignature", label: "رفع صورة التوقيع" },
                     { key: "enableInlineComments", label: "تعليقات العميل المباشرة" },
                     { key: "allowRejection", label: "طلب التعديل / الاعتراض" },
+                    { key: "enablePromoCode", label: "حقل كود الخصم" },
                     { key: "enableExpiryCountdown", label: "عداد انتهاء الصلاحية" },
                     { key: "enableReadingTime", label: "تقدير وقت القراءة" },
                     { key: "enablePrint", label: "زر الطباعة" },
