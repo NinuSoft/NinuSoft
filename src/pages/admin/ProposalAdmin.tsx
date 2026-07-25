@@ -1894,7 +1894,7 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                     href={`${window.location.origin}/proposals/${selectedAuditProposal.token}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-amber-300 hover:text-amber-200 hover:underline font-mono text-xs max-w-[280px] truncate"
+                    className="text-amber-300 hover:text-amber-200 hover:underline font-mono text-xs max-w-[520px] lg:max-w-[620px] truncate"
                     title="اضغط لفتح رابط العرض في نافذة جديدة"
                   >
                     {window.location.origin}/proposals/{selectedAuditProposal.token}
