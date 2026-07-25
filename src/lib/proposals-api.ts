@@ -316,6 +316,7 @@ export function revokeProposalSignatureApi(
     adminKey,
     `/proposals/${encodeURIComponent(id)}/signature`,
     {
+      method: "DELETE",
       body: JSON.stringify({
         reason: options.reason || null,
         sectionId: options.sectionId || null,
