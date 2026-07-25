@@ -65,6 +65,7 @@ import {
   LogOut,
   Lock,
   Share2,
+  Tag,
 } from "@/components/Icons";
 
 type FormState = {
@@ -136,7 +137,8 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
   const [shareCopied, setShareCopied] = useState(false);
   const [passwordCopied, setPasswordCopied] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [activeAdminTab, setActiveAdminTab] = useState<"editor" | "analytics" | "settings">("editor");
+  const [activeAdminTab, setActiveAdminTab] = useState<"editor" | "analytics" | "discounts" | "settings">("editor");
+  const [selectedDiscountProposalId, setSelectedDiscountProposalId] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
 
   const [sections, setSections] = useState<ProposalSection[]>(() =>
@@ -836,14 +838,18 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                 ? "إدارة العروض"
                 : activeAdminTab === "analytics"
                   ? "التحليلات والأداء"
-                  : "إعدادات التجربة"}
+                  : activeAdminTab === "discounts"
+                    ? "الخصومات والكوبونات"
+                    : "إعدادات التجربة"}
             </h1>
             <p>
               {activeAdminTab === "editor"
                 ? "أنشئ عروضاً احترافية وتابع تفاعل العملاء من مكان واحد."
                 : activeAdminTab === "analytics"
                   ? "راقب وصول العملاء وقراءة العروض."
-                  : "خصص تجربة العرض والميزات المتاحة للعملاء."}
+                  : activeAdminTab === "discounts"
+                    ? "إدارة خصومات وكوبونات الشركاء المخصصة لكل عرض."
+                    : "خصص تجربة العرض والميزات المتاحة للعملاء."}
             </p>
           </div>
           <div className="proposal-admin-top-actions">
@@ -882,6 +888,39 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
         ) : activeAdminTab === "analytics" ? (
           <section className="proposal-editor">
             <ProposalAnalytics items={items} />
+          </section>
+        ) : activeAdminTab === "discounts" ? (
+          <section className="proposal-editor p-6 rounded-2xl bg-card border border-primary/30 shadow-xl space-y-4 text-start dir-rtl">
+            <div className="border-b border-border/40 pb-3 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+                <Tag className="w-5 h-5 text-amber-400" />
+                <span>إدارة الخصومات والكوبونات الخاصة للعروض</span>
+              </h2>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-muted-foreground block">
+                اختر العرض المطلوب لإدارة الخصومات والكوبونات الخاصة به:
+              </label>
+              <select
+                value={selectedDiscountProposalId || (items[0]?.id || "")}
+                onChange={(e) => setSelectedDiscountProposalId(e.target.value)}
+                className="w-full text-xs font-bold bg-background border border-input rounded-xl p-3"
+              >
+                {items.map((it) => (
+                  <option key={it.id} value={it.id}>
+                    {it.title} ({it.clientName})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {(selectedDiscountProposalId || items[0]?.id) && (
+              <ProposalDiscountsManager
+                adminKey={adminKey}
+                proposalId={selectedDiscountProposalId || items[0]?.id}
+              />
+            )}
           </section>
         ) : (
           <>
@@ -1833,12 +1872,6 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                       </div>
                     ))}
                   </div>
-                )}
-                {selectedAuditProposal && (
-                  <ProposalDiscountsManager
-                    adminKey={adminKey}
-                    proposalId={selectedAuditProposal.id}
-                  />
                 )}
               </div>
 

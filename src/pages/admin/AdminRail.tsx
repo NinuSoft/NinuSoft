@@ -1,11 +1,11 @@
-import { FileText, BarChart, Settings, Link, LogOut } from "@/components/Icons";
+import { FileText, BarChart, Settings, Link, LogOut, Tag } from "@/components/Icons";
 
 type AdminRailProps = {
   currentSection: "proposals" | "shortlinks";
-  activeProposalTab?: "editor" | "analytics" | "settings";
+  activeProposalTab?: "editor" | "analytics" | "discounts" | "settings";
   unresolvedCount?: number;
   onNavigateSection: (section: "proposals" | "shortlinks") => void;
-  onSelectProposalTab?: (tab: "editor" | "analytics" | "settings") => void;
+  onSelectProposalTab?: (tab: "editor" | "analytics" | "discounts" | "settings") => void;
   onLogout: () => void;
 };
 
@@ -57,7 +57,7 @@ export function AdminRail({
             )}
           </button>
 
-          {/* Proposal Sub-items (Analytics & Settings) */}
+          {/* Proposal Sub-items (Analytics, Discounts & Settings) */}
           {currentSection === "proposals" && (
             <div
               className="proposal-admin-nav-group is-secondary"
@@ -65,6 +65,7 @@ export function AdminRail({
             >
               {[
                 { id: "analytics" as const, label: "التحليلات", icon: BarChart },
+                { id: "discounts" as const, label: "الخصومات", icon: Tag },
                 { id: "settings" as const, label: "الإعدادات", icon: Settings },
               ].map((tab) => {
                 const Icon = tab.icon;
