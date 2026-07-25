@@ -3,6 +3,7 @@ import remarkGfm from "remark-gfm";
 import { proposalMarkdownComponents, remarkAlerts } from "@/components/ProposalMarkdown";
 
 import { playChimeNotification, requestDesktopNotificationPermission, showDesktopNotification } from "@/lib/audio-notifications";
+import { ProposalDiscountsManager } from "@/components/ProposalDiscountsManager";
 import { formatProposalDate } from "@/lib/format-date";
 import { jumpToQuotedText } from "@/lib/quote-navigator";
 import { ChangeEvent, SyntheticEvent, useEffect, useMemo, useRef, useState } from "react";
@@ -1786,6 +1787,12 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                       </div>
                     ))}
                   </div>
+                )}
+                {selectedAuditProposal && (
+                  <ProposalDiscountsManager
+                    adminKey={adminKey}
+                    proposalId={selectedAuditProposal.id}
+                  />
                 )}
               </div>
 
