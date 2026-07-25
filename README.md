@@ -67,17 +67,37 @@ The site includes an advanced client proposal viewing engine and internal admin 
 
 - **Client Links**: `https://ninusoft.com/proposals/<private-token>`
 - **Admin Control Panel**: `https://ninusoft.com/admin`
-- **Per-Proposal Custom Settings**: Cross-device sync of signature methods (draw, type, upload), inline comments, expiry countdown, print/PDF export, and rejection controls.
+- **Per-Proposal Custom Settings**: Cross-device sync of signature methods (draw, type, upload), inline comments, expiry countdown, print/PDF export, rejection controls, and discount toggle.
+- **Admin Discount Manager ("الخصومات") & Promo Code Box**: Dedicated admin category for managing proposal discounts (`percentage` or `fixed_amount`); clients can enter promo codes with real-time total recalculation.
+- **Widescreen 2-Column Audit Engagement Modal (`1440px x 900px`)**:
+  - Integrated header with clickable tracking URL, copy link button, and discount status badge.
+  - 2x2 Engagement Stats Grid (`Open Count`, `Full Read`, `First Visit`, `Last Active`).
+  - Comment status filter tabs (`الكل`, `قيد المراجعة`, `تم الحل`) with full vertical space utilization.
+- **Multi-Provider AI Assistant (Groq Cloud API & Workers AI Fallback)**:
+  - 1-click admin smart reply drafting and interactive proposal AI chat assistant.
+  - High-speed Groq API model cascade (`llama-3.3-70b-versatile` -> `openai/gpt-oss-120b` -> `qwen/qwen3.6-27b` -> `openai/gpt-oss-20b` -> `groq/compound` -> `llama-3.1-8b-instant`) with up to 18,000 free daily requests.
+  - Automatic fallback to Cloudflare Workers AI (`@cf/meta/llama-3.3-70b-instruct-fp8-fast`) if limits are reached.
 - **Rejection Recovery & Exit-Intent Survey**: Converts proposal rejections into interactive negotiation requests (installment options, scope adjustments, or technical inquiries).
-- **Admin Discount Manager & Client Promo Box**: Admin can create custom promo codes (`NINU10`, `EARLYBIRD`) per proposal; clients enter codes for live discount calculation.
-- **Interactive ROI & Value Calculator**: Client widget estimating weekly/monthly hours saved and annual ROI.
-- **Dynamic Target Launch Date Badge**: Live target launch date calculation based on signing date and contract duration.
-- **1-Click WhatsApp & Walkthrough Launcher**: Direct button to initiate a pre-filled WhatsApp conversation with the NinuSoft project lead.
-- **Post-Acceptance Celebration & Onboarding Roadmap**: 3-step project kickoff roadmap displayed upon signing.
 - **Telegram-style Quote Jump & Flash Highlight**: Clickable comment quote boxes that scroll to and pulse-highlight target text in the proposal.
-- **Workers AI Assistant**: Cloudflare Workers AI (`@cf/meta/llama-3.1-8b-instruct`) for 1-click admin smart reply drafting.
 - **Internal Notes & Comment Locking**: Lock answered comments against modification and keep private internal admin notes.
 - **Audio Chime & Desktop Push Notifications**: Background auto-polling alerts when clients post new inquiries.
+
+```mermaid
+flowchart TD
+    Client["Client Visitor"] -->|View Proposal| Engine["Proposal Engine"]
+    Engine -->|Post Inquiry / Ask AI| Backend["Cloudflare Workers Backend"]
+    
+    subgraph Multi-Provider AI Cascade
+        Backend -->|1st Choice| Groq1["Groq: Llama 3.3 70B (1k RPD)"]
+        Backend -->|2nd Choice| Groq2["Groq: GPT-OSS 120B (1k RPD)"]
+        Backend -->|3rd Choice| Groq3["Groq: Qwen 3.6 27B (1k RPD)"]
+        Backend -->|4th Choice| Groq4["Groq: Llama 3.1 8B Instant (14.4k RPD)"]
+        Backend -.->|Fallback| CF_AI["Cloudflare Workers AI (10k Neurons)"]
+    end
+
+    Backend --> Admin["Admin Dashboard"]
+    Admin -->|View Audit Modal| AuditView["Widescreen Audit Workspace (2x2 Stats + Comments)"]
+```
 
 ## Deployment
 
