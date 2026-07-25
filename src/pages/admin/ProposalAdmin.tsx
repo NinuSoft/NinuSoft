@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  adminDeleteProposalCommentApi,
+  adminEditProposalCommentApi,
   adminRequest,
   ApiError,
   getProposalActivityApi,
@@ -326,6 +328,44 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
       );
     } finally {
       setRevoking(false);
+    }
+  };
+
+  const [editingAdminCommentId, setEditingAdminCommentId] = useState<string | null>(null);
+  const [editingAdminCommentText, setEditingAdminCommentText] = useState("");
+
+  const adminDeleteComment = async (commentId: string) => {
+    if (!selectedAuditProposal || !activity) return;
+    if (!window.confirm("هل أنت تأكد من رغبتك في حذف هذا التعليق كمسؤول؟")) return;
+    try {
+      const res = await adminDeleteProposalCommentApi(
+        adminKey,
+        selectedAuditProposal.id,
+        commentId,
+      );
+      setActivity({ ...activity, comments: res.comments });
+      setMessage("تم حذف التعليق بنجاح.");
+      await loadItems();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "تعذر حذف التعليق.");
+    }
+  };
+
+  const adminSaveCommentEdit = async (commentId: string, text: string) => {
+    if (!selectedAuditProposal || !activity || !text.trim()) return;
+    try {
+      const res = await adminEditProposalCommentApi(
+        adminKey,
+        selectedAuditProposal.id,
+        commentId,
+        { text: text.trim() },
+      );
+      setActivity({ ...activity, comments: res.comments });
+      setEditingAdminCommentId(null);
+      setEditingAdminCommentText("");
+      setMessage("تم تعديل التعليق بنجاح.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "تعذر تعديل التعليق.");
     }
   };
 
@@ -1684,19 +1724,78 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                 ) : activity && activity.comments.length > 0 ? (
                   <div className="space-y-1.5">
                     {activity.comments.map((c) => (
-                      <div key={c.id} className="p-2.5 rounded-lg border border-border/40 bg-muted/30 space-y-1 text-xs">
+                      <div key={c.id} className="p-2.5 rounded-lg border border-border/40 bg-muted/30 space-y-1.5 text-xs">
                         <div className="flex items-center justify-between gap-2">
                           <strong className="text-foreground">{c.author}</strong>
-                          <span className="font-mono text-[11px] text-muted-foreground">
-                            {formatDate(c.createdAt)}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-[11px] text-muted-foreground">
+                              {formatDate(c.createdAt)}
+                            </span>
+                            {editingAdminCommentId !== c.id && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingAdminCommentId(c.id);
+                                  setEditingAdminCommentText(c.text);
+                                }}
+                                className="p-1 hover:text-foreground text-muted-foreground transition-colors"
+                                title="تعديل التعليق"
+                              >
+                                <Edit className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            {editingAdminCommentId !== c.id && (
+                              <button
+                                type="button"
+                                onClick={() => adminDeleteComment(c.id)}
+                                className="p-1 hover:text-destructive text-muted-foreground transition-colors"
+                                title="حذف التعليق"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
                         </div>
                         {c.selectedText && (
                           <div className="p-1.5 rounded bg-amber-500/10 border-r-2 border-amber-500 text-amber-300 font-mono text-[11px] italic">
                             &ldquo;{c.selectedText}&rdquo;
                           </div>
                         )}
-                        <p className="text-foreground/90">{c.text}</p>
+                        {editingAdminCommentId === c.id ? (
+                          <div className="space-y-2 pt-1">
+                            <Textarea
+                              value={editingAdminCommentText}
+                              onChange={(e) => setEditingAdminCommentText(e.target.value)}
+                              rows={2}
+                              className="text-xs bg-background"
+                            />
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingAdminCommentId(null);
+                                  setEditingAdminCommentText("");
+                                }}
+                                className="text-xs h-7"
+                              >
+                                إلغاء
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={() => adminSaveCommentEdit(c.id, editingAdminCommentText)}
+                                disabled={!editingAdminCommentText.trim()}
+                                className="text-xs h-7"
+                              >
+                                حفظ التعديل
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-foreground/90">{c.text}</p>
+                        )}
                       </div>
                     ))}
                   </div>

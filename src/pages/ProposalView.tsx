@@ -157,6 +157,8 @@ export default function ProposalView() {
     loading: commentsLoading,
     error: commentsError,
     submit: submitComment,
+    edit: editComment,
+    remove: removeComment,
     reload: reloadComments,
   } = useProposalComments(
     status === "ready" ? proposal?.token : undefined,
@@ -1055,6 +1057,8 @@ export default function ProposalView() {
                   loading={commentsLoading}
                   error={commentsError}
                   onSubmit={submitComment}
+                  onEdit={editComment}
+                  onDelete={removeComment}
                   onRetry={reloadComments}
                   clientName={proposal.clientName}
                 />

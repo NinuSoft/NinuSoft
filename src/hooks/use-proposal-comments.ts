@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
+  deleteProposalCommentApi,
+  editProposalCommentApi,
   getProposalCommentsApi,
   submitProposalCommentApi,
   type ProposalComment,
@@ -64,5 +66,34 @@ export function useProposalComments(
     [token, sessionId, accessToken],
   );
 
-  return { comments, loading, error, submit, reload };
+  const edit = useCallback(
+    async (commentId: string, text: string, selectedText?: string) => {
+      if (!token) throw new Error("لا يمكن تعديل التعليق بدون رابط عرض صالح.");
+      const res = await editProposalCommentApi(
+        token,
+        commentId,
+        { text, selectedText },
+        sessionId,
+        accessToken,
+      );
+      setComments(res.comments || []);
+    },
+    [token, sessionId, accessToken],
+  );
+
+  const remove = useCallback(
+    async (commentId: string) => {
+      if (!token) throw new Error("لا يمكن حذف التعليق بدون رابط عرض صالح.");
+      const res = await deleteProposalCommentApi(
+        token,
+        commentId,
+        sessionId,
+        accessToken,
+      );
+      setComments(res.comments || []);
+    },
+    [token, sessionId, accessToken],
+  );
+
+  return { comments, loading, error, submit, edit, remove, reload };
 }

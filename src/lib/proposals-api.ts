@@ -314,11 +314,72 @@ export function revokeProposalSignatureApi(
     adminKey,
     `/proposals/${encodeURIComponent(id)}/signature`,
     {
-      method: "DELETE",
       body: JSON.stringify({
         reason: options.reason || null,
         sectionId: options.sectionId || null,
       }),
+    },
+  );
+}
+
+export function editProposalCommentApi(
+  token: string,
+  commentId: string,
+  data: { text: string; selectedText?: string },
+  sessionId?: string,
+  accessToken?: string,
+) {
+  return apiRequest<{ ok: true; comments: ProposalComment[] }>(
+    `/v1/proposals/${encodeURIComponent(token)}/comments/${encodeURIComponent(commentId)}`,
+    {
+      method: "PUT",
+      headers: proposalAuthHeaders(sessionId, accessToken),
+      body: JSON.stringify(data),
+    },
+  );
+}
+
+export function deleteProposalCommentApi(
+  token: string,
+  commentId: string,
+  sessionId?: string,
+  accessToken?: string,
+) {
+  return apiRequest<{ ok: true; comments: ProposalComment[] }>(
+    `/v1/proposals/${encodeURIComponent(token)}/comments/${encodeURIComponent(commentId)}`,
+    {
+      method: "DELETE",
+      headers: proposalAuthHeaders(sessionId, accessToken),
+    },
+  );
+}
+
+export function adminEditProposalCommentApi(
+  adminKey: string,
+  proposalId: string,
+  commentId: string,
+  data: { text: string; author?: string },
+) {
+  return adminRequest<{ ok: true; comments: ProposalComment[] }>(
+    adminKey,
+    `/proposals/${encodeURIComponent(proposalId)}/comments/${encodeURIComponent(commentId)}`,
+    {
+      method: "PUT",
+      body: JSON.stringify(data),
+    },
+  );
+}
+
+export function adminDeleteProposalCommentApi(
+  adminKey: string,
+  proposalId: string,
+  commentId: string,
+) {
+  return adminRequest<{ ok: true; comments: ProposalComment[] }>(
+    adminKey,
+    `/proposals/${encodeURIComponent(proposalId)}/comments/${encodeURIComponent(commentId)}`,
+    {
+      method: "DELETE",
     },
   );
 }

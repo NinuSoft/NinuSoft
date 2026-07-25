@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageSquare, Plus } from "@/components/Icons";
+import { Edit, MessageSquare, Plus, Trash2 } from "@/components/Icons";
 import { useToast } from "@/hooks/use-toast";
 import { formatProposalDate } from "@/lib/format-date";
 import type { ProposalComment } from "@/lib/proposals-api";
@@ -11,6 +11,8 @@ interface ProposalCommentsProps {
   loading?: boolean;
   error?: string | null;
   onSubmit: (input: { text: string; author?: string }) => Promise<void>;
+  onEdit?: (commentId: string, text: string) => Promise<void>;
+  onDelete?: (commentId: string) => Promise<void>;
   onRetry?: () => void;
   clientName?: string;
 }
@@ -20,12 +22,18 @@ export function ProposalComments({
   loading,
   error,
   onSubmit,
+  onEdit,
+  onDelete,
   onRetry,
   clientName,
 }: ProposalCommentsProps) {
   const [commentText, setCommentText] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -36,8 +44,6 @@ export function ProposalComments({
     setSubmitting(true);
     try {
       await onSubmit({ text, author: clientName || "العميل" });
-      // Only clear once the server has the comment — otherwise a failed send
-      // would silently discard what the client typed.
       setCommentText("");
     } catch (err) {
       toast({
@@ -48,6 +54,57 @@ export function ProposalComments({
       });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const startEdit = (c: ProposalComment) => {
+    setEditingId(c.id);
+    setEditText(c.text);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditText("");
+  };
+
+  const handleSaveEdit = async (commentId: string) => {
+    const trimmed = editText.trim();
+    if (!trimmed || !onEdit) return;
+
+    setActionLoading(commentId);
+    try {
+      await onEdit(commentId, trimmed);
+      toast({ title: "تم تعديل التعليق بنجاح" });
+      cancelEdit();
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "تعذر تعديل التعليق",
+        description:
+          err instanceof Error ? err.message : "حدث خطأ غير متوقع.",
+      });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleDelete = async (commentId: string) => {
+    if (!onDelete) return;
+    if (!window.confirm("هل أنت تأكد من رغبتك في حذف هذا التعليق؟")) return;
+
+    setActionLoading(commentId);
+    try {
+      await onDelete(commentId);
+      toast({ title: "تم حذف التعليق بنجاح" });
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "تعذر حذف التعليق",
+        description:
+          err instanceof Error ? err.message : "حدث خطأ غير متوقع.",
+      });
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -118,16 +175,72 @@ export function ProposalComments({
             <div key={c.id} className="p-3.5 rounded-xl border border-border/40 bg-card/80 space-y-2 text-xs">
               <div className="flex items-center justify-between text-muted-foreground">
                 <strong className="text-foreground text-xs font-bold">{c.author}</strong>
-                <span className="font-mono text-[11px] opacity-75">
-                  {formatProposalDate(c.createdAt)}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-[11px] opacity-75">
+                    {formatProposalDate(c.createdAt)}
+                  </span>
+                  {onEdit && editingId !== c.id && (
+                    <button
+                      type="button"
+                      onClick={() => startEdit(c)}
+                      className="p-1 hover:text-foreground transition-colors"
+                      title="تعديل التعليق"
+                    >
+                      <Edit className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                  {onDelete && editingId !== c.id && (
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(c.id)}
+                      disabled={actionLoading === c.id}
+                      className="p-1 hover:text-destructive text-muted-foreground transition-colors"
+                      title="حذف التعليق"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
+
               {c.selectedText && (
                 <div className="p-2 rounded-lg bg-amber-500/10 border-r-2 border-amber-500 text-amber-300 font-mono text-[11px] italic">
                   &ldquo;{c.selectedText}&rdquo;
                 </div>
               )}
-              <p className="text-foreground/90 leading-relaxed pt-1">{c.text}</p>
+
+              {editingId === c.id ? (
+                <div className="space-y-2 pt-1">
+                  <Textarea
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    rows={2}
+                    className="text-xs"
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={cancelEdit}
+                      className="text-xs h-7"
+                    >
+                      إلغاء
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => handleSaveEdit(c.id)}
+                      disabled={actionLoading === c.id || !editText.trim()}
+                      className="text-xs h-7"
+                    >
+                      {actionLoading === c.id ? "جارٍ الحفظ..." : "حفظ التعديل"}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-foreground/90 leading-relaxed pt-1">{c.text}</p>
+              )}
             </div>
           ))}
         </div>
