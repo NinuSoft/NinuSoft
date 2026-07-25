@@ -1858,7 +1858,7 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
         {/* Engagement Audit Modal */}
         {selectedAuditProposal && (
           <div className="fixed inset-0 z-50 bg-background/85 backdrop-blur-lg flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
-            <div className="w-[96vw] max-w-[1440px] max-h-[93vh] flex flex-col p-5 sm:p-7 rounded-3xl bg-card/95 border border-amber-500/30 backdrop-blur-2xl shadow-[0_25px_60px_rgba(0,0,0,0.7)] space-y-4 text-start dir-rtl">
+            <div className="w-[96vw] max-w-[1440px] h-[90vh] max-h-[900px] min-h-[550px] flex flex-col p-5 sm:p-7 rounded-3xl bg-card/95 border border-amber-500/30 backdrop-blur-2xl shadow-[0_25px_60px_rgba(0,0,0,0.7)] space-y-4 text-start dir-rtl">
               <div className="flex items-center justify-between border-b border-border/40 pb-3.5 shrink-0">
                 <div className="space-y-1">
                   <h3 className="font-bold text-lg text-foreground flex items-center gap-2">
@@ -2406,39 +2406,34 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
               </div>
 
               {/* Token Access Info Footer */}
-              <div className="p-3.5 rounded-2xl bg-card/80 border border-border/60 flex items-center justify-between gap-4 flex-wrap text-xs shrink-0">
-                <div className="flex items-center gap-2.5 font-mono flex-1 min-w-0 flex-wrap">
-                  <span className="text-[11px] text-muted-foreground font-sans font-bold shrink-0 flex items-center gap-1">
-                    <Link className="w-3.5 h-3.5 text-amber-400" />
-                    رابط التتبع الفريد:
-                  </span>
-                  <a
-                    href={`${window.location.origin}/proposals/${selectedAuditProposal.token}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-amber-300 hover:text-amber-200 hover:underline truncate font-mono text-xs flex items-center gap-1"
-                    title="اضغط لفتح رابط العرض في نافذة جديدة"
-                  >
-                    <span>{window.location.origin}/proposals/{selectedAuditProposal.token}</span>
-                  </a>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const linkUrl = `${window.location.origin}/proposals/${selectedAuditProposal.token}`;
-                      navigator.clipboard.writeText(linkUrl).catch(() => {});
-                      setAuditLinkCopied(true);
-                      setTimeout(() => setAuditLinkCopied(false), 2000);
-                    }}
-                    className="h-7 text-xs px-2.5 font-bold gap-1 text-amber-300 border-amber-500/30 hover:bg-amber-500/10 shrink-0"
-                  >
-                    {auditLinkCopied ? <CheckCircle className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                    <span>{auditLinkCopied ? "تم نسخ الرابط!" : "نسخ الرابط"}</span>
-                  </Button>
-                </div>
-                <Button type="button" variant="outline" size="sm" onClick={() => setSelectedAuditProposal(null)} className="px-6 font-bold text-xs shrink-0">
-                  إغلاق التقرير
+              <div className="p-3.5 rounded-2xl bg-card/80 border border-border/60 flex items-center justify-start gap-3 flex-wrap text-xs shrink-0">
+                <span className="text-[11px] text-muted-foreground font-sans font-bold shrink-0 flex items-center gap-1">
+                  <Link className="w-3.5 h-3.5 text-amber-400" />
+                  رابط التتبع الفريد:
+                </span>
+                <a
+                  href={`${window.location.origin}/proposals/${selectedAuditProposal.token}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-amber-300 hover:text-amber-200 hover:underline truncate font-mono text-xs max-w-full"
+                  title="اضغط لفتح رابط العرض في نافذة جديدة"
+                >
+                  <span>{window.location.origin}/proposals/{selectedAuditProposal.token}</span>
+                </a>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const linkUrl = `${window.location.origin}/proposals/${selectedAuditProposal.token}`;
+                    navigator.clipboard.writeText(linkUrl).catch(() => {});
+                    setAuditLinkCopied(true);
+                    setTimeout(() => setAuditLinkCopied(false), 2000);
+                  }}
+                  className="h-7 text-xs px-2.5 font-bold gap-1 text-amber-300 border-amber-500/30 hover:bg-amber-500/10 shrink-0"
+                >
+                  {auditLinkCopied ? <CheckCircle className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                  <span>{auditLinkCopied ? "تم نسخ الرابط!" : "نسخ الرابط"}</span>
                 </Button>
               </div>
             </div>
