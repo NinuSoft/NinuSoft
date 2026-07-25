@@ -491,9 +491,9 @@ export function ProposalSignature({
                 <button
                   type="button"
                   onClick={clearCanvas}
-                  className="text-amber-400 hover:underline text-xs font-bold flex items-center gap-1"
+                  className="text-amber-400 hover:underline text-[11px] font-bold flex items-center gap-1 shrink-0"
                 >
-                  <RefreshCw className="w-3 h-3" /> مسح وإعادة الرسم
+                  <RefreshCw className="w-3 h-3" /> مسح
                 </button>
               )}
             </div>
