@@ -262,37 +262,22 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
       reads: items.reduce((sum, item) => sum + item.readCount, 0),
     };
   }, [items]);
-  const [onlyActionRequired, setOnlyActionRequired] = useState(false);
-
-  const actionRequiredCount = useMemo(() => {
-    return items.filter(
-      (item) =>
-        (item.unresolvedCommentCount ?? 0) > 0 ||
-        item.rejectedSections > 0 ||
-        item.signatureStatus === "REJECTED",
-    ).length;
+  const totalUnresolvedComments = useMemo(() => {
+    return items.reduce(
+      (sum, item) => sum + (item.unresolvedCommentCount ?? 0),
+      0,
+    );
   }, [items]);
 
   const filteredItems = useMemo(() => {
-    let result = items;
     const query = searchQuery.trim().toLowerCase();
-    if (query) {
-      result = result.filter(
-        (item) =>
-          item.title.toLowerCase().includes(query) ||
-          item.clientName.toLowerCase().includes(query),
-      );
-    }
-    if (onlyActionRequired) {
-      result = result.filter(
-        (item) =>
-          (item.unresolvedCommentCount ?? 0) > 0 ||
-          item.rejectedSections > 0 ||
-          item.signatureStatus === "REJECTED",
-      );
-    }
-    return result;
-  }, [items, searchQuery, onlyActionRequired]);
+    if (!query) return items;
+    return items.filter(
+      (item) =>
+        item.title.toLowerCase().includes(query) ||
+        item.clientName.toLowerCase().includes(query),
+    );
+  }, [items, searchQuery]);
 
   // Client signatures and comments live on the server, so the audit modal
   // fetches them on open rather than reading this browser's storage.
@@ -747,6 +732,11 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
             >
               <FileText className="h-4 w-4" />
               <span>العروض</span>
+              {totalUnresolvedComments > 0 && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500 text-black border border-amber-400 animate-pulse ms-auto shrink-0 shadow-sm">
+                  {totalUnresolvedComments}
+                </span>
+              )}
             </button>
             <div className="proposal-admin-nav-group is-secondary" aria-label="أدوات العروض">
               {[
@@ -1469,21 +1459,6 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                   aria-label="البحث في العروض"
                 />
               </label>
-              <Button
-                variant={onlyActionRequired ? "default" : "outline"}
-                size="sm"
-                onClick={() => setOnlyActionRequired(!onlyActionRequired)}
-                className={`font-bold text-xs flex items-center gap-1.5 transition-all ${
-                  onlyActionRequired
-                    ? "bg-amber-500 hover:bg-amber-600 text-black shadow-md"
-                    : actionRequiredCount > 0
-                    ? "border-amber-500/50 text-amber-300 hover:bg-amber-500/10"
-                    : ""
-                }`}
-              >
-                <AlertCircle className="w-3.5 h-3.5" />
-                يتطلب إجراء ({actionRequiredCount})
-              </Button>
               <Button variant="outline" size="sm" onClick={() => void loadItems()} disabled={busy} aria-label="تحديث القائمة">
                 <RefreshCw className={`h-3.5 w-3.5 ${busy ? "animate-spin" : ""}`} />
               </Button>

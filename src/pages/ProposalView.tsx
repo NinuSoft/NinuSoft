@@ -351,6 +351,41 @@ export default function ProposalView() {
     () => parseProposalSections(proposal?.markdown || ""),
     [proposal?.markdown],
   );
+
+  const sectionCommentStats = useMemo(() => {
+    const stats: Record<string, { total: number; unresolved: number }> = {};
+    for (const sec of sections) {
+      stats[sec.id] = { total: 0, unresolved: 0 };
+    }
+
+    if (comments.length === 0) return stats;
+
+    comments.forEach((c) => {
+      let matchedSectionId = sections[0]?.id;
+      if (c.selectedText && sections.length > 1) {
+        const found = sections.find(
+          (sec) =>
+            sec.content.includes(c.selectedText!) ||
+            sec.title.includes(c.selectedText!),
+        );
+        if (found) matchedSectionId = found.id;
+      }
+
+      if (matchedSectionId && stats[matchedSectionId]) {
+        stats[matchedSectionId].total += 1;
+        if (!c.resolved) {
+          stats[matchedSectionId].unresolved += 1;
+        }
+      }
+    });
+
+    return stats;
+  }, [sections, comments]);
+
+  const totalUnresolvedComments = useMemo(
+    () => comments.filter((c) => !c.resolved).length,
+    [comments],
+  );
   const [activeSectionId, setActiveSectionId] = useState<string>("sec-all");
   const [visibleSectionId, setVisibleSectionId] = useState<string | null>(null);
   const sectionStorageKey = `ninusoft-proposal-sec:${token}`;
@@ -899,7 +934,15 @@ export default function ProposalView() {
               <div className="proposal-sidebar-card">
                 <div className="proposal-sidebar-header">
                   <h3>أقسام الوثيقة</h3>
-                  <span className="proposal-section-count">{toEnglishDigits(sections.length)} أقسام</span>
+                  <div className="flex items-center gap-1.5">
+                    {totalUnresolvedComments > 0 && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse flex items-center gap-1">
+                        <MessageSquare className="w-3 h-3 text-amber-400" />
+                        {toEnglishDigits(totalUnresolvedComments)}
+                      </span>
+                    )}
+                    <span className="proposal-section-count">{toEnglishDigits(sections.length)} أقسام</span>
+                  </div>
                 </div>
 
                 <nav className="proposal-sidebar-nav" aria-label="أقسام العرض">
@@ -918,32 +961,71 @@ export default function ProposalView() {
                       <strong>عرض كافة الأقسام</strong>
                       <small>الوثيقة الكاملة</small>
                     </div>
+                    {totalUnresolvedComments > 0 && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse flex items-center gap-1 ms-auto shrink-0">
+                        <MessageSquare className="w-3 h-3 text-amber-400" />
+                        {toEnglishDigits(totalUnresolvedComments)}
+                      </span>
+                    )}
                   </button>
 
                   <div className="proposal-sidebar-divider" />
 
-                  {sections.map((sec, idx) => (
-                    <button
-                      key={sec.id}
-                      type="button"
-                      className={`proposal-sidebar-item ${
-                        activeSectionId === sec.id ? "is-active" : ""
-                      } ${
-                        activeSectionId === "sec-all" && visibleSectionId === sec.id
-                          ? "is-in-view"
-                          : ""
-                      }`}
-                      onClick={() => {
-                        handleSelectSection(sec.id);
-                        window.scrollTo({ top: 120, behavior: "smooth" });
-                      }}
-                    >
-                      <span className="proposal-sidebar-num">{toEnglishDigits(idx + 1)}</span>
-                      <div className="proposal-sidebar-info">
-                        <strong>{sec.title}</strong>
-                      </div>
-                    </button>
-                  ))}
+                  {sections.map((sec, idx) => {
+                    const stats = sectionCommentStats[sec.id];
+                    const secUnresolved = stats?.unresolved ?? 0;
+                    const secTotal = stats?.total ?? 0;
+                    const secSig = sec.hasSignature ? getForSection(sec.stableId) : null;
+                    const secSigStatus = secSig?.status;
+
+                    return (
+                      <button
+                        key={sec.id}
+                        type="button"
+                        className={`proposal-sidebar-item ${
+                          activeSectionId === sec.id ? "is-active" : ""
+                        } ${
+                          activeSectionId === "sec-all" && visibleSectionId === sec.id
+                            ? "is-in-view"
+                            : ""
+                        }`}
+                        onClick={() => {
+                          handleSelectSection(sec.id);
+                          window.scrollTo({ top: 120, behavior: "smooth" });
+                        }}
+                      >
+                        <span className="proposal-sidebar-num">{toEnglishDigits(idx + 1)}</span>
+                        <div className="proposal-sidebar-info">
+                          <strong>{sec.title}</strong>
+                        </div>
+
+                        {/* Section Badges */}
+                        <div className="flex items-center gap-1 shrink-0 ms-auto">
+                          {secUnresolved > 0 && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse flex items-center gap-1 shadow-sm">
+                              <MessageSquare className="w-3 h-3 text-amber-400" />
+                              {toEnglishDigits(secUnresolved)}
+                            </span>
+                          )}
+                          {secSigStatus === "SIGNED" && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-0.5">
+                              <CheckCircle className="w-3 h-3" />
+                            </span>
+                          )}
+                          {secSigStatus === "REJECTED" && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-destructive/20 text-destructive border border-destructive/30 flex items-center gap-0.5">
+                              <XCircle className="w-3 h-3" />
+                            </span>
+                          )}
+                          {secUnresolved === 0 && secTotal > 0 && !secSigStatus && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-muted text-muted-foreground border border-border/40 flex items-center gap-0.5">
+                              <MessageSquare className="w-3 h-3" />
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
                 </nav>
 
                 {settings.enablePdfExport && (
