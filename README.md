@@ -61,23 +61,23 @@ Currently, the following app privacy policies are available:
 | **Hindam Customer** | [privacy-policy.html](./public/apps/hindam-customer/privacy-policy.html) | [Open Link](https://ninusoft.com/apps/hindam-customer/privacy-policy.html) |
 | **Hindam Manager** | [privacy-policy.html](./public/apps/hindam-manager/privacy-policy.html) | [Open Link](https://ninusoft.com/apps/hindam-manager/privacy-policy.html) |
 
-### 4. Private Markdown Proposals
+### 4. Private Markdown Proposals & Client Engagement Engine
 
-The site includes a read-only client proposal viewer and an internal management
-screen:
+The site includes an advanced client proposal viewing engine and internal admin dashboard:
 
-- Client links: `https://ninusoft.com/proposals/<private-token>`
-- Unified management: `https://ninusoft.com/admin`
-- Markdown rendering supports tables, task lists, links, and code blocks.
-- Printing and browser-native “Save as PDF” use a dedicated A4 print layout.
-- Passwords, expiration checks, content, and open/read events are handled by a
-  separate Cloudflare Worker rather than the public static bundle.
-
-The backend project is located at
-`/home/al-taie/Github/cloudflare-workers/ninusoft-proposals`. Follow its README
-to create D1, set `ADMIN_API_KEY` and `SESSION_SECRET`, apply the migration, and
-deploy. The frontend uses `https://ninusoft-proposals.ninusoft.workers.dev` by
-default; override it at build time with `VITE_PROPOSALS_API_URL` if needed.
+- **Client Links**: `https://ninusoft.com/proposals/<private-token>`
+- **Admin Control Panel**: `https://ninusoft.com/admin`
+- **Per-Proposal Custom Settings**: Cross-device sync of signature methods (draw, type, upload), inline comments, expiry countdown, print/PDF export, and rejection controls.
+- **Rejection Recovery & Exit-Intent Survey**: Converts proposal rejections into interactive negotiation requests (installment options, scope adjustments, or technical inquiries).
+- **Admin Discount Manager & Client Promo Box**: Admin can create custom promo codes (`NINU10`, `EARLYBIRD`) per proposal; clients enter codes for live discount calculation.
+- **Interactive ROI & Value Calculator**: Client widget estimating weekly/monthly hours saved and annual ROI.
+- **Dynamic Target Launch Date Badge**: Live target launch date calculation based on signing date and contract duration.
+- **1-Click WhatsApp & Walkthrough Launcher**: Direct button to initiate a pre-filled WhatsApp conversation with the NinuSoft project lead.
+- **Post-Acceptance Celebration & Onboarding Roadmap**: 3-step project kickoff roadmap displayed upon signing.
+- **Telegram-style Quote Jump & Flash Highlight**: Clickable comment quote boxes that scroll to and pulse-highlight target text in the proposal.
+- **Workers AI Assistant**: Cloudflare Workers AI (`@cf/meta/llama-3.1-8b-instruct`) for 1-click admin smart reply drafting.
+- **Internal Notes & Comment Locking**: Lock answered comments against modification and keep private internal admin notes.
+- **Audio Chime & Desktop Push Notifications**: Background auto-polling alerts when clients post new inquiries.
 
 ## Deployment
 
