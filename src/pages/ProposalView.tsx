@@ -139,6 +139,8 @@ export default function ProposalView() {
   const [showExecSummary, setShowExecSummary] = useState(false);
   const [printStatus, setPrintStatus] = useState<"print" | "pdf" | null>(null);
   const [submittingHighlight, setSubmittingHighlight] = useState(false);
+  /** Timestamp until which a collapsed selection must not dismiss the popover. */
+  const suppressSelectionClear = useRef(0);
   const { toast } = useToast();
 
   const sessionId = useMemo(() => {
@@ -179,44 +181,94 @@ export default function ProposalView() {
   );
 
   useEffect(() => {
-    const handleSelection = () => {
+    let debounce = 0;
+    let frame = 0;
+
+    const POPOVER_H = 48;
+
+    /** Viewport coordinates for the popover, given the live selection rect. */
+    const positionFor = (rect: DOMRect) => {
+      // Touch devices draw their own Copy/Look-Up callout directly above the
+      // selection, so prefer below it there; above is fine with a mouse.
+      const coarse = window.matchMedia("(pointer: coarse)").matches;
+      const below = rect.bottom + 12;
+      const above = rect.top - POPOVER_H;
+      const fitsBelow = below + POPOVER_H <= window.innerHeight - 12;
+      const fitsAbove = above >= 12;
+
+      // Fall back to the other side rather than letting the clamp drop the
+      // button on top of the text the client just selected.
+      let top: number;
+      if (coarse) top = fitsBelow ? below : fitsAbove ? above : below;
+      else top = fitsAbove ? above : fitsBelow ? below : above;
+
+      return {
+        top: Math.max(12, Math.min(top, window.innerHeight - POPOVER_H - 12)),
+        left: Math.max(
+          12,
+          Math.min(window.innerWidth - 170, rect.left + rect.width / 2 - 75),
+        ),
+      };
+    };
+
+    const readSelection = () => {
       const selection = window.getSelection();
-      if (!selection || selection.isCollapsed) {
-        if (!showHighlightModal) {
-          setSelectionPos(null);
-          setSelectedText("");
-        }
-        return;
-      }
-
+      if (!selection || selection.isCollapsed) return null;
       const text = selection.toString().trim();
-      if (text.length > 2) {
-        try {
-          const range = selection.getRangeAt(0);
-          const rect = range.getBoundingClientRect();
-          if (rect.width > 0 && rect.height > 0) {
-            setSelectedText(text);
-            // Use viewport-relative coordinates for fixed positioning
-            setSelectionPos({
-              top: Math.max(12, rect.top - 48),
-              left: Math.max(12, Math.min(window.innerWidth - 170, rect.left + rect.width / 2 - 75)),
-            });
-          }
-        } catch {}
+      if (text.length <= 2) return null;
+      try {
+        const rect = selection.getRangeAt(0).getBoundingClientRect();
+        if (rect.width <= 0 || rect.height <= 0) return null;
+        return { text, rect };
+      } catch {
+        return null;
       }
     };
 
-    const handleScroll = () => {
-      if (!showHighlightModal) {
+    // `selectionchange` is the only selection signal touch devices emit —
+    // long-pressing to select text fires no mouse events at all. It also
+    // covers the mouse, so desktop and touch share one path. Debounced because
+    // it fires continuously while the selection is being dragged.
+    const handleSelectionChange = () => {
+      window.clearTimeout(debounce);
+      debounce = window.setTimeout(() => {
+        if (showHighlightModal) return;
+        const current = readSelection();
+        if (current) {
+          setSelectedText(current.text);
+          setSelectionPos(positionFor(current.rect));
+          return;
+        }
+        // A tap on the popover itself can collapse the selection before the
+        // click registers; ignore the clear for a moment so the tap lands.
+        if (suppressSelectionClear.current > Date.now()) return;
         setSelectionPos(null);
-      }
+        setSelectedText("");
+      }, 250);
     };
 
-    document.addEventListener("mouseup", handleSelection);
+    // Follow the text rather than hiding: momentum and rubber-band scrolling on
+    // mobile fire constantly, and clearing on any scroll made the popover
+    // vanish the instant it appeared.
+    const handleScroll = () => {
+      if (showHighlightModal) return;
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        const current = readSelection();
+        if (current) setSelectionPos(positionFor(current.rect));
+      });
+    };
+
+    document.addEventListener("selectionchange", handleSelectionChange);
     window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll, { passive: true });
     return () => {
-      document.removeEventListener("mouseup", handleSelection);
+      window.clearTimeout(debounce);
+      if (frame) window.cancelAnimationFrame(frame);
+      document.removeEventListener("selectionchange", handleSelectionChange);
       window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
     };
   }, [showHighlightModal]);
 
@@ -1172,9 +1224,17 @@ export default function ProposalView() {
       {/* Floating Selection Popover Button */}
       {selectionPos && selectedText && !showHighlightModal && (
         <div
-          className="fixed z-40 animate-in fade-in zoom-in duration-150"
+          // z-[60] clears the AI launcher (z-50) and the mobile sections
+          // launcher (z-40), both of which are fixed near the viewport edges.
+          className="fixed z-[60] animate-in fade-in zoom-in duration-150"
           style={{ top: `${selectionPos.top}px`, left: `${selectionPos.left}px` }}
-          onMouseDown={(e) => e.preventDefault()}
+          // pointerdown covers mouse and touch, and unlike touchstart React does
+          // not attach it passively, so preventDefault actually holds the
+          // selection open while the button is pressed.
+          onPointerDown={(e) => {
+            suppressSelectionClear.current = Date.now() + 600;
+            e.preventDefault();
+          }}
         >
           <Button
             type="button"
@@ -1182,6 +1242,7 @@ export default function ProposalView() {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
+              suppressSelectionClear.current = 0;
               setShowHighlightModal(true);
             }}
             className="shadow-2xl font-bold text-xs rounded-full px-4 py-2 flex items-center gap-1.5 bg-amber-500 text-black hover:bg-amber-400 border border-amber-300"
