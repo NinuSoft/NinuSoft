@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle, Edit, MessageSquare, Plus, Trash2 } from "@/components/Icons";
@@ -33,8 +33,18 @@ export function ProposalComments({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [filter, setFilter] = useState<"all" | "open" | "resolved">("all");
 
   const { toast } = useToast();
+
+  const openCount = useMemo(() => comments.filter((c) => !c.resolved).length, [comments]);
+  const resolvedCount = useMemo(() => comments.filter((c) => c.resolved).length, [comments]);
+
+  const filteredComments = useMemo(() => {
+    if (filter === "open") return comments.filter((c) => !c.resolved);
+    if (filter === "resolved") return comments.filter((c) => c.resolved);
+    return comments;
+  }, [comments, filter]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,21 +119,34 @@ export function ProposalComments({
   };
 
   return (
-    <section id="proposal-comments" className="proposal-comments-section mt-10 p-6 rounded-2xl border border-border/60 bg-card/60 backdrop-blur-md shadow-xl text-start dir-rtl">
+    <section
+      id="proposal-comments"
+      className="proposal-comments-section mt-10 p-6 rounded-2xl border border-border/60 bg-card/60 backdrop-blur-md shadow-xl text-start dir-rtl"
+    >
+      {/* Header Bar */}
       <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
-        <div className="flex items-center gap-2 text-primary font-bold text-lg">
-          <MessageSquare className="w-5 h-5" />
-          <span>الاستفسارات والتعليقات المباشرة ({comments.length})</span>
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-primary/10 text-primary">
+            <MessageSquare className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-bold text-lg text-foreground">
+              الاستفسارات والتعليقات المباشرة
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              تواصل مباشرة مع فريق NinuSoft حول تفاصيل هذا المقترح
+            </p>
+          </div>
         </div>
         <Button
           type="button"
           variant="outline"
           size="sm"
           onClick={() => setIsOpen(!isOpen)}
-          className="text-xs font-bold flex items-center gap-1.5"
+          className="text-xs font-bold flex items-center gap-1.5 shadow-sm"
         >
           {isOpen ? (
-            "إخفاء صندوق التعليقات"
+            "إخفاء نموذج الإضافة"
           ) : (
             <>
               <Plus className="w-3.5 h-3.5" /> إضافة تعليق أو سؤال
@@ -132,14 +155,57 @@ export function ProposalComments({
         </Button>
       </div>
 
+      {/* Filter Pills */}
+      {comments.length > 0 && (
+        <div className="flex items-center gap-2 mb-5 pb-3 border-b border-border/40 text-xs">
+          <button
+            type="button"
+            onClick={() => setFilter("all")}
+            className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
+              filter === "all"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-muted/60"
+            }`}
+          >
+            الكل ({comments.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilter("open")}
+            className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
+              filter === "open"
+                ? "bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-sm"
+                : "bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-muted/60"
+            }`}
+          >
+            قيد المراجعة ({openCount})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilter("resolved")}
+            className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
+              filter === "resolved"
+                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm"
+                : "bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-muted/60"
+            }`}
+          >
+            تم الحل ({resolvedCount})
+          </button>
+        </div>
+      )}
+
+      {/* Comment Creation Form */}
       {isOpen && (
-        <form onSubmit={handleSubmit} className="mb-6 space-y-3 p-4 rounded-xl bg-muted/40 border border-border/40">
+        <form
+          onSubmit={handleSubmit}
+          className="mb-6 space-y-3 p-4 rounded-xl bg-muted/30 border border-border/50 shadow-inner"
+        >
           <Textarea
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
             placeholder="اكتب استفسارك أو تعليقك حول هذا المقترح..."
             rows={3}
-            className="text-xs"
+            className="text-xs bg-background/80"
             required
             autoFocus
           />
@@ -148,17 +214,18 @@ export function ProposalComments({
               type="submit"
               size="sm"
               disabled={submitting}
-              className="font-bold text-xs flex items-center gap-1.5"
+              className="font-bold text-xs flex items-center gap-1.5 shadow-md"
             >
               <MessageSquare className="w-3.5 h-3.5" />
-              {submitting ? "جارٍ الإرسال..." : "إرسال التعليق"}
+              {submitting ? "جارٍ الإرسال..." : "إرسال الاستفسار"}
             </Button>
           </div>
         </form>
       )}
 
+      {/* Comments List */}
       {error ? (
-        <div className="p-3.5 rounded-xl border border-destructive/40 bg-destructive/10 text-xs space-y-2">
+        <div className="p-4 rounded-xl border border-destructive/40 bg-destructive/10 text-xs space-y-2">
           <p className="text-destructive font-bold">تعذر تحميل التعليقات.</p>
           <p className="text-muted-foreground">{error}</p>
           {onRetry && (
@@ -168,24 +235,29 @@ export function ProposalComments({
           )}
         </div>
       ) : loading && comments.length === 0 ? (
-        <p className="text-xs text-muted-foreground italic">جارٍ تحميل التعليقات...</p>
-      ) : comments.length > 0 ? (
-        <div className="space-y-3">
-          {comments.map((c) => (
+        <p className="text-xs text-muted-foreground italic p-4 text-center">جارٍ تحميل التعليقات...</p>
+      ) : filteredComments.length > 0 ? (
+        <div className="space-y-3.5">
+          {filteredComments.map((c) => (
             <div
               key={c.id}
-              className={`p-3.5 rounded-xl border space-y-2 text-xs transition-opacity ${
+              className={`p-4 rounded-xl border text-xs transition-all duration-200 space-y-2.5 ${
                 c.resolved
-                  ? "border-emerald-500/30 bg-emerald-500/5 opacity-80"
-                  : "border-border/40 bg-card/80"
+                  ? "border-l-4 border-l-emerald-500 border-emerald-500/20 bg-emerald-950/10"
+                  : "border-l-4 border-l-amber-500 border-border/60 bg-card/80 shadow-sm hover:shadow-md"
               }`}
             >
-              <div className="flex items-center justify-between text-muted-foreground">
+              {/* Card Header */}
+              <div className="flex items-center justify-between gap-3 text-muted-foreground flex-wrap">
                 <div className="flex items-center gap-2">
-                  <strong className="text-foreground text-xs font-bold">{c.author}</strong>
-                  {c.resolved && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                      <CheckCircle className="w-3 h-3" /> محلول
+                  <span className="font-bold text-foreground text-xs">{c.author}</span>
+                  {c.resolved ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                      <CheckCircle className="w-3 h-3" /> تم الحل
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                      قيد المراجعة
                     </span>
                   )}
                 </div>
@@ -217,19 +289,21 @@ export function ProposalComments({
                 </div>
               </div>
 
+              {/* Selected Text Highlight Quote */}
               {c.selectedText && (
-                <div className="p-2 rounded-lg bg-amber-500/10 border-r-2 border-amber-500 text-amber-300 font-mono text-[11px] italic">
+                <div className="p-2.5 rounded-lg bg-amber-500/10 border-r-4 border-amber-500 text-amber-200 font-mono text-[11px] italic leading-relaxed">
                   &ldquo;{c.selectedText}&rdquo;
                 </div>
               )}
 
+              {/* Comment Content / Edit Mode */}
               {editingId === c.id ? (
                 <div className="space-y-2 pt-1">
                   <Textarea
                     value={editText}
                     onChange={(e) => setEditText(e.target.value)}
                     rows={2}
-                    className="text-xs"
+                    className="text-xs bg-background"
                   />
                   <div className="flex justify-end gap-2">
                     <Button
@@ -253,13 +327,21 @@ export function ProposalComments({
                   </div>
                 </div>
               ) : (
-                <p className="text-foreground/90 leading-relaxed pt-1">{c.text}</p>
+                <p className="text-foreground/90 leading-relaxed">{c.text}</p>
               )}
             </div>
           ))}
         </div>
       ) : (
-        <p className="text-xs text-muted-foreground italic">لا توجد تعليقات حتى الآن. حدّد أي نص في العرض لإضافة تعليق أو سؤال عليـه!</p>
+        <div className="p-8 text-center rounded-xl bg-muted/20 border border-dashed border-border/50 text-xs text-muted-foreground">
+          <p>
+            {filter === "all"
+              ? "لا توجد تعليقات حتى الآن. حدّد أي نص في العرض لإضافة تعليق أو سؤال عليه!"
+              : filter === "open"
+              ? "لا توجد استفسارات قيد المراجعة."
+              : "لا توجد استفسارات تم حلها."}
+          </p>
+        </div>
       )}
     </section>
   );

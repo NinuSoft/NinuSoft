@@ -41,6 +41,7 @@ import {
   FileSpreadsheet,
   BookOpen,
   Send,
+  AlertCircle,
   CheckCircle,
   MessageSquare,
   XCircle,
@@ -261,15 +262,37 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
       reads: items.reduce((sum, item) => sum + item.readCount, 0),
     };
   }, [items]);
-  const filteredItems = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    if (!query) return items;
+  const [onlyActionRequired, setOnlyActionRequired] = useState(false);
+
+  const actionRequiredCount = useMemo(() => {
     return items.filter(
       (item) =>
-        item.title.toLowerCase().includes(query) ||
-        item.clientName.toLowerCase().includes(query),
-    );
-  }, [items, searchQuery]);
+        (item.unresolvedCommentCount ?? 0) > 0 ||
+        item.rejectedSections > 0 ||
+        item.signatureStatus === "REJECTED",
+    ).length;
+  }, [items]);
+
+  const filteredItems = useMemo(() => {
+    let result = items;
+    const query = searchQuery.trim().toLowerCase();
+    if (query) {
+      result = result.filter(
+        (item) =>
+          item.title.toLowerCase().includes(query) ||
+          item.clientName.toLowerCase().includes(query),
+      );
+    }
+    if (onlyActionRequired) {
+      result = result.filter(
+        (item) =>
+          (item.unresolvedCommentCount ?? 0) > 0 ||
+          item.rejectedSections > 0 ||
+          item.signatureStatus === "REJECTED",
+      );
+    }
+    return result;
+  }, [items, searchQuery, onlyActionRequired]);
 
   // Client signatures and comments live on the server, so the audit modal
   // fetches them on open rather than reading this browser's storage.
@@ -380,7 +403,7 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
         { resolved: nextState },
       );
       setActivity({ ...activity, comments: res.comments });
-      setMessage(nextState ? "تم تحديد التعليق كمحلول." : "تمت إعادة فتح التعليق.");
+      setMessage(nextState ? "تم تحديد التعليق كـ تم الحل." : "تمت إعادة فتح التعليق كـ قيد المراجعة.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "تعذر تحديث حالة التعليق.");
     }
@@ -1446,6 +1469,21 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                   aria-label="البحث في العروض"
                 />
               </label>
+              <Button
+                variant={onlyActionRequired ? "default" : "outline"}
+                size="sm"
+                onClick={() => setOnlyActionRequired(!onlyActionRequired)}
+                className={`font-bold text-xs flex items-center gap-1.5 transition-all ${
+                  onlyActionRequired
+                    ? "bg-amber-500 hover:bg-amber-600 text-black shadow-md"
+                    : actionRequiredCount > 0
+                    ? "border-amber-500/50 text-amber-300 hover:bg-amber-500/10"
+                    : ""
+                }`}
+              >
+                <AlertCircle className="w-3.5 h-3.5" />
+                يتطلب إجراء ({actionRequiredCount})
+              </Button>
               <Button variant="outline" size="sm" onClick={() => void loadItems()} disabled={busy} aria-label="تحديث القائمة">
                 <RefreshCw className={`h-3.5 w-3.5 ${busy ? "animate-spin" : ""}`} />
               </Button>
@@ -1465,7 +1503,7 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                 <thead>
                   <tr>
                     <th>العرض</th>
-                    <th>الحالة</th>
+                    <th>الحالة والإجراءات</th>
                     <th>الفتح / القراءة</th>
                     <th>آخر نشاط</th>
                     <th>الإجراءات</th>
@@ -1474,12 +1512,13 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                 <tbody>
                   {filteredItems.map((item) => {
                     const expired = item.expiresAt && new Date(item.expiresAt) <= new Date();
-                    // From the backend, not this browser: a client signs in
-                    // their own browser, so localStorage here was always empty.
                     const sigStatus = item.signatureStatus;
+                    const unresolvedComments = item.unresolvedCommentCount ?? 0;
+                    const hasRejection = item.rejectedSections > 0 || sigStatus === "REJECTED";
+                    const needsAction = unresolvedComments > 0 || hasRejection;
 
                     return (
-                      <tr key={item.id}>
+                      <tr key={item.id} className={needsAction ? "bg-amber-500/5" : ""}>
                         <td>
                           <a
                             href={`/proposals/${item.token}`}
@@ -1494,6 +1533,12 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                         </td>
                         <td>
                           <div className="flex flex-col gap-1 items-start">
+                            {needsAction && (
+                              <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold flex items-center gap-1 shadow-sm">
+                                <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
+                                إجراء مطلوب ({[unresolvedComments ? `${unresolvedComments} استفسار` : '', hasRejection ? 'طلب تعديل' : ''].filter(Boolean).join('، ')})
+                              </span>
+                            )}
                             {sigStatus === "SIGNED" ? (
                               <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold flex items-center gap-1">
                                 <CheckCircle className="w-3.5 h-3.5" /> معتمد
@@ -1741,64 +1786,38 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                 ) : activity && activity.comments.length > 0 ? (
                   <div className="space-y-1.5">
                     {activity.comments.map((c) => (
-                      <div key={c.id} className="p-2.5 rounded-lg border border-border/40 bg-muted/30 space-y-1.5 text-xs">
-                        <div className="flex items-center justify-between gap-2">
+                      <div
+                        key={c.id}
+                        className={`p-3.5 rounded-xl border text-xs space-y-2.5 transition-all ${
+                          c.resolved
+                            ? "border-l-4 border-l-emerald-500 border-emerald-500/20 bg-emerald-950/10"
+                            : "border-l-4 border-l-amber-500 border-border/50 bg-muted/30"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
                           <div className="flex items-center gap-2">
-                            <strong className="text-foreground">{c.author}</strong>
-                            {c.resolved && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                                <CheckCircle className="w-3 h-3" /> محلول
+                            <strong className="text-foreground text-xs">{c.author}</strong>
+                            {c.resolved ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                                <CheckCircle className="w-3 h-3" /> تم الحل
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                                قيد المراجعة
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono text-[11px] text-muted-foreground">
-                              {formatDate(c.createdAt)}
-                            </span>
-                            {editingAdminCommentId !== c.id && (
-                              <button
-                                type="button"
-                                onClick={() => adminToggleCommentResolve(c.id, c.resolved)}
-                                className={`p-1 transition-colors ${
-                                  c.resolved
-                                    ? "text-emerald-400 hover:text-emerald-300"
-                                    : "text-muted-foreground hover:text-emerald-400"
-                                }`}
-                                title={c.resolved ? "إعادة فتح التعليق" : "تحديد كمحلول"}
-                              >
-                                <CheckCircle className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-                            {editingAdminCommentId !== c.id && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setEditingAdminCommentId(c.id);
-                                  setEditingAdminCommentText(c.text);
-                                }}
-                                className="p-1 hover:text-foreground text-muted-foreground transition-colors"
-                                title="تعديل التعليق"
-                              >
-                                <Edit className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-                            {editingAdminCommentId !== c.id && (
-                              <button
-                                type="button"
-                                onClick={() => adminDeleteComment(c.id)}
-                                className="p-1 hover:text-destructive text-muted-foreground transition-colors"
-                                title="حذف التعليق"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-                          </div>
+                          <span className="font-mono text-[11px] text-muted-foreground">
+                            {formatDate(c.createdAt)}
+                          </span>
                         </div>
+
                         {c.selectedText && (
-                          <div className="p-1.5 rounded bg-amber-500/10 border-r-2 border-amber-500 text-amber-300 font-mono text-[11px] italic">
+                          <div className="p-2 rounded-lg bg-amber-500/10 border-r-2 border-amber-500 text-amber-300 font-mono text-[11px] italic">
                             &ldquo;{c.selectedText}&rdquo;
                           </div>
                         )}
+
                         {editingAdminCommentId === c.id ? (
                           <div className="space-y-2 pt-1">
                             <Textarea
@@ -1832,7 +1851,50 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                             </div>
                           </div>
                         ) : (
-                          <p className="text-foreground/90">{c.text}</p>
+                          <p className="text-foreground/90 leading-relaxed">{c.text}</p>
+                        )}
+
+                        {/* Admin Action Bar */}
+                        {editingAdminCommentId !== c.id && (
+                          <div className="flex items-center justify-between pt-2 border-t border-border/30">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant={c.resolved ? "ghost" : "outline"}
+                              onClick={() => adminToggleCommentResolve(c.id, c.resolved)}
+                              className={`text-xs h-7 gap-1 font-semibold ${
+                                c.resolved
+                                  ? "text-muted-foreground hover:text-foreground"
+                                  : "text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
+                              }`}
+                            >
+                              <CheckCircle className="w-3.5 h-3.5" />
+                              {c.resolved ? "إعادة فتح (قيد المراجعة)" : "تحديد كـ تم الحل"}
+                            </Button>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setEditingAdminCommentId(c.id);
+                                  setEditingAdminCommentText(c.text);
+                                }}
+                                className="text-xs h-7 gap-1"
+                              >
+                                <Edit className="w-3.5 h-3.5" /> تعديل
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => adminDeleteComment(c.id)}
+                                className="text-xs h-7 gap-1 text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" /> حذف
+                              </Button>
+                            </div>
+                          </div>
                         )}
                       </div>
                     ))}

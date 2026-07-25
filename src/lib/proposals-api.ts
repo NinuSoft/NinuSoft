@@ -29,6 +29,7 @@ export type ProposalSummary = Omit<Proposal, "markdown"> & {
   signedAt: string | null;
   signerName: string | null;
   commentCount: number;
+  unresolvedCommentCount: number;
   lastCommentAt: string | null;
 };
 
