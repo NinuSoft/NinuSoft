@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ProposalAiAssistant } from "@/components/ProposalAiAssistant";
 import { ProposalExecutiveSummary } from "@/components/ProposalExecutiveSummary";
 import { ProposalExpiryCountdown } from "@/components/ProposalExpiryCountdown";
+import { ProposalPostAcceptanceOnboarding } from "@/components/ProposalPostAcceptanceOnboarding";
 import { ProposalRoiCalculator } from "@/components/ProposalRoiCalculator";
 import { formatProposalDate } from "@/lib/format-date";
 import { ProposalAttachments } from "@/components/ProposalAttachments";
@@ -173,6 +174,7 @@ export default function ProposalView() {
 
   // Signatures are per-section: signing one section must leave the rest open.
   const {
+    signatures,
     loading: signaturesLoading,
     getForSection,
     submit: submitSignature,
@@ -1179,6 +1181,13 @@ export default function ProposalView() {
                           );
                         })()}
                       </div>
+                    )}
+
+                    {signatures.some((s) => s.status === "SIGNED") && (
+                      <ProposalPostAcceptanceOnboarding
+                        clientName={proposal.clientName}
+                        proposalTitle={proposal.title}
+                      />
                     )}
 
                     <ProposalRoiCalculator />
