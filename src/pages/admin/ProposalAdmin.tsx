@@ -352,6 +352,26 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
     return () => clearInterval(interval);
   }, [authenticated, adminKey]);
 
+  const [editingInternalNoteId, setEditingInternalNoteId] = useState<string | null>(null);
+  const [editingInternalNoteText, setEditingInternalNoteText] = useState("");
+
+  const adminSaveInternalNote = async (commentId: string, noteText: string) => {
+    if (!selectedAuditProposal || !activity) return;
+    try {
+      const res = await adminEditProposalCommentApi(
+        adminKey,
+        selectedAuditProposal.id,
+        commentId,
+        { internalNote: noteText.trim() || null },
+      );
+      setActivity({ ...activity, comments: res.comments });
+      setEditingInternalNoteId(null);
+      setEditingInternalNoteText("");
+      setMessage("تم حفظ الملاحظة الداخلية الخاصة بالفريق بنجاح.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "تعذر حفظ الملاحظة الداخلية.");
+    }
+  };
   const [editingAdminCommentId, setEditingAdminCommentId] = useState<string | null>(null);
   const [editingAdminCommentText, setEditingAdminCommentText] = useState("");
   const [replyingCommentId, setReplyingCommentId] = useState<string | null>(null);
@@ -1835,7 +1855,60 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                                 <p className="text-foreground/95 leading-relaxed font-normal">{c.replyText}</p>
                               </div>
                             )}
+
+                            {/* Internal Admin Note Block */}
+                            {c.internalNote && (
+                              <div className="mt-2 p-2.5 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-xs space-y-1">
+                                <div className="flex items-center justify-between text-yellow-400 font-bold text-[11px]">
+                                  <span className="flex items-center gap-1">
+                                    <Lock className="w-3 h-3 text-yellow-400" />
+                                    ملاحظة داخلية خاصة بالفريق (غير مرئية للعميل)
+                                  </span>
+                                </div>
+                                <p className="text-yellow-200/90 leading-relaxed font-mono">{c.internalNote}</p>
+                              </div>
+                            )}
                           </>
+                        )}
+
+                        {/* Internal Note Form */}
+                        {editingInternalNoteId === c.id && (
+                          <div className="space-y-2 pt-2 border-t border-border/40 bg-yellow-500/5 p-2.5 rounded-lg">
+                            <label className="text-[11px] font-bold text-yellow-400 block flex items-center gap-1">
+                              <Lock className="w-3 h-3" />
+                              اكتب ملاحظة داخلية خاصة بالفريق (تظهر للمسؤولين فقط):
+                            </label>
+                            <Textarea
+                              value={editingInternalNoteText}
+                              onChange={(e) => setEditingInternalNoteText(e.target.value)}
+                              placeholder="أدخل ملاحظات خاصة بين أعضاء الفريق حول هذا التعليق..."
+                              rows={2}
+                              className="text-xs bg-background border-yellow-500/30 focus:border-yellow-500"
+                              autoFocus
+                            />
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingInternalNoteId(null);
+                                  setEditingInternalNoteText("");
+                                }}
+                                className="text-xs h-7"
+                              >
+                                إلغاء
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={() => adminSaveInternalNote(c.id, editingInternalNoteText)}
+                                className="text-xs h-7 bg-yellow-500 text-black hover:bg-yellow-600 font-bold shadow-sm"
+                              >
+                                حفظ الملاحظة الداخلية
+                              </Button>
+                            </div>
+                          </div>
                         )}
 
                         {/* Admin Reply Form */}
@@ -1887,9 +1960,9 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                         )}
 
                         {/* Admin Action Bar */}
-                        {editingAdminCommentId !== c.id && replyingCommentId !== c.id && (
+                        {editingAdminCommentId !== c.id && replyingCommentId !== c.id && editingInternalNoteId !== c.id && (
                           <div className="flex items-center justify-between pt-2 border-t border-border/30">
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1.5 flex-wrap">
                               <Button
                                 type="button"
                                 size="sm"
@@ -1902,7 +1975,7 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                                 }`}
                               >
                                 <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                                <span>{c.resolved ? "إعادة فتح (قيد المراجعة)" : "تحديد كـ تم الحل دون رد"}</span>
+                                <span>{c.resolved ? "إعادة فتح (قيد المراجعة)" : "تحديد كـ تم الحل"}</span>
                               </Button>
                               <Button
                                 type="button"
@@ -1916,6 +1989,19 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                               >
                                 <MessageSquare className="w-3.5 h-3.5" />
                                 {c.replyText ? "تعديل الرد" : "إضافة رّد الفريق"}
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setEditingInternalNoteId(c.id);
+                                  setEditingInternalNoteText(c.internalNote || "");
+                                }}
+                                className="text-xs h-7 gap-1 text-yellow-300 border-yellow-500/30 hover:bg-yellow-500/10 font-bold"
+                              >
+                                <Lock className="w-3.5 h-3.5" />
+                                {c.internalNote ? "تعديل الملاحظة" : "ملاحظة داخلية"}
                               </Button>
                             </div>
                             <div className="flex items-center gap-1">

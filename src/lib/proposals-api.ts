@@ -44,6 +44,7 @@ export type ProposalComment = {
   replyText?: string | null;
   replyAuthor?: string | null;
   repliedAt?: string | null;
+  internalNote?: string | null;
   createdAt: string;
 };
 
@@ -365,7 +366,7 @@ export function adminEditProposalCommentApi(
   adminKey: string,
   proposalId: string,
   commentId: string,
-  data: { text?: string; author?: string; resolved?: boolean; replyText?: string | null; replyAuthor?: string },
+  data: { text?: string; author?: string; resolved?: boolean; replyText?: string | null; replyAuthor?: string; internalNote?: string | null },
 ) {
   return adminRequest<{ ok: true; comments: ProposalComment[] }>(
     adminKey,
