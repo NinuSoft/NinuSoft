@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   adminDeleteProposalCommentApi,
   adminEditProposalCommentApi,
+  adminGenerateAiReplyApi,
   adminRequest,
   ApiError,
   getProposalActivityApi,
@@ -376,6 +377,28 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
   const [editingAdminCommentId, setEditingAdminCommentId] = useState<string | null>(null);
   const [editingAdminCommentText, setEditingAdminCommentText] = useState("");
   const [replyingCommentId, setReplyingCommentId] = useState<string | null>(null);
+  const [aiGeneratingCommentId, setAiGeneratingCommentId] = useState<string | null>(null);
+
+  const adminGenerateAiReply = async (commentId: string) => {
+    if (!selectedAuditProposal) return;
+    setAiGeneratingCommentId(commentId);
+    try {
+      const res = await adminGenerateAiReplyApi(
+        adminKey,
+        selectedAuditProposal.id,
+        commentId,
+      );
+      if (res.suggestedReply) {
+        setReplyingText(res.suggestedReply);
+        setMessage("تمت صياغة الرد بواسطة الذكاء الاصطناعي بنجاح. يمكنك تعديله قبل الإرسال.");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "تعذر صياغة الرد بالذكاء الاصطناعي.");
+    } finally {
+      setAiGeneratingCommentId(null);
+    }
+  };
+
   const [replyingText, setReplyingText] = useState("");
 
   const adminSaveCommentReply = async (commentId: string, replyText: string, markResolved = true) => {
@@ -1923,12 +1946,25 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                         {/* Admin Reply Form */}
                         {replyingCommentId === c.id && (
                           <div className="space-y-2 pt-2 border-t border-border/40 bg-muted/20 p-2.5 rounded-lg">
-                            <label className="text-[11px] font-bold text-amber-400 block">اكتب رّد فريق NinuSoft المباشر للعميل:</label>
+                            <div className="flex items-center justify-between gap-2 flex-wrap text-amber-400">
+                              <label className="text-[11px] font-bold block">اكتب رّد فريق NinuSoft المباشر للعميل:</label>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => adminGenerateAiReply(c.id)}
+                                disabled={aiGeneratingCommentId === c.id}
+                                className="text-[11px] h-6 border-purple-500/40 text-purple-300 hover:bg-purple-500/15 font-bold gap-1 shadow-sm"
+                              >
+                                <span>✨</span>
+                                <span>{aiGeneratingCommentId === c.id ? "جارٍ الصياغة بالذكاء الاصطناعي..." : "صياغة رد بالذكاء الاصطناعي"}</span>
+                              </Button>
+                            </div>
                             <Textarea
                               value={replyingText}
                               onChange={(e) => setReplyingText(e.target.value)}
-                              placeholder="أدخل رّد الفريق الذي سيظهر للعميل كإجابة رسمية..."
-                              rows={2}
+                              placeholder="أدخل رّد الفريق أو استعن بالذكاء الاصطناعي لصياغته..."
+                              rows={3}
                               className="text-xs bg-background"
                               autoFocus
                             />

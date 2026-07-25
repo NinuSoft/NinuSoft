@@ -392,4 +392,18 @@ export function adminDeleteProposalCommentApi(
   );
 }
 
+export function adminGenerateAiReplyApi(
+  adminKey: string,
+  proposalId: string,
+  commentId: string,
+) {
+  return adminRequest<{ ok: true; suggestedReply: string }>(
+    adminKey,
+    `/proposals/${encodeURIComponent(proposalId)}/comments/${encodeURIComponent(commentId)}/ai-reply`,
+    {
+      method: "POST",
+    },
+  );
+}
+
 
