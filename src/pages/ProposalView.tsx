@@ -1119,6 +1119,7 @@ export default function ProposalView() {
                               {settings.enableDigitalSignature && activeSection.hasSignature && (
                                 <div className="mt-8">
                                   <ProposalSignature
+                                    key={activeSection.stableId}
                                     clientName={proposal.clientName}
                                     sectionId={activeSection.stableId}
                                     sectionTitle={activeSection.title}

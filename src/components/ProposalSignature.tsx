@@ -100,6 +100,18 @@ export function ProposalSignature({
     ctx.lineJoin = "round";
   }, [signMode, signedData]);
 
+  const toCanvasCoords = (clientX: number, clientY: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { cx: 0, cy: 0 };
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+      cx: (clientX - rect.left) * scaleX,
+      cy: (clientY - rect.top) * scaleY,
+    };
+  };
+
   const startDrawing = (x: number, y: number) => {
     isDrawing.current = true;
     const canvas = canvasRef.current;
@@ -107,9 +119,9 @@ export function ProposalSignature({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const rect = canvas.getBoundingClientRect();
+    const { cx, cy } = toCanvasCoords(x, y);
     ctx.beginPath();
-    ctx.moveTo(x - rect.left, y - rect.top);
+    ctx.moveTo(cx, cy);
     setHasDrawn(true);
   };
 
@@ -120,8 +132,8 @@ export function ProposalSignature({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const rect = canvas.getBoundingClientRect();
-    ctx.lineTo(x - rect.left, y - rect.top);
+    const { cx, cy } = toCanvasCoords(x, y);
+    ctx.lineTo(cx, cy);
     ctx.stroke();
   };
 
@@ -478,12 +490,12 @@ export function ProposalSignature({
               )}
             </div>
 
-            <div className="relative rounded-xl border-2 border-dashed border-amber-500/40 bg-black/40 overflow-hidden touch-none flex justify-center">
+            <div className="relative rounded-xl border-2 border-dashed border-amber-500/40 bg-black/40 overflow-hidden touch-none">
               <canvas
                 ref={canvasRef}
                 width={550}
                 height={160}
-                className="w-full max-w-[550px] h-[160px] cursor-crosshair"
+                className="w-full h-[160px] cursor-crosshair"
                 onMouseDown={(e) => startDrawing(e.clientX, e.clientY)}
                 onMouseMove={(e) => draw(e.clientX, e.clientY)}
                 onMouseUp={stopDrawing}
