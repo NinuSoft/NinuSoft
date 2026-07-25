@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle, Edit, MessageSquare, Plus, Trash2 } from "@/components/Icons";
+import { CheckCircle, Edit, MessageSquare, Plus, Shield, Trash2 } from "@/components/Icons";
 import { useToast } from "@/hooks/use-toast";
 import { formatProposalDate } from "@/lib/format-date";
 import type { ProposalComment } from "@/lib/proposals-api";
@@ -327,7 +327,27 @@ export function ProposalComments({
                   </div>
                 </div>
               ) : (
-                <p className="text-foreground/90 leading-relaxed">{c.text}</p>
+                <>
+                  <p className="text-foreground/90 leading-relaxed">{c.text}</p>
+                  {c.replyText && (
+                    <div className="mt-3 p-3 rounded-lg bg-primary/10 border-r-4 border-primary text-xs space-y-1.5 shadow-inner">
+                      <div className="flex items-center justify-between gap-2 text-primary font-bold text-[11px]">
+                        <span className="flex items-center gap-1">
+                          <Shield className="w-3.5 h-3.5" />
+                          {c.replyAuthor || "فريق NinuSoft"}
+                        </span>
+                        {c.repliedAt && (
+                          <span className="font-mono text-[10px] opacity-75">
+                            {formatProposalDate(c.repliedAt)}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-foreground/95 leading-relaxed font-normal">
+                        {c.replyText}
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           ))}

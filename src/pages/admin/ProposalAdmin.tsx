@@ -2,6 +2,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { proposalMarkdownComponents, remarkAlerts } from "@/components/ProposalMarkdown";
 
+import { formatProposalDate } from "@/lib/format-date";
 import { ChangeEvent, SyntheticEvent, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,7 @@ import {
   type ProposalActivity,
   type ProposalSummary,
 } from "@/lib/proposals-api";
+import { AdminRail } from "@/pages/admin/AdminRail";
 import {
   ApiError as ShortlinksApiError,
   createShortlink,
@@ -339,8 +341,39 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
     }
   };
 
+  useEffect(() => {
+    if (!authenticated || !adminKey) return;
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void loadItems(adminKey);
+      }
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [authenticated, adminKey]);
+
   const [editingAdminCommentId, setEditingAdminCommentId] = useState<string | null>(null);
   const [editingAdminCommentText, setEditingAdminCommentText] = useState("");
+  const [replyingCommentId, setReplyingCommentId] = useState<string | null>(null);
+  const [replyingText, setReplyingText] = useState("");
+
+  const adminSaveCommentReply = async (commentId: string, replyText: string) => {
+    if (!selectedAuditProposal || !activity) return;
+    try {
+      const res = await adminEditProposalCommentApi(
+        adminKey,
+        selectedAuditProposal.id,
+        commentId,
+        { replyText: replyText.trim(), replyAuthor: "فريق NinuSoft", resolved: true },
+      );
+      setActivity({ ...activity, comments: res.comments });
+      setReplyingCommentId(null);
+      setReplyingText("");
+      setMessage("تم إرسال رّد فريق NinuSoft وتعيين التعليق كـ تم الحل بنجاح.");
+      await loadItems();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "تعذر حفظ الرد.");
+    }
+  };
 
   const adminDeleteComment = async (commentId: string) => {
     if (!selectedAuditProposal || !activity) return;
@@ -713,74 +746,14 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
 
   return (
     <div className="proposal-admin" dir="rtl">
-      <aside className="proposal-admin-rail">
-        <a className="proposal-brand" href="/">
-          <img src="/logo.png" alt="" />
-          <span>NinuSoft <small>Admin workspace</small></span>
-        </a>
-        <nav aria-label="التنقل الرئيسي">
-          <div className="proposal-admin-nav-group">
-            <span className="proposal-admin-nav-label">الأقسام الرئيسية</span>
-            <button
-              type="button"
-              className={
-                activeAdminTab === "editor"
-                  ? "is-active"
-                  : "is-parent-active"
-              }
-              onClick={() => setActiveAdminTab("editor")}
-            >
-              <FileText className="h-4 w-4" />
-              <span>العروض</span>
-              {totalUnresolvedComments > 0 && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500 text-black border border-amber-400 animate-pulse ms-auto shrink-0 shadow-sm">
-                  {totalUnresolvedComments}
-                </span>
-              )}
-            </button>
-            <div className="proposal-admin-nav-group is-secondary" aria-label="أدوات العروض">
-              {[
-                { id: "analytics" as const, label: "التحليلات", icon: BarChart },
-                { id: "settings" as const, label: "الإعدادات", icon: Settings },
-              ].map((tab) => {
-                const Icon = tab.icon;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    className={activeAdminTab === tab.id ? "is-active" : ""}
-                    onClick={() => setActiveAdminTab(tab.id)}
-                  >
-                    <Icon className="h-3.5 w-3.5" />
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <button type="button" onClick={() => onNavigate?.("shortlinks")}>
-              <Link className="h-4 w-4" />
-              <span>الروابط المختصرة</span>
-            </button>
-          </div>
-        </nav>
-        <div className="proposal-admin-rail-footer">
-          <div className="proposal-admin-avatar">NS</div>
-          <div>
-            <strong>فريق NinuSoft</strong>
-            <span>مسؤول النظام</span>
-          </div>
-          <button
-            type="button"
-            onClick={logout}
-            aria-label="تسجيل الخروج"
-            title="تسجيل الخروج"
-            className="proposal-admin-rail-logout"
-          >
-            <LogOut className="h-4 w-4" />
-            <span className="proposal-admin-logout-label">خروج</span>
-          </button>
-        </div>
-      </aside>
+      <AdminRail
+        currentSection="proposals"
+        activeProposalTab={activeAdminTab}
+        unresolvedCount={totalUnresolvedComments}
+        onNavigateSection={(sec) => onNavigate?.(sec)}
+        onSelectProposalTab={(tab) => setActiveAdminTab(tab)}
+        onLogout={logout}
+      />
 
       <div className="proposal-admin-workspace">
         <header className="proposal-admin-topbar">
@@ -1826,26 +1799,93 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                             </div>
                           </div>
                         ) : (
-                          <p className="text-foreground/90 leading-relaxed">{c.text}</p>
+                          <>
+                            <p className="text-foreground/90 leading-relaxed">{c.text}</p>
+                            {c.replyText && (
+                              <div className="mt-2 p-2.5 rounded-lg bg-amber-500/10 border-r-4 border-amber-500 text-xs space-y-1">
+                                <div className="flex items-center justify-between text-amber-400 font-bold text-[11px]">
+                                  <span className="flex items-center gap-1">
+                                    <Shield className="w-3 h-3" />
+                                    {c.replyAuthor || "فريق NinuSoft"}
+                                  </span>
+                                  {c.repliedAt && <span className="font-mono text-[10px] opacity-75">{formatProposalDate(c.repliedAt)}</span>}
+                                </div>
+                                <p className="text-foreground/95 leading-relaxed font-normal">{c.replyText}</p>
+                              </div>
+                            )}
+                          </>
+                        )}
+
+                        {/* Admin Reply Form */}
+                        {replyingCommentId === c.id && (
+                          <div className="space-y-2 pt-2 border-t border-border/40 bg-muted/20 p-2.5 rounded-lg">
+                            <label className="text-[11px] font-bold text-amber-400 block">اكتب رّد فريق NinuSoft المباشر للعميل:</label>
+                            <Textarea
+                              value={replyingText}
+                              onChange={(e) => setReplyingText(e.target.value)}
+                              placeholder="أدخل رّد الفريق الذي سيظهر للعميل كإجابة رسمية..."
+                              rows={2}
+                              className="text-xs bg-background"
+                              autoFocus
+                            />
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setReplyingCommentId(null);
+                                  setReplyingText("");
+                                }}
+                                className="text-xs h-7"
+                              >
+                                إلغاء
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={() => adminSaveCommentReply(c.id, replyingText)}
+                                disabled={!replyingText.trim()}
+                                className="text-xs h-7 bg-amber-500 text-black hover:bg-amber-600 font-bold"
+                              >
+                                إرسال الرد وتحديد كـ تم الحل
+                              </Button>
+                            </div>
+                          </div>
                         )}
 
                         {/* Admin Action Bar */}
-                        {editingAdminCommentId !== c.id && (
+                        {editingAdminCommentId !== c.id && replyingCommentId !== c.id && (
                           <div className="flex items-center justify-between pt-2 border-t border-border/30">
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant={c.resolved ? "ghost" : "outline"}
-                              onClick={() => adminToggleCommentResolve(c.id, c.resolved)}
-                              className={`text-xs h-7 gap-1 font-semibold ${
-                                c.resolved
-                                  ? "text-muted-foreground hover:text-foreground"
-                                  : "text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
-                              }`}
-                            >
-                              <CheckCircle className="w-3.5 h-3.5" />
-                              {c.resolved ? "إعادة فتح (قيد المراجعة)" : "تحديد كـ تم الحل"}
-                            </Button>
+                            <div className="flex items-center gap-1.5">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant={c.resolved ? "ghost" : "outline"}
+                                onClick={() => adminToggleCommentResolve(c.id, c.resolved)}
+                                className={`text-xs h-7 gap-1 font-semibold ${
+                                  c.resolved
+                                    ? "text-muted-foreground hover:text-foreground"
+                                    : "text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
+                                }`}
+                              >
+                                <CheckCircle className="w-3.5 h-3.5" />
+                                {c.resolved ? "إعادة فتح (قيد المراجعة)" : "تحديد كـ تم الحل"}
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setReplyingCommentId(c.id);
+                                  setReplyingText(c.replyText || "");
+                                }}
+                                className="text-xs h-7 gap-1 text-amber-300 border-amber-500/30 hover:bg-amber-500/10 font-bold"
+                              >
+                                <MessageSquare className="w-3.5 h-3.5" />
+                                {c.replyText ? "تعديل الرد" : "إضافة رّد الفريق"}
+                              </Button>
+                            </div>
                             <div className="flex items-center gap-1">
                               <Button
                                 type="button"

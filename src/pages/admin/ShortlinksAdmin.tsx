@@ -11,6 +11,8 @@ import {
   updateShortlink,
   type Shortlink,
 } from "@/lib/shortlinks-api";
+import { adminRequest, type ProposalSummary } from "@/lib/proposals-api";
+import { AdminRail } from "@/pages/admin/AdminRail";
 import {
   Shield,
   ArrowLeft,
@@ -74,6 +76,7 @@ export default function ShortlinksAdmin({ onNavigate, onLogout }: ShortlinksAdmi
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [unresolvedProposalsCount, setUnresolvedProposalsCount] = useState(0);
 
   const loadItems = async (key = adminKey) => {
     const result = await listShortlinks(key);
@@ -81,6 +84,15 @@ export default function ShortlinksAdmin({ onNavigate, onLogout }: ShortlinksAdmi
     setAuthenticated(true);
     sessionStorage.setItem("ninusoft-admin-key", key);
     sessionStorage.setItem("ninusoft-shortlinks-admin-key", key);
+
+    try {
+      const propResult = await adminRequest<{ proposals: ProposalSummary[] }>(key, "/proposals");
+      const unresolvedCount = propResult.proposals.reduce(
+        (sum, item) => sum + (item.unresolvedCommentCount ?? 0),
+        0,
+      );
+      setUnresolvedProposalsCount(unresolvedCount);
+    } catch {}
   };
 
   useEffect(() => {
@@ -94,7 +106,15 @@ export default function ShortlinksAdmin({ onNavigate, onLogout }: ShortlinksAdmi
     } else {
       setCheckingSession(false);
     }
+
+    const interval = setInterval(() => {
+      if (adminKey && document.visibilityState === "visible") {
+        void loadItems(adminKey);
+      }
+    }, 30000);
+
     return () => {
+      clearInterval(interval);
       document.title = "NinuSoft";
     };
     // Initial session restoration only.
@@ -271,42 +291,12 @@ export default function ShortlinksAdmin({ onNavigate, onLogout }: ShortlinksAdmi
 
   return (
     <div className="proposal-admin shortlinks-admin" dir="rtl">
-      <aside className="proposal-admin-rail">
-        <a className="proposal-brand" href="/">
-          <img src="/logo.png" alt="" />
-          <span>NinuSoft <small>Admin workspace</small></span>
-        </a>
-        <nav aria-label="التنقل الرئيسي">
-          <div className="proposal-admin-nav-group">
-            <span className="proposal-admin-nav-label">الأقسام الرئيسية</span>
-            <button type="button" onClick={() => onNavigate?.("proposals")}>
-              <FileText className="h-4 w-4" />
-              <span>العروض</span>
-            </button>
-            <button type="button" className="is-active">
-              <Link className="h-4 w-4" />
-              <span>الروابط المختصرة</span>
-            </button>
-          </div>
-        </nav>
-        <div className="proposal-admin-rail-footer">
-          <div className="proposal-admin-avatar">NS</div>
-          <div>
-            <strong>فريق NinuSoft</strong>
-            <span>مسؤول النظام</span>
-          </div>
-          <button
-            type="button"
-            onClick={logout}
-            aria-label="تسجيل الخروج"
-            title="تسجيل الخروج"
-            className="proposal-admin-rail-logout"
-          >
-            <LogOut className="h-4 w-4" />
-            <span className="proposal-admin-logout-label">خروج</span>
-          </button>
-        </div>
-      </aside>
+      <AdminRail
+        currentSection="shortlinks"
+        unresolvedCount={unresolvedProposalsCount}
+        onNavigateSection={(sec) => onNavigate?.(sec)}
+        onLogout={logout}
+      />
 
       <div className="proposal-admin-workspace">
         <header className="proposal-admin-topbar">
