@@ -302,7 +302,7 @@ export function ProposalComments({
                   <span className="font-mono text-[11px] opacity-75">
                     {formatProposalDate(c.createdAt)}
                   </span>
-                  {onEdit && editingId !== c.id && (
+                  {onEdit && editingId !== c.id && !c.resolved && !c.replyText && (
                     <button
                       type="button"
                       onClick={() => startEdit(c)}
@@ -312,7 +312,7 @@ export function ProposalComments({
                       <Edit className="w-3.5 h-3.5" />
                     </button>
                   )}
-                  {onDelete && editingId !== c.id && (
+                  {onDelete && editingId !== c.id && !c.resolved && !c.replyText && (
                     <button
                       type="button"
                       onClick={() => handleDelete(c.id)}
