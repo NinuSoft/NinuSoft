@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ProposalAiAssistant } from "@/components/ProposalAiAssistant";
 import { ProposalExecutiveSummary } from "@/components/ProposalExecutiveSummary";
 import { ProposalExpiryCountdown } from "@/components/ProposalExpiryCountdown";
+import { formatProposalDate } from "@/lib/format-date";
 import { ProposalAttachments } from "@/components/ProposalAttachments";
 import { ProposalIncentiveBanner } from "@/components/ProposalIncentiveBanner";
 import { ProposalPackageSwitcher } from "@/components/ProposalPackageSwitcher";
@@ -896,6 +897,15 @@ export default function ProposalView() {
       </header>
 
       <main className="proposal-shell">
+        {/* Dynamic Target Launch Date Badge (Feature 2/6) */}
+        <div className="mb-4 p-3.5 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-300 text-xs flex items-center justify-between gap-3 shadow-md dir-rtl">
+          <div className="flex items-center gap-2 font-semibold">
+            <span className="p-1.5 rounded-lg bg-sky-500/20 text-sky-300 text-sm">📅</span>
+            <span>عند اعتماد وتوقيع المقترح اليوم 👈 <strong className="text-sky-200 font-bold underline underline-offset-4">تاريخ الإطلاق والجاهزية المستهدف: {formatProposalDate(new Date(Date.now() + 30 * 86400000).toISOString())}</strong></span>
+          </div>
+          <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-sky-500/20 font-mono text-sky-300 border border-sky-500/40 shrink-0 font-bold">جدول زمنـي مباشر</span>
+        </div>
+
         {settings.enableExpiryCountdown && (
           <ProposalExpiryCountdown />
         )}
