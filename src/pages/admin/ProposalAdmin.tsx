@@ -357,19 +357,19 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
   const [replyingCommentId, setReplyingCommentId] = useState<string | null>(null);
   const [replyingText, setReplyingText] = useState("");
 
-  const adminSaveCommentReply = async (commentId: string, replyText: string) => {
+  const adminSaveCommentReply = async (commentId: string, replyText: string, markResolved = true) => {
     if (!selectedAuditProposal || !activity) return;
     try {
       const res = await adminEditProposalCommentApi(
         adminKey,
         selectedAuditProposal.id,
         commentId,
-        { replyText: replyText.trim(), replyAuthor: "فريق NinuSoft", resolved: true },
+        { replyText: replyText.trim(), replyAuthor: "فريق NinuSoft", resolved: markResolved },
       );
       setActivity({ ...activity, comments: res.comments });
       setReplyingCommentId(null);
       setReplyingText("");
-      setMessage("تم إرسال رّد فريق NinuSoft وتعيين التعليق كـ تم الحل بنجاح.");
+      setMessage(markResolved ? "تم إرسال رّد فريق NinuSoft وتعيين التعليق كـ تم الحل بنجاح." : "تم إرسال رّد فريق NinuSoft مع إبقاء التعليق قيد المراجعة.");
       await loadItems();
     } catch (err) {
       setError(err instanceof Error ? err.message : "تعذر حفظ الرد.");
@@ -1850,7 +1850,7 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                               className="text-xs bg-background"
                               autoFocus
                             />
-                            <div className="flex justify-end gap-2">
+                            <div className="flex flex-wrap items-center justify-end gap-2">
                               <Button
                                 type="button"
                                 variant="ghost"
@@ -1865,10 +1865,20 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                               </Button>
                               <Button
                                 type="button"
+                                variant="outline"
                                 size="sm"
-                                onClick={() => adminSaveCommentReply(c.id, replyingText)}
+                                onClick={() => adminSaveCommentReply(c.id, replyingText, false)}
                                 disabled={!replyingText.trim()}
-                                className="text-xs h-7 bg-amber-500 text-black hover:bg-amber-600 font-bold"
+                                className="text-xs h-7 border-amber-500/40 text-amber-300 hover:bg-amber-500/10 font-bold"
+                              >
+                                إرسال الرد
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={() => adminSaveCommentReply(c.id, replyingText, true)}
+                                disabled={!replyingText.trim()}
+                                className="text-xs h-7 bg-amber-500 text-black hover:bg-amber-600 font-bold shadow-sm"
                               >
                                 إرسال الرد وتحديد كـ تم الحل
                               </Button>
@@ -1883,16 +1893,16 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                               <Button
                                 type="button"
                                 size="sm"
-                                variant={c.resolved ? "ghost" : "outline"}
+                                variant="outline"
                                 onClick={() => adminToggleCommentResolve(c.id, c.resolved)}
-                                className={`text-xs h-7 gap-1 font-semibold ${
+                                className={`text-xs h-7 gap-1.5 font-bold transition-all ${
                                   c.resolved
-                                    ? "text-muted-foreground hover:text-foreground"
-                                    : "text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
+                                    ? "bg-muted/50 text-muted-foreground border-border/40 hover:bg-muted"
+                                    : "bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30 shadow-sm"
                                 }`}
                               >
-                                <CheckCircle className="w-3.5 h-3.5" />
-                                {c.resolved ? "إعادة فتح (قيد المراجعة)" : "تحديد كـ تم الحل"}
+                                <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+                                <span>{c.resolved ? "إعادة فتح (قيد المراجعة)" : "تحديد كـ تم الحل دون رد"}</span>
                               </Button>
                               <Button
                                 type="button"
