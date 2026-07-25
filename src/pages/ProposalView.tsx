@@ -1218,6 +1218,24 @@ export default function ProposalView() {
         </footer>
       </main>
 
+      {/* WhatsApp & Walkthrough Launcher (Feature 3/6) */}
+      <div className="fixed bottom-5 left-4 z-50 sm:bottom-6 sm:left-6 dir-rtl">
+        <a
+          href={`https://wa.me/?text=${encodeURIComponent(
+            `أهلاً فريق NinuSoft، بخصوص العرض الفني والمالي "${proposal.title}"، أود طرح استفسار سريع / حجز مراجعة...`
+          )}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group flex h-11 items-center gap-2 rounded-2xl border border-emerald-500/40 bg-[#0d1e17]/95 px-3.5 text-[#34d399] shadow-[0_16px_45px_rgba(0,0,0,.45)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:bg-[#12281f] text-xs font-bold"
+          title="تواصل مباشر عبر WhatsApp مع مدير المشروع"
+        >
+          <span className="grid h-7 w-7 place-items-center rounded-xl bg-emerald-500 text-black font-bold text-sm">
+            💬
+          </span>
+          <span className="hidden sm:inline">تواصل مباشر مع مدير المشروع</span>
+        </a>
+      </div>
+
       {/* NinuSoft AI launcher */}
       <div className="proposal-ai-launcher fixed bottom-5 right-4 z-50 sm:bottom-6 sm:right-6">
         <button
