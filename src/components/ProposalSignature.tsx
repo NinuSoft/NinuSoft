@@ -79,6 +79,8 @@ export function ProposalSignature({
 
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
+  /** The client must tick the irreversibility notice before either decision. */
+  const [acknowledged, setAcknowledged] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const isDrawing = useRef(false);
@@ -526,6 +528,29 @@ export function ProposalSignature({
           </div>
         ) : null}
 
+        {/* The decision is final server-side (409 on any second attempt), so it
+            has to be unmistakable before the client commits to it. */}
+        <label
+          htmlFor={`sig-ack-${sectionId || "document"}`}
+          className="flex items-start gap-2.5 p-3.5 rounded-xl border border-amber-500/40 bg-amber-500/10 cursor-pointer"
+        >
+          <input
+            id={`sig-ack-${sectionId || "document"}`}
+            type="checkbox"
+            checked={acknowledged}
+            onChange={(e) => setAcknowledged(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 accent-amber-500"
+          />
+          <span className="text-xs leading-relaxed text-amber-200/90">
+            <strong className="text-amber-300 block mb-0.5">
+              هذا القرار نهائي ولا يمكن التراجع عنه.
+            </strong>
+            بعد الإرسال لا يمكنك تعديل التوقيع أو إلغاؤه أو تغيير قرارك
+            {sectionTitle ? ` بخصوص "${sectionTitle}"` : ""}. للتعديل بعد ذلك يلزم
+            التواصل مع فريق NinuSoft.
+          </span>
+        </label>
+
         <div className="pt-2 flex items-center justify-between gap-4 flex-wrap">
           {allowRejection ? (
             <Button
@@ -538,7 +563,12 @@ export function ProposalSignature({
             </Button>
           ) : <div />}
 
-          <Button type="submit" className="w-full md:w-auto px-8 font-bold text-sm flex items-center gap-2" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            className="w-full md:w-auto px-8 font-bold text-sm flex items-center gap-2"
+            disabled={isSubmitting || !acknowledged}
+            title={!acknowledged ? "يرجى تأكيد قراءة التنبيه أعلاه أولاً" : undefined}
+          >
             <PenTool className="w-4 h-4" />
             {isSubmitting ? "جاري الاعتماد…" : "تأكيد واعتماد المقترح"}
           </Button>
@@ -567,6 +597,11 @@ export function ProposalSignature({
                   required
                 />
               </label>
+
+              <p className="p-3 rounded-xl border border-destructive/40 bg-destructive/10 text-xs leading-relaxed text-destructive">
+                <strong className="block mb-0.5">هذا القرار نهائي ولا يمكن التراجع عنه.</strong>
+                بعد الإرسال لا يمكنك تعديل هذا القرار أو إلغاؤه بنفسك.
+              </p>
 
               <div className="flex items-center justify-end gap-2 pt-2">
                 <Button type="button" variant="outline" size="sm" onClick={() => setShowRejectModal(false)}>
