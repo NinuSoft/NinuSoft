@@ -16,6 +16,7 @@ import { parseProposalSections } from "@/lib/proposal-sections";
 import { ProposalSignature } from "@/components/ProposalSignature";
 import { defaultProposalSettings, type ProposalSettings } from "@/lib/proposal-settings";
 import { useProposalComments } from "@/hooks/use-proposal-comments";
+import { useProposalSignatures } from "@/hooks/use-proposal-signatures";
 import { useToast } from "@/hooks/use-toast";
 import { ProposalAiAssistant } from "@/components/ProposalAiAssistant";
 import { ProposalExecutiveSummary } from "@/components/ProposalExecutiveSummary";
@@ -158,6 +159,17 @@ export default function ProposalView() {
     submit: submitComment,
     reload: reloadComments,
   } = useProposalComments(
+    status === "ready" ? proposal?.token : undefined,
+    sessionId,
+    accessToken.current,
+  );
+
+  // Signatures are per-section: signing one section must leave the rest open.
+  const {
+    loading: signaturesLoading,
+    getForSection,
+    submit: submitSignature,
+  } = useProposalSignatures(
     status === "ready" ? proposal?.token : undefined,
     sessionId,
     accessToken.current,
@@ -938,9 +950,11 @@ export default function ProposalView() {
                               <div className="mt-8">
                                 <ProposalSignature
                                   clientName={proposal.clientName}
-                                  proposalToken={proposal.token}
-                                  sessionId={sessionId}
-                                  accessToken={accessToken.current}
+                                  sectionId={sec.stableId}
+                                  sectionTitle={sec.title}
+                                  signature={getForSection(sec.stableId)}
+                                  loading={signaturesLoading}
+                                  onSubmit={submitSignature}
                                   allowDraw={settings.allowDrawSignature}
                                   allowType={settings.allowTypeSignature}
                                   allowUpload={settings.allowUploadSignature}
@@ -969,9 +983,11 @@ export default function ProposalView() {
                                 <div className="mt-8">
                                   <ProposalSignature
                                     clientName={proposal.clientName}
-                                    proposalToken={proposal.token}
-                                    sessionId={sessionId}
-                                    accessToken={accessToken.current}
+                                    sectionId={activeSection.stableId}
+                                    sectionTitle={activeSection.title}
+                                    signature={getForSection(activeSection.stableId)}
+                                    loading={signaturesLoading}
+                                    onSubmit={submitSignature}
                                     allowDraw={settings.allowDrawSignature}
                                     allowType={settings.allowTypeSignature}
                                     allowUpload={settings.allowUploadSignature}
@@ -1020,9 +1036,9 @@ export default function ProposalView() {
                     {settings.enableDigitalSignature && !hasAnySectionSignature && (
                       <ProposalSignature
                         clientName={proposal.clientName}
-                        proposalToken={proposal.token}
-                        sessionId={sessionId}
-                        accessToken={accessToken.current}
+                        signature={getForSection(undefined)}
+                        loading={signaturesLoading}
+                        onSubmit={submitSignature}
                         allowDraw={settings.allowDrawSignature}
                         allowType={settings.allowTypeSignature}
                         allowUpload={settings.allowUploadSignature}

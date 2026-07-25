@@ -24,6 +24,8 @@ export type ProposalSummary = Omit<Proposal, "markdown"> & {
   openCount: number;
   readCount: number;
   signatureStatus: "SIGNED" | "REJECTED" | null;
+  signedSections: number;
+  rejectedSections: number;
   signedAt: string | null;
   signerName: string | null;
   commentCount: number;
@@ -45,6 +47,8 @@ export type ProposalComment = {
  * values for these.
  */
 export type SignatureRecord = {
+  section_id: string;
+  section_title: string | null;
   status: "SIGNED" | "REJECTED";
   name: string;
   title: string;
@@ -62,6 +66,7 @@ export type SignatureRecord = {
 
 /** What the client sends when signing or rejecting. */
 export type SignatureInput = {
+  sectionId?: string;
   status: "SIGNED" | "REJECTED";
   name: string;
   title: string;
@@ -71,6 +76,8 @@ export type SignatureInput = {
 
 /** A previously-recorded decision that an admin has since revoked. */
 export type RevokedSignature = {
+  section_id: string;
+  section_title: string | null;
   status: "SIGNED" | "REJECTED";
   name: string;
   title: string;
@@ -83,7 +90,7 @@ export type RevokedSignature = {
 };
 
 export type ProposalActivity = {
-  signature: SignatureRecord | null;
+  signatures: SignatureRecord[];
   signatureHistory: RevokedSignature[];
   comments: ProposalComment[];
   events: { type: string; sessionId: string; createdAt: string }[];
@@ -230,12 +237,12 @@ export function submitProposalSignatureApi(
   );
 }
 
-export function getProposalSignatureApi(
+export function getProposalSignaturesApi(
   token: string,
   sessionId?: string,
   accessToken?: string,
 ) {
-  return apiRequest<{ signature: SignatureRecord | null }>(
+  return apiRequest<{ signatures: SignatureRecord[] }>(
     `/v1/proposals/${encodeURIComponent(token)}/signature`,
     { headers: proposalAuthHeaders(sessionId, accessToken) },
   );
@@ -297,17 +304,21 @@ export function getProposalActivityApi(adminKey: string, id: string) {
  * archived server-side rather than deleted — revoking must not erase the fact
  * that a client once approved.
  */
+/** Omitting sectionId revokes every section's decision. */
 export function revokeProposalSignatureApi(
   adminKey: string,
   id: string,
-  reason?: string,
+  options: { reason?: string; sectionId?: string } = {},
 ) {
-  return adminRequest<{ ok: true; revokedAt: string }>(
+  return adminRequest<{ ok: true; revokedAt: string; revokedCount: number }>(
     adminKey,
     `/proposals/${encodeURIComponent(id)}/signature`,
     {
       method: "DELETE",
-      body: JSON.stringify({ reason: reason || null }),
+      body: JSON.stringify({
+        reason: options.reason || null,
+        sectionId: options.sectionId || null,
+      }),
     },
   );
 }

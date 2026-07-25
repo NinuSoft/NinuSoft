@@ -14,8 +14,6 @@ import {
 
 import {
   ApiError,
-  getProposalSignatureApi,
-  submitProposalSignatureApi,
   type SignatureInput,
   type SignatureRecord,
 } from "@/lib/proposals-api";
@@ -24,9 +22,13 @@ import { formatProposalDate } from "@/lib/format-date";
 
 interface ProposalSignatureProps {
   clientName: string;
-  proposalToken?: string;
-  sessionId?: string;
-  accessToken?: string;
+  /** Which section this block signs. Omitted only for legacy whole-document proposals. */
+  sectionId?: string;
+  sectionTitle?: string;
+  /** The decision already recorded for this section, if any. */
+  signature: SignatureRecord | null;
+  loading?: boolean;
+  onSubmit: (sectionId: string | undefined, input: SignatureInput) => Promise<SignatureRecord>;
   allowDraw?: boolean;
   allowType?: boolean;
   allowUpload?: boolean;
@@ -48,9 +50,11 @@ function sigField(
 
 export function ProposalSignature({
   clientName,
-  proposalToken,
-  sessionId,
-  accessToken,
+  sectionId,
+  sectionTitle,
+  signature,
+  loading = false,
+  onSubmit,
   allowDraw = true,
   allowType = true,
   allowUpload = true,
@@ -58,33 +62,12 @@ export function ProposalSignature({
   onSigned,
 }: ProposalSignatureProps) {
   const { toast } = useToast();
-  // The backend is authoritative and enforces one signature per proposal, so
-  // the record is always fetched rather than read from this browser's storage.
-  const [signedData, setSignedData] = useState<SignatureRecord | null>(null);
-  const [loadingSignature, setLoadingSignature] = useState(Boolean(proposalToken));
+  // The hook owns the fetched list; this only holds a record produced by this
+  // component's own submit so the panel updates without waiting for a refetch.
+  const [localRecord, setLocalRecord] = useState<SignatureRecord | null>(null);
+  const signedData = localRecord ?? signature;
+  const loadingSignature = loading && !signedData;
 
-  useEffect(() => {
-    if (!proposalToken) {
-      setLoadingSignature(false);
-      return;
-    }
-    let cancelled = false;
-    setLoadingSignature(true);
-    getProposalSignatureApi(proposalToken, sessionId, accessToken)
-      .then((res) => {
-        if (!cancelled) setSignedData(res.signature ?? null);
-      })
-      .catch(() => {
-        // A failed read must not present the signing form as "not yet signed";
-        // leave it null but stop blocking, and let the POST surface any 409.
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingSignature(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [proposalToken, sessionId, accessToken]);
 
   const [signerName, setSignerName] = useState(clientName || "");
   const [signerTitle, setSignerTitle] = useState("المدير التنفيذي / ممثل الشركة");
@@ -212,25 +195,10 @@ export function ProposalSignature({
     input: SignatureInput,
     onSuccess?: () => void,
   ) => {
-    if (!proposalToken) {
-      setIsSubmitting(false);
-      toast({
-        variant: "destructive",
-        title: "تعذر حفظ القرار",
-        description: "رابط العرض غير صالح.",
-      });
-      return;
-    }
     try {
-      const res = await submitProposalSignatureApi(
-        proposalToken,
-        input,
-        sessionId,
-        accessToken,
-      );
-      setSignedData(res.record);
+      const record = await onSubmit(sectionId, input);
+      setLocalRecord(record);
       onSuccess?.();
-      if (onSigned) onSigned(res.record);
     } catch (err) {
       const isFinalized =
         err instanceof ApiError && err.code === "signature_finalized";
@@ -242,12 +210,6 @@ export function ProposalSignature({
             ? err.message
             : "حدث خطأ غير متوقع. حاول مجدداً.",
       });
-      // Someone already decided on this proposal — show the real record.
-      if (isFinalized) {
-        getProposalSignatureApi(proposalToken, sessionId, accessToken)
-          .then((res) => setSignedData(res.signature ?? null))
-          .catch(() => {});
-      }
     } finally {
       setIsSubmitting(false);
     }
