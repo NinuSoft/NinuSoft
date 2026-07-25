@@ -141,6 +141,8 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
   const [activeAdminTab, setActiveAdminTab] = useState<"editor" | "analytics" | "discounts" | "settings">("editor");
   const [selectedDiscountProposalId, setSelectedDiscountProposalId] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<"all" | "signed" | "rejected" | "read" | "unread" | "has_discount" | "expired">("all");
+  const [auditCommentTab, setAuditCommentTab] = useState<"all" | "pending" | "resolved">("all");
+  const [auditLinkCopied, setAuditLinkCopied] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const statusCounts = useMemo(() => {
@@ -1856,14 +1858,29 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
         {/* Engagement Audit Modal */}
         {selectedAuditProposal && (
           <div className="fixed inset-0 z-50 bg-background/85 backdrop-blur-lg flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
-            <div className="w-full max-w-5xl lg:max-w-6xl max-h-[92vh] flex flex-col p-5 sm:p-7 rounded-3xl bg-card/95 border border-amber-500/30 backdrop-blur-2xl shadow-[0_25px_60px_rgba(0,0,0,0.7)] space-y-4 text-start dir-rtl">
+            <div className="w-[96vw] max-w-[1440px] max-h-[93vh] flex flex-col p-5 sm:p-7 rounded-3xl bg-card/95 border border-amber-500/30 backdrop-blur-2xl shadow-[0_25px_60px_rgba(0,0,0,0.7)] space-y-4 text-start dir-rtl">
               <div className="flex items-center justify-between border-b border-border/40 pb-3.5 shrink-0">
                 <div className="space-y-1">
                   <h3 className="font-bold text-lg text-foreground flex items-center gap-2">
                     <BarChart className="w-5 h-5 text-amber-400" />
                     <span>تقرير تفاعل وتدقيق العرض</span>
                   </h3>
-                  <p className="text-xs text-muted-foreground">{selectedAuditProposal.title} ({selectedAuditProposal.clientName})</p>
+                  <div className="flex items-center gap-2 flex-wrap pt-0.5">
+                    <p className="text-xs text-muted-foreground">{selectedAuditProposal.title} ({selectedAuditProposal.clientName})</p>
+                    {selectedAuditProposal.promoCode || selectedAuditProposal.discountValue ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm">
+                        <Tag className="w-3.5 h-3.5 text-amber-400" />
+                        <span>كود الخصم المطبق: {selectedAuditProposal.promoCode || "خصم خاص"}</span>
+                        {selectedAuditProposal.discountValue && (
+                          <span className="font-mono text-amber-400">({selectedAuditProposal.discountValue}{selectedAuditProposal.discountType === "percentage" ? "%" : "$"})</span>
+                        )}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium text-muted-foreground/70 bg-muted/40 border border-border/30">
+                        <span>سعر أساسي (بدون خصم)</span>
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <Button type="button" variant="ghost" size="sm" onClick={() => setSelectedAuditProposal(null)} className="h-9 w-9 p-0 rounded-full">
                   <XCircle className="w-5 h-5" />
@@ -2037,15 +2054,70 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                 {/* Left Column: Comments, AI Assistant & Internal Notes (7 cols) */}
                 <div className="lg:col-span-7 space-y-4">
                   <div className="space-y-3 p-4.5 rounded-2xl bg-muted/20 border border-border/40">
-                    <h4 className="font-bold text-xs text-foreground flex items-center gap-1.5 border-b border-border/40 pb-2">
-                      <MessageSquare className="w-4 h-4 text-amber-400" />
-                      <span>تعليقات واستفسارات العملاء ({activity?.comments.length ?? 0})</span>
-                    </h4>
+                    <div className="flex items-center justify-between gap-2 border-b border-border/40 pb-2 flex-wrap">
+                      <h4 className="font-bold text-xs text-foreground flex items-center gap-1.5">
+                        <MessageSquare className="w-4 h-4 text-amber-400" />
+                        <span>تعليقات واستفسارات العملاء ({activity?.comments.length ?? 0})</span>
+                      </h4>
+
+                      {activity && activity.comments.length > 0 && (
+                        <div className="flex items-center gap-1 bg-background/60 p-1 rounded-xl border border-border/40">
+                          <button
+                            type="button"
+                            onClick={() => setAuditCommentTab("all")}
+                            className={`px-2.5 py-0.5 rounded-lg text-[11px] font-bold transition-all ${
+                              auditCommentTab === "all"
+                                ? "bg-amber-500 text-black shadow-sm"
+                                : "text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            الكل ({activity.comments.length})
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAuditCommentTab("pending")}
+                            className={`px-2.5 py-0.5 rounded-lg text-[11px] font-bold transition-all ${
+                              auditCommentTab === "pending"
+                                ? "bg-amber-500/30 text-amber-300 border border-amber-500/40 shadow-sm"
+                                : "text-muted-foreground hover:text-amber-300"
+                            }`}
+                          >
+                            قيد المراجعة ({activity.comments.filter((c) => !c.resolved).length})
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAuditCommentTab("resolved")}
+                            className={`px-2.5 py-0.5 rounded-lg text-[11px] font-bold transition-all ${
+                              auditCommentTab === "resolved"
+                                ? "bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 shadow-sm"
+                                : "text-muted-foreground hover:text-emerald-300"
+                            }`}
+                          >
+                            تم الحل ({activity.comments.filter((c) => c.resolved).length})
+                          </button>
+                        </div>
+                      )}
+                    </div>
                 {activityLoading ? (
                   <p className="text-xs text-muted-foreground italic p-3">جارٍ التحميل...</p>
-                ) : activity && activity.comments.length > 0 ? (
-                  <div className="space-y-1.5">
-                    {activity.comments.map((c) => (
+                ) : activity && activity.comments.length > 0 ? (() => {
+                  const filteredComments = activity.comments.filter((c) => {
+                    if (auditCommentTab === "pending") return !c.resolved;
+                    if (auditCommentTab === "resolved") return Boolean(c.resolved);
+                    return true;
+                  });
+
+                  if (filteredComments.length === 0) {
+                    return (
+                      <p className="text-xs text-muted-foreground italic p-3.5 rounded-xl bg-muted/20 border border-border/30">
+                        لا توجد تعليقات مطابقة لتصنيف التصفية المحدد ({auditCommentTab === "pending" ? "قيد المراجعة" : "تم الحل"}).
+                      </p>
+                    );
+                  }
+
+                  return (
+                    <div className="space-y-1.5">
+                      {filteredComments.map((c) => (
                       <div
                         key={c.id}
                         className={`p-3.5 rounded-xl border text-xs space-y-2.5 transition-all ${
@@ -2323,20 +2395,47 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                       </div>
                     ))}
                   </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground italic p-3.5 rounded-xl bg-muted/20 border border-border/30">
-                    لا توجد تعليقات من العميل على هذا العرض بعد.
-                  </p>
-                )}
+                );
+              })() : (
+                <p className="text-xs text-muted-foreground italic p-3.5 rounded-xl bg-muted/20 border border-border/30">
+                  لا توجد تعليقات من العميل على هذا العرض بعد.
+                </p>
+              )}
                   </div>
                 </div>
               </div>
 
               {/* Token Access Info Footer */}
               <div className="p-3.5 rounded-2xl bg-card/80 border border-border/60 flex items-center justify-between gap-4 flex-wrap text-xs shrink-0">
-                <div className="flex items-center gap-2 font-mono flex-1 min-w-0">
-                  <span className="text-[11px] text-muted-foreground font-sans font-bold shrink-0">رابط التتبع الفريد:</span>
-                  <p className="text-amber-300 truncate">{window.location.origin}/proposals/{selectedAuditProposal.token}</p>
+                <div className="flex items-center gap-2.5 font-mono flex-1 min-w-0 flex-wrap">
+                  <span className="text-[11px] text-muted-foreground font-sans font-bold shrink-0 flex items-center gap-1">
+                    <Link className="w-3.5 h-3.5 text-amber-400" />
+                    رابط التتبع الفريد:
+                  </span>
+                  <a
+                    href={`${window.location.origin}/proposals/${selectedAuditProposal.token}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-amber-300 hover:text-amber-200 hover:underline truncate font-mono text-xs flex items-center gap-1"
+                    title="اضغط لفتح رابط العرض في نافذة جديدة"
+                  >
+                    <span>{window.location.origin}/proposals/{selectedAuditProposal.token}</span>
+                  </a>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const linkUrl = `${window.location.origin}/proposals/${selectedAuditProposal.token}`;
+                      navigator.clipboard.writeText(linkUrl).catch(() => {});
+                      setAuditLinkCopied(true);
+                      setTimeout(() => setAuditLinkCopied(false), 2000);
+                    }}
+                    className="h-7 text-xs px-2.5 font-bold gap-1 text-amber-300 border-amber-500/30 hover:bg-amber-500/10 shrink-0"
+                  >
+                    {auditLinkCopied ? <CheckCircle className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                    <span>{auditLinkCopied ? "تم نسخ الرابط!" : "نسخ الرابط"}</span>
+                  </Button>
                 </div>
                 <Button type="button" variant="outline" size="sm" onClick={() => setSelectedAuditProposal(null)} className="px-6 font-bold text-xs shrink-0">
                   إغلاق التقرير
