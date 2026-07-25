@@ -58,6 +58,7 @@ import {
   Plus,
   Search,
   RefreshCw,
+  Clock,
   Copy,
   Link,
   Shield,
@@ -139,7 +140,59 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
   const [showPreview, setShowPreview] = useState(false);
   const [activeAdminTab, setActiveAdminTab] = useState<"editor" | "analytics" | "discounts" | "settings">("editor");
   const [selectedDiscountProposalId, setSelectedDiscountProposalId] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "signed" | "rejected" | "read" | "unread" | "has_discount" | "expired">("all");
   const [searchQuery, setSearchQuery] = useState("");
+
+  const statusCounts = useMemo(() => {
+    const counts = {
+      all: items.length,
+      signed: 0,
+      rejected: 0,
+      read: 0,
+      unread: 0,
+      has_discount: 0,
+      expired: 0,
+    };
+    const now = new Date();
+    for (const item of items) {
+      const isExpired = Boolean(item.expiresAt && new Date(item.expiresAt) <= now);
+      if (isExpired) counts.expired++;
+      if (item.signatureStatus === "SIGNED") counts.signed++;
+      else if (item.signatureStatus === "REJECTED" || item.rejectedSections > 0) counts.rejected++;
+      else if (item.readCount > 0) counts.read++;
+      else counts.unread++;
+
+      if (item.promoCode || item.discountValue) counts.has_discount++;
+    }
+    return counts;
+  }, [items]);
+
+  const filteredItems = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    const now = new Date();
+
+    return items.filter((item) => {
+      // 1. Search Query Filter
+      const matchesQuery =
+        !query ||
+        item.title.toLowerCase().includes(query) ||
+        item.clientName.toLowerCase().includes(query) ||
+        (item.promoCode && item.promoCode.toLowerCase().includes(query));
+
+      if (!matchesQuery) return false;
+
+      // 2. Status Filter Tab
+      const isExpired = Boolean(item.expiresAt && new Date(item.expiresAt) <= now);
+      if (statusFilter === "signed") return item.signatureStatus === "SIGNED";
+      if (statusFilter === "rejected") return item.signatureStatus === "REJECTED" || item.rejectedSections > 0;
+      if (statusFilter === "read") return item.readCount > 0 && item.signatureStatus !== "SIGNED" && !item.rejectedSections;
+      if (statusFilter === "unread") return item.openCount === 0 && item.readCount === 0;
+      if (statusFilter === "has_discount") return Boolean(item.promoCode || item.discountValue);
+      if (statusFilter === "expired") return isExpired;
+
+      return true;
+    });
+  }, [items, searchQuery, statusFilter]);
 
   const [sections, setSections] = useState<ProposalSection[]>(() =>
     parseProposalSections(emptyForm.markdown)
@@ -279,16 +332,6 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
       0,
     );
   }, [items]);
-
-  const filteredItems = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    if (!query) return items;
-    return items.filter(
-      (item) =>
-        item.title.toLowerCase().includes(query) ||
-        item.clientName.toLowerCase().includes(query),
-    );
-  }, [items, searchQuery]);
 
   // Client signatures and comments live on the server, so the audit modal
   // fetches them on open rather than reading this browser's storage.
@@ -1581,7 +1624,7 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                   type="search"
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="بحث باسم العرض، العميل، أو رمز الرابط..."
+                  placeholder="بحث باسم العرض، العميل، كود الخصم..."
                   aria-label="البحث في العروض"
                 />
               </label>
@@ -1593,17 +1636,112 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
               </Button>
             </div>
           </div>
+
+          {/* Status Filter Tab Bar */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-2.5 pt-1 border-b border-border/40 mb-3">
+            <button
+              type="button"
+              onClick={() => setStatusFilter("all")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
+                statusFilter === "all"
+                  ? "bg-amber-500 text-black shadow-md"
+                  : "bg-card/70 text-muted-foreground hover:bg-card border border-border/40"
+              }`}
+            >
+              <span>الكل</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/20 text-current">{statusCounts.all}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("signed")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
+                statusFilter === "signed"
+                  ? "bg-emerald-500 text-black shadow-md"
+                  : "bg-card/70 text-emerald-400/80 hover:bg-card border border-emerald-500/20"
+              }`}
+            >
+              <CheckCircle className="w-3.5 h-3.5" />
+              <span>معتمد</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/20 text-current">{statusCounts.signed}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("rejected")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
+                statusFilter === "rejected"
+                  ? "bg-destructive text-white shadow-md"
+                  : "bg-card/70 text-destructive/80 hover:bg-card border border-destructive/20"
+              }`}
+            >
+              <XCircle className="w-3.5 h-3.5" />
+              <span>طلب تعديل</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/20 text-current">{statusCounts.rejected}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("read")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
+                statusFilter === "read"
+                  ? "bg-sky-500 text-black shadow-md"
+                  : "bg-card/70 text-sky-400/80 hover:bg-card border border-sky-500/20"
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>تمت القراءة</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/20 text-current">{statusCounts.read}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("unread")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
+                statusFilter === "unread"
+                  ? "bg-purple-500 text-white shadow-md"
+                  : "bg-card/70 text-purple-400/80 hover:bg-card border border-purple-500/20"
+              }`}
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span>جديد / لم يُفتح</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/20 text-current">{statusCounts.unread}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("has_discount")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
+                statusFilter === "has_discount"
+                  ? "bg-amber-400 text-black shadow-md"
+                  : "bg-card/70 text-amber-300/80 hover:bg-card border border-amber-500/20"
+              }`}
+            >
+              <Tag className="w-3.5 h-3.5" />
+              <span>يحتوي خصم</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/20 text-current">{statusCounts.has_discount}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("expired")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
+                statusFilter === "expired"
+                  ? "bg-muted-foreground text-background shadow-md"
+                  : "bg-card/70 text-muted-foreground hover:bg-card border border-border/40"
+              }`}
+            >
+              <Clock className="w-3.5 h-3.5" />
+              <span>منتهي</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/20 text-current">{statusCounts.expired}</span>
+            </button>
+          </div>
+
           {filteredItems.length === 0 ? (
             <div className="proposal-empty">
               <Search className="h-5 w-5" />
-              {items.length === 0 ? "لا توجد عروض بعد. أنشئ العرض الأول من الأعلى." : "لا توجد نتائج مطابقة لبحثك."}
+              {items.length === 0 ? "لا توجد عروض بعد. أنشئ العرض الأول من الأعلى." : "لا توجد نتائج مطابقة لتصنيف البحث."}
             </div>
           ) : (
             <div className="proposal-table-wrap">
               <table>
                 <thead>
                   <tr>
-                    <th>العرض</th>
+                    <th>العرض والخصم</th>
                     <th>الحالة والإجراءات</th>
                     <th>الفتح / القراءة</th>
                     <th>آخر نشاط</th>
@@ -1621,16 +1759,32 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                     return (
                       <tr key={item.id} className={needsAction ? "bg-amber-500/5" : ""}>
                         <td>
-                          <a
-                            href={`/proposals/${item.token}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="font-bold text-foreground hover:text-amber-400 hover:underline flex items-center gap-1.5"
-                          >
-                            <Eye className="w-3.5 h-3.5 text-amber-400" />
-                            <span>{item.title}</span>
-                          </a>
-                          <span className="text-xs text-muted-foreground block">{item.clientName}</span>
+                          <div className="space-y-1">
+                            <a
+                              href={`/proposals/${item.token}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-bold text-foreground hover:text-amber-400 hover:underline flex items-center gap-1.5"
+                            >
+                              <Eye className="w-3.5 h-3.5 text-amber-400" />
+                              <span>{item.title}</span>
+                            </a>
+                            <span className="text-xs text-muted-foreground block">{item.clientName}</span>
+
+                            {item.promoCode || item.discountValue ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                                <Tag className="w-3 h-3 text-amber-400" />
+                                <span>كود الخصم: {item.promoCode || "خصم خاص"}</span>
+                                {item.discountValue && (
+                                  <span className="font-mono text-amber-400">({item.discountValue}{item.discountType === "percentage" ? "%" : "$"})</span>
+                                )}
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium text-muted-foreground/70 bg-muted/30 border border-border/20">
+                                <span>سعر أساسي</span>
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td>
                           <div className="flex flex-col gap-1 items-start">

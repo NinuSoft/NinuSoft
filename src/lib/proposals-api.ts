@@ -32,6 +32,9 @@ export type ProposalSummary = Omit<Proposal, "markdown"> & {
   commentCount: number;
   unresolvedCommentCount: number;
   lastCommentAt: string | null;
+  promoCode?: string | null;
+  discountType?: "percentage" | "fixed" | null;
+  discountValue?: number | null;
 };
 
 /** A comment as stored by the backend. `id` and `createdAt` are server-assigned. */
