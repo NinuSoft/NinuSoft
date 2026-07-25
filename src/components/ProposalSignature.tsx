@@ -578,7 +578,7 @@ export function ProposalSignature({
           </div>
           {appliedDiscount && (
             <div className="p-2 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center justify-between">
-              <span>🎉 تم تطبيق خصم {appliedDiscount.label} بنجاح!</span>
+              <span>تم تطبيق خصم {appliedDiscount.label} بنجاح</span>
               <span className="font-mono text-[10px] bg-emerald-500/20 px-1.5 py-0.5 rounded">{appliedDiscount.code}</span>
             </div>
           )}
@@ -648,10 +648,10 @@ export function ProposalSignature({
               {/* Option Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {[
-                  { id: "budget", label: "💰 الميزانية أعلى من المتوقع", desc: "طلب تقسيط الدفعات أو ضبط النطاق" },
-                  { id: "technical", label: "⚙️ تفاصيل فنية إضافية", desc: "طلب استفسارات أو توضيح تقني" },
-                  { id: "time", label: "⏱️ نحتاج وقتاً أطول", desc: "طلب تمديد فترة صلاحية العرض" },
-                  { id: "other", label: "🛑 ملاحظات / رفض آخر", desc: "إرسال سبب الاعتراض النهائي" },
+                  { id: "budget", label: "الميزانية أعلى من المتوقع", desc: "طلب تقسيط الدفعات أو ضبط النطاق" },
+                  { id: "technical", label: "تفاصيل فنية إضافية", desc: "طلب استفسارات أو توضيح تقني" },
+                  { id: "time", label: "نحتاج وقتاً أطول", desc: "طلب تمديد فترة صلاحية العرض" },
+                  { id: "other", label: "ملاحظات / رفض آخر", desc: "إرسال سبب الاعتراض النهائي" },
                 ].map((opt) => (
                   <button
                     key={opt.id}

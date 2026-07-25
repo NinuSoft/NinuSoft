@@ -29,7 +29,7 @@ import { ProposalIncentiveBanner } from "@/components/ProposalIncentiveBanner";
 import { ProposalPackageSwitcher } from "@/components/ProposalPackageSwitcher";
 import { ProposalComments } from "@/components/ProposalComments";
 import { Textarea } from "@/components/ui/textarea";
-import { Clock, Printer, Download, FileText, Globe, Layers, MessageSquare, XCircle, CheckCircle, Edit, Sparkles, Shield, Lock } from "@/components/Icons";
+import { Calendar, Clock, Printer, Download, FileText, Globe, Layers, MessageSquare, XCircle, CheckCircle, Edit, Sparkles, Shield, Lock } from "@/components/Icons";
 
 function Brand() {
   return (
@@ -903,8 +903,10 @@ export default function ProposalView() {
         {/* Dynamic Target Launch Date Badge (Feature 2/6) */}
         <div className="mb-4 p-3.5 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-300 text-xs flex items-center justify-between gap-3 shadow-md dir-rtl">
           <div className="flex items-center gap-2 font-semibold">
-            <span className="p-1.5 rounded-lg bg-sky-500/20 text-sky-300 text-sm">📅</span>
-            <span>عند اعتماد وتوقيع المقترح اليوم 👈 <strong className="text-sky-200 font-bold underline underline-offset-4">تاريخ الإطلاق والجاهزية المستهدف: {formatProposalDate(new Date(Date.now() + 30 * 86400000).toISOString())}</strong></span>
+            <span className="p-1.5 rounded-lg bg-sky-500/20 text-sky-300">
+              <Calendar className="w-4 h-4" />
+            </span>
+            <span>عند اعتماد وتوقيع المقترح اليوم — <strong className="text-sky-200 font-bold underline underline-offset-4">تاريخ الإطلاق والجاهزية المستهدف: {formatProposalDate(new Date(Date.now() + 30 * 86400000).toISOString())}</strong></span>
           </div>
           <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-sky-500/20 font-mono text-sky-300 border border-sky-500/40 shrink-0 font-bold">جدول زمنـي مباشر</span>
         </div>
@@ -1241,8 +1243,8 @@ export default function ProposalView() {
           className="group flex h-11 items-center gap-2 rounded-2xl border border-emerald-500/40 bg-[#0d1e17]/95 px-3.5 text-[#34d399] shadow-[0_16px_45px_rgba(0,0,0,.45)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:bg-[#12281f] text-xs font-bold"
           title="تواصل مباشر عبر WhatsApp مع مدير المشروع"
         >
-          <span className="grid h-7 w-7 place-items-center rounded-xl bg-emerald-500 text-black font-bold text-sm">
-            💬
+          <span className="grid h-7 w-7 place-items-center rounded-xl bg-emerald-500 text-black font-bold">
+            <MessageSquare className="w-4 h-4" />
           </span>
           <span className="hidden sm:inline">تواصل مباشر مع مدير المشروع</span>
         </a>

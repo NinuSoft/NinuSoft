@@ -26,7 +26,7 @@ export function ProposalPostAcceptanceOnboarding({
           <Sparkles className="w-8 h-8 animate-bounce" />
         </div>
         <h3 className="text-2xl font-bold text-emerald-300">
-          تهانينا! تم اعتماد المقترح بنجاح 🎉
+          تم اعتماد المقترح بنجاح
         </h3>
         <p className="text-xs text-emerald-200/80 max-w-md mx-auto leading-relaxed">
           شكراً لثقتكم بمؤسسة NinuSoft. تم تسجيل توقيع {clientName || "المعتمد"} على مقترح &ldquo;{proposalTitle}&rdquo; بنجاح.

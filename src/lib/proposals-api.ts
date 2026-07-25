@@ -11,6 +11,7 @@ export type Proposal = {
   title: string;
   clientName: string;
   markdown: string;
+  settings?: ProposalSettings;
   expiresAt: string | null;
   updatedAt: string;
 };

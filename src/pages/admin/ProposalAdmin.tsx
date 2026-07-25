@@ -4,6 +4,7 @@ import { proposalMarkdownComponents, remarkAlerts } from "@/components/ProposalM
 
 import { playChimeNotification, requestDesktopNotificationPermission, showDesktopNotification } from "@/lib/audio-notifications";
 import { ProposalDiscountsManager } from "@/components/ProposalDiscountsManager";
+import { defaultProposalSettings, type ProposalSettings } from "@/lib/proposal-settings";
 import { formatProposalDate } from "@/lib/format-date";
 import { jumpToQuotedText } from "@/lib/quote-navigator";
 import { ChangeEvent, SyntheticEvent, useEffect, useMemo, useRef, useState } from "react";
@@ -76,6 +77,7 @@ type FormState = {
   active: boolean;
   rotateToken: boolean;
   removePassword: boolean;
+  settings?: ProposalSettings;
 };
 
 const emptyForm: FormState = {
@@ -88,6 +90,7 @@ const emptyForm: FormState = {
   active: true,
   rotateToken: false,
   removePassword: false,
+  settings: undefined,
 };
 
 function formatDate(value: string | null | undefined): string {
@@ -602,7 +605,7 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
     setBusy(true);
     setError("");
     try {
-      const result = await adminRequest<{ proposal: ProposalSummary & { markdown: string } }>(
+      const result = await adminRequest<{ proposal: ProposalSummary & { markdown: string; settings?: ProposalSettings } }>(
         adminKey,
         `/proposals/${id}`,
       );
@@ -620,6 +623,7 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
         active: proposal.active,
         rotateToken: false,
         removePassword: false,
+        settings: proposal.settings || defaultProposalSettings,
       });
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch {
@@ -639,6 +643,7 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
         title: form.title,
         clientName: form.clientName,
         markdown: form.markdown,
+        settings: form.settings,
         password: form.removePassword
           ? null
           : form.password || undefined,
@@ -1437,6 +1442,47 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
             )}
 
             <div className="proposal-form-options">
+              {/* Per-Proposal Custom Settings Card */}
+              <div className="p-4 rounded-xl border border-primary/30 bg-card/60 space-y-3 text-xs dir-rtl text-start col-span-full">
+                <div className="flex items-center justify-between border-b border-border/40 pb-2">
+                  <strong className="text-primary font-bold flex items-center gap-1.5">
+                    <Settings className="w-4 h-4" />
+                    <span>إعدادات وصلاحيات هذا العرض (Per-Proposal Settings)</span>
+                  </strong>
+                  <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded font-mono">تزامن تلقائي عبر الأجهزة</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-1">
+                  {[
+                    { key: "allowDrawSignature", label: "توقيع بالرسم" },
+                    { key: "allowTypeSignature", label: "توقيع بالكتابة" },
+                    { key: "allowUploadSignature", label: "رفع صورة التوقيع" },
+                    { key: "enableInlineComments", label: "تعليقات العميل المباشرة" },
+                    { key: "allowRejection", label: "طلب التعديل / الاعتراض" },
+                    { key: "enableExpiryCountdown", label: "عداد انتهاء الصلاحية" },
+                    { key: "enableReadingTime", label: "تقدير وقت القراءة" },
+                    { key: "enablePrint", label: "زر الطباعة" },
+                    { key: "enablePdfExport", label: "زر حفظ PDF" },
+                  ].map((opt) => {
+                    const currentVal = form.settings?.[opt.key as keyof ProposalSettings] ?? defaultProposalSettings[opt.key as keyof ProposalSettings];
+                    return (
+                      <label key={opt.key} className="flex items-center gap-2 p-2 rounded-lg bg-muted/20 border border-border/40 cursor-pointer hover:bg-muted/40 transition">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(currentVal)}
+                          onChange={(e) => {
+                            const updated = { ...(form.settings || defaultProposalSettings), [opt.key]: e.target.checked };
+                            setForm((current) => ({ ...current, settings: updated }));
+                          }}
+                          className="accent-primary h-3.5 w-3.5"
+                        />
+                        <span className="font-semibold text-foreground">{opt.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
               <label>
                 <input
                   type="checkbox"
