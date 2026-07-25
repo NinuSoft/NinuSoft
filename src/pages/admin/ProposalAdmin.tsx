@@ -1920,30 +1920,31 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                 </div>
               </div>
 
-              {/* Engagement Stats Overview Bar */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center shrink-0">
-                <div className="p-3.5 rounded-2xl bg-card/80 border border-sky-500/20 shadow-sm">
-                  <span className="text-[11px] text-muted-foreground block font-bold">مرات الفتح</span>
-                  <strong className="text-xl font-bold text-sky-400">{selectedAuditProposal.openCount}</strong>
-                </div>
-                <div className="p-3.5 rounded-2xl bg-card/80 border border-amber-500/20 shadow-sm">
-                  <span className="text-[11px] text-muted-foreground block font-bold">القراءة الكاملة</span>
-                  <strong className="text-xl font-bold text-amber-400">{selectedAuditProposal.readCount}</strong>
-                </div>
-                <div className="p-3.5 rounded-2xl bg-card/80 border border-emerald-500/20 shadow-sm">
-                  <span className="text-[11px] text-muted-foreground block font-bold">أول زيارة</span>
-                  <strong className="text-xs font-mono block text-foreground pt-1.5">{formatDate(selectedAuditProposal.firstOpenedAt) || "لم يُفتح"}</strong>
-                </div>
-                <div className="p-3.5 rounded-2xl bg-card/80 border border-purple-500/20 shadow-sm">
-                  <span className="text-[11px] text-muted-foreground block font-bold">آخر نشاط</span>
-                  <strong className="text-xs font-mono block text-foreground pt-1.5">{formatDate(selectedAuditProposal.lastReadAt || selectedAuditProposal.lastOpenedAt) || "لا يوجد"}</strong>
-                </div>
-              </div>
-
               {/* 2-Column Full Height Workspace Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-0 py-1">
-                {/* Right Column: Decisions & Signatures (5 cols) */}
-                <div className="lg:col-span-5 flex flex-col h-full min-h-0">
+                {/* Right Column: Stats & Signatures (5 cols) */}
+                <div className="lg:col-span-5 flex flex-col h-full min-h-0 space-y-3">
+                  {/* 2x2 Engagement Stats Grid */}
+                  <div className="grid grid-cols-2 gap-2.5 text-center shrink-0">
+                    <div className="p-3 rounded-2xl bg-card/80 border border-sky-500/20 shadow-sm">
+                      <span className="text-[10px] text-muted-foreground block font-bold">مرات الفتح</span>
+                      <strong className="text-lg font-bold text-sky-400">{selectedAuditProposal.openCount}</strong>
+                    </div>
+                    <div className="p-3 rounded-2xl bg-card/80 border border-amber-500/20 shadow-sm">
+                      <span className="text-[10px] text-muted-foreground block font-bold">القراءة الكاملة</span>
+                      <strong className="text-lg font-bold text-amber-400">{selectedAuditProposal.readCount}</strong>
+                    </div>
+                    <div className="p-3 rounded-2xl bg-card/80 border border-emerald-500/20 shadow-sm">
+                      <span className="text-[10px] text-muted-foreground block font-bold">أول زيارة</span>
+                      <strong className="text-[11px] font-mono block text-foreground pt-1">{formatDate(selectedAuditProposal.firstOpenedAt) || "لم يُفتح"}</strong>
+                    </div>
+                    <div className="p-3 rounded-2xl bg-card/80 border border-purple-500/20 shadow-sm">
+                      <span className="text-[10px] text-muted-foreground block font-bold">آخر نشاط</span>
+                      <strong className="text-[11px] font-mono block text-foreground pt-1">{formatDate(selectedAuditProposal.lastReadAt || selectedAuditProposal.lastOpenedAt) || "لا يوجد"}</strong>
+                    </div>
+                  </div>
+
+                  {/* Signatures Card */}
                   <div className="flex-1 flex flex-col space-y-3 p-4.5 rounded-2xl bg-muted/20 border border-border/40 min-h-0 overflow-y-auto">
                     <h4 className="font-bold text-xs text-foreground flex items-center gap-1.5 border-b border-border/40 pb-2">
                       <CheckCircle className="w-4 h-4 text-amber-400" />
