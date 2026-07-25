@@ -575,40 +575,67 @@ export function ProposalSignature({
         </div>
       </form>
 
-      {/* Reject Modal */}
+      {/* Rejection Recovery & Exit-Intent Survey Modal */}
       {showRejectModal && (
-        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-md p-6 rounded-2xl bg-card border border-destructive/50 shadow-2xl space-y-4 text-start dir-rtl">
-            <div className="flex items-center gap-2 text-destructive font-bold text-lg">
-              <XCircle className="w-5 h-5" /> طلب تعديل أو رفض المقترح
+        <div className="fixed inset-0 z-50 bg-background/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-lg p-6 rounded-2xl bg-card border border-destructive/40 shadow-2xl space-y-4 text-start dir-rtl">
+            <div className="flex items-center gap-2 text-destructive font-bold text-lg border-b border-border/40 pb-3">
+              <XCircle className="w-6 h-6 shrink-0" />
+              <span>طلب تعديل العرض أو مناقشة الخيارات</span>
             </div>
-            <p className="text-xs text-muted-foreground">
-              يرجى توضيح الملاحظات أو سبب طلب التعديل ليصل إلى فريق NinuSoft لتحديث المقترح.
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              يسعدنا التوصل لأفضل حل يناسب مؤسستك. ما السبب الرئيسي لطلب التعديل أو الاعتراض؟
             </p>
 
             <form onSubmit={handleReject} className="space-y-4">
+              {/* Option Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {[
+                  { id: "budget", label: "💰 الميزانية أعلى من المتوقع", desc: "طلب تقسيط الدفعات أو ضبط النطاق" },
+                  { id: "technical", label: "⚙️ تفاصيل فنية إضافية", desc: "طلب استفسارات أو توضيح تقني" },
+                  { id: "time", label: "⏱️ نحتاج وقتاً أطول", desc: "طلب تمديد فترة صلاحية العرض" },
+                  { id: "other", label: "🛑 ملاحظات / رفض آخر", desc: "إرسال سبب الاعتراض النهائي" },
+                ].map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => {
+                      setRejectionReason((prev) => {
+                        const prefix = `[نوع الطلب: ${opt.label}] `;
+                        return prev.startsWith("[نوع الطلب:") ? `${prefix}${prev.replace(/^\[نوع الطلب: [^\]]+\]\s*/, "")}` : `${prefix}${prev}`;
+                      });
+                    }}
+                    className="p-3 rounded-xl border text-right transition-all flex flex-col justify-between hover:border-primary/60 bg-muted/20 hover:bg-muted/40"
+                  >
+                    <span className="text-xs font-bold text-foreground block mb-0.5">{opt.label}</span>
+                    <span className="text-[10px] text-muted-foreground">{opt.desc}</span>
+                  </button>
+                ))}
+              </div>
+
               <label className="grid gap-1.5 text-xs font-semibold text-foreground">
-                <span>سبب التعديل / الملاحظات</span>
+                <span>توضيح التفاصيل أو ملاحظاتك لمسؤول المشروع:</span>
                 <Textarea
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
-                  placeholder="اكتب ملاحظاتك هنا..."
-                  rows={4}
+                  placeholder="اكتب ملاحظاتك، تفضيلات التقسيط، أو الاستفسارات المطلوب مناقشتها..."
+                  rows={3}
+                  className="text-xs bg-background"
                   required
                 />
               </label>
 
-              <p className="p-3 rounded-xl border border-destructive/40 bg-destructive/10 text-xs leading-relaxed text-destructive">
-                <strong className="block mb-0.5">هذا القرار نهائي ولا يمكن التراجع عنه.</strong>
-                بعد الإرسال لا يمكنك تعديل هذا القرار أو إلغاؤه بنفسك.
+              <p className="p-3 rounded-xl border border-amber-500/40 bg-amber-500/10 text-xs leading-relaxed text-amber-200">
+                <strong className="block mb-0.5 text-amber-300">💡 ملاحظة الهامة:</strong>
+                إرسال ملاحظاتك وسيتم إشعار مدير المشروع مباشرة لتوفير المرونة والتعديلات المطلوبة.
               </p>
 
-              <div className="flex items-center justify-end gap-2 pt-2">
+              <div className="flex items-center justify-end gap-2 pt-1">
                 <Button type="button" variant="outline" size="sm" onClick={() => setShowRejectModal(false)}>
                   إلغاء
                 </Button>
                 <Button type="submit" variant="destructive" size="sm" disabled={isSubmitting}>
-                  تأكيد الإرسال
+                  {isSubmitting ? "جارٍ الإرسال..." : "إرسال الملاحظات والطلب"}
                 </Button>
               </div>
             </form>
