@@ -9,6 +9,7 @@ interface ProposalIncentiveBannerProps {
   content?: string;
   clientName?: string;
   proposalToken?: string;
+  accessToken?: string;
   expiresAt?: string | null;
   onScrollToSign?: () => void;
 }
@@ -17,6 +18,7 @@ export function ProposalIncentiveBanner({
   content,
   clientName,
   proposalToken,
+  accessToken,
   expiresAt,
   onScrollToSign,
 }: ProposalIncentiveBannerProps) {
@@ -28,7 +30,7 @@ export function ProposalIncentiveBanner({
     try {
       if (proposalToken) {
         const prompt = `صغ حافزاً تسويقياً حماسياً ومقنعاً جداً في سطر واحد فقط (15 كلمة) يغري العميل (${clientName || "العميل"}) بالتوقيع والاعتماد المبكر لهذا العرض الفني والمالي.`;
-        const res = await askProposalAiApi(proposalToken, prompt);
+        const res = await askProposalAiApi(proposalToken, prompt, accessToken);
         if (res?.answer && res.answer.trim().length > 10) {
           setIncentiveText(res.answer.trim().replace(/^["']|["']$/g, ""));
           setLoading(false);

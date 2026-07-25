@@ -8,15 +8,16 @@ import { Input } from "@/components/ui/input";
 import {
   ApiError,
   getProposal,
-  getPublicProposalSettingsApi,
   type Proposal,
   recordProposalEvent,
   unlockProposal,
-  submitProposalCommentApi,
 } from "@/lib/proposals-api";
 import { parseProposalSections } from "@/lib/proposal-sections";
 import { ProposalSignature } from "@/components/ProposalSignature";
-import { defaultProposalSettings, getProposalSettings, saveProposalSettings, type ProposalSettings } from "@/lib/proposal-settings";
+import { defaultProposalSettings, type ProposalSettings } from "@/lib/proposal-settings";
+import { useProposalComments } from "@/hooks/use-proposal-comments";
+import { useProposalSignatures } from "@/hooks/use-proposal-signatures";
+import { useToast } from "@/hooks/use-toast";
 import { ProposalAiAssistant } from "@/components/ProposalAiAssistant";
 import { ProposalExecutiveSummary } from "@/components/ProposalExecutiveSummary";
 import { ProposalExpiryCountdown } from "@/components/ProposalExpiryCountdown";
@@ -123,7 +124,9 @@ export default function ProposalView() {
   const accessStorageKey = `ninusoft-proposal-access:${token}`;
   const accessToken = useRef(sessionStorage.getItem(accessStorageKey) || "");
 
-  const [settings, setSettings] = useState(getProposalSettings);
+  // Server settings arrive with the proposal; until then the page renders a
+  // loading state, so these defaults are never shown to a client.
+  const [settings, setSettings] = useState<ProposalSettings>(defaultProposalSettings);
   const readingProgressRef = useRef<HTMLDivElement>(null);
   const [lang, setLang] = useState<"ar" | "en">("ar");
   const [showMobileNav, setShowMobileNav] = useState(false);
@@ -135,12 +138,42 @@ export default function ProposalView() {
   const [showAiModal, setShowAiModal] = useState(false);
   const [showExecSummary, setShowExecSummary] = useState(false);
   const [printStatus, setPrintStatus] = useState<"print" | "pdf" | null>(null);
+  const [submittingHighlight, setSubmittingHighlight] = useState(false);
+  const { toast } = useToast();
 
-  useEffect(() => {
-    const handleSettingsChange = () => setSettings(getProposalSettings());
-    window.addEventListener("ninusoft_settings_updated", handleSettingsChange);
-    return () => window.removeEventListener("ninusoft_settings_updated", handleSettingsChange);
-  }, []);
+  const sessionId = useMemo(() => {
+    const key = `ninusoft-proposal-session:${token}`;
+    const existing = sessionStorage.getItem(key);
+    if (existing) return existing;
+    const value = crypto.randomUUID();
+    sessionStorage.setItem(key, value);
+    return value;
+  }, [token]);
+
+  // One owner for the comment list — both the comment box and the selection
+  // popover submit through this, so neither can overwrite the other.
+  const {
+    comments,
+    loading: commentsLoading,
+    error: commentsError,
+    submit: submitComment,
+    reload: reloadComments,
+  } = useProposalComments(
+    status === "ready" ? proposal?.token : undefined,
+    sessionId,
+    accessToken.current,
+  );
+
+  // Signatures are per-section: signing one section must leave the rest open.
+  const {
+    loading: signaturesLoading,
+    getForSection,
+    submit: submitSignature,
+  } = useProposalSignatures(
+    status === "ready" ? proposal?.token : undefined,
+    sessionId,
+    accessToken.current,
+  );
 
   useEffect(() => {
     const handleSelection = () => {
@@ -187,26 +220,26 @@ export default function ProposalView() {
   const submitHighlightComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!highlightCommentText.trim() || !selectedText || !proposal) return;
+    if (submittingHighlight) return;
 
-    const newComment = {
-      id: Math.random().toString(36).substring(2, 9),
-      author: proposal.clientName || "العميل",
-      text: highlightCommentText.trim(),
-      selectedText: selectedText,
-      date: new Intl.DateTimeFormat("ar-IQ-u-nu-latn", { dateStyle: "short", timeStyle: "short" }).format(new Date()),
-    };
-
-    const storageKey = `ninusoft-comments:${proposal.title}`;
+    setSubmittingHighlight(true);
     try {
-      const raw = localStorage.getItem(storageKey);
-      const existing = raw ? JSON.parse(raw) : [];
-      const updated = [newComment, ...existing];
-      localStorage.setItem(storageKey, JSON.stringify(updated));
-      if (proposal.token) {
-        await submitProposalCommentApi(proposal.token, newComment).catch(() => {});
-      }
+      await submitComment({
+        text: highlightCommentText.trim(),
+        author: proposal.clientName || "العميل",
+        selectedText,
+      });
     } catch (err) {
-      console.error(err);
+      // Keep the modal open with the text intact so the client can retry.
+      toast({
+        variant: "destructive",
+        title: "تعذر إرسال التعليق",
+        description:
+          err instanceof Error ? err.message : "حدث خطأ غير متوقع. حاول مجدداً.",
+      });
+      return;
+    } finally {
+      setSubmittingHighlight(false);
     }
 
     setShowHighlightModal(false);
@@ -389,14 +422,35 @@ export default function ProposalView() {
     };
   }, [activeSectionId, sections]);
 
-  const sessionId = useMemo(() => {
-    const key = `ninusoft-proposal-session:${token}`;
-    const existing = sessionStorage.getItem(key);
-    if (existing) return existing;
-    const value = crypto.randomUUID();
-    sessionStorage.setItem(key, value);
-    return value;
-  }, [token]);
+  // Deterrence, not protection: hiding the buttons left Cmd+P and the browser
+  // menu wide open. Screenshots and devtools still defeat this — the watermark
+  // setting is the real control.
+  useEffect(() => {
+    if (settings.enablePrint || settings.enablePdfExport) return;
+
+    const root = document.documentElement;
+    const block = () => {
+      if (!root.dataset.printMode) root.dataset.printBlocked = "true";
+    };
+    const unblock = () => {
+      delete root.dataset.printBlocked;
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "p") {
+        event.preventDefault();
+      }
+    };
+
+    window.addEventListener("beforeprint", block);
+    window.addEventListener("afterprint", unblock);
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => {
+      window.removeEventListener("beforeprint", block);
+      window.removeEventListener("afterprint", unblock);
+      window.removeEventListener("keydown", onKeyDown, true);
+      unblock();
+    };
+  }, [settings.enablePrint, settings.enablePdfExport]);
 
   const load = async () => {
     setStatus("loading");
@@ -411,18 +465,11 @@ export default function ProposalView() {
         document.title = `${result.proposal.title} | NinuSoft`;
         setStatus("ready");
 
-        if ((result as any).settings) {
-          const merged = { ...defaultProposalSettings, ...(result as any).settings };
-          setSettings(merged);
-          saveProposalSettings(merged);
-        } else {
-          getPublicProposalSettingsApi().then((res) => {
-            if (res && res.settings && typeof res.settings === "object") {
-              const merged = { ...defaultProposalSettings, ...(res.settings as Partial<ProposalSettings>) };
-              setSettings(merged);
-              saveProposalSettings(merged);
-            }
-          }).catch(() => {});
+        // Settings ship with the proposal. They are deliberately not cached in
+        // localStorage: the viewer must reflect what the admin saved on the
+        // server, not whatever this browser last saw.
+        if (result.settings) {
+          setSettings({ ...defaultProposalSettings, ...result.settings });
         }
       }
     } catch (requestError) {
@@ -767,6 +814,7 @@ export default function ProposalView() {
           content={proposal.markdown}
           clientName={proposal.clientName}
           proposalToken={proposal.token}
+          accessToken={accessToken.current}
           expiresAt={proposal.expiresAt}
           onScrollToSign={() => {
             const sigEl = document.getElementById("proposal-signature-section");
@@ -901,9 +949,12 @@ export default function ProposalView() {
                             {settings.enableDigitalSignature && sec.hasSignature && (
                               <div className="mt-8">
                                 <ProposalSignature
-                                  proposalTitle={proposal.title}
                                   clientName={proposal.clientName}
-                                  proposalToken={proposal.token}
+                                  sectionId={sec.stableId}
+                                  sectionTitle={sec.title}
+                                  signature={getForSection(sec.stableId)}
+                                  loading={signaturesLoading}
+                                  onSubmit={submitSignature}
                                   allowDraw={settings.allowDrawSignature}
                                   allowType={settings.allowTypeSignature}
                                   allowUpload={settings.allowUploadSignature}
@@ -931,9 +982,12 @@ export default function ProposalView() {
                               {settings.enableDigitalSignature && activeSection.hasSignature && (
                                 <div className="mt-8">
                                   <ProposalSignature
-                                    proposalTitle={proposal.title}
                                     clientName={proposal.clientName}
-                                    proposalToken={proposal.token}
+                                    sectionId={activeSection.stableId}
+                                    sectionTitle={activeSection.title}
+                                    signature={getForSection(activeSection.stableId)}
+                                    loading={signaturesLoading}
+                                    onSubmit={submitSignature}
                                     allowDraw={settings.allowDrawSignature}
                                     allowType={settings.allowTypeSignature}
                                     allowUpload={settings.allowUploadSignature}
@@ -981,9 +1035,10 @@ export default function ProposalView() {
 
                     {settings.enableDigitalSignature && !hasAnySectionSignature && (
                       <ProposalSignature
-                        proposalTitle={proposal.title}
                         clientName={proposal.clientName}
-                        proposalToken={proposal.token}
+                        signature={getForSection(undefined)}
+                        loading={signaturesLoading}
+                        onSubmit={submitSignature}
                         allowDraw={settings.allowDrawSignature}
                         allowType={settings.allowTypeSignature}
                         allowUpload={settings.allowUploadSignature}
@@ -995,7 +1050,14 @@ export default function ProposalView() {
               })()}
 
               {settings.enableInlineComments && (
-                <ProposalComments proposalTitle={proposal.title} proposalToken={proposal.token} clientName={proposal.clientName} />
+                <ProposalComments
+                  comments={comments}
+                  loading={commentsLoading}
+                  error={commentsError}
+                  onSubmit={submitComment}
+                  onRetry={reloadComments}
+                  clientName={proposal.clientName}
+                />
               )}
             </article>
           </div>

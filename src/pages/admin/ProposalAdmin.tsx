@@ -9,7 +9,10 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   adminRequest,
   ApiError,
+  getProposalActivityApi,
+  revokeProposalSignatureApi,
   type Proposal,
+  type ProposalActivity,
   type ProposalSummary,
 } from "@/lib/proposals-api";
 import {
@@ -19,6 +22,7 @@ import {
   shortlinkUrl,
 } from "@/lib/shortlinks-api";
 import {
+  ensureSectionStableIds,
   parseProposalSections,
   serializeProposalSections,
   type ProposalSection,
@@ -36,6 +40,7 @@ import {
   BookOpen,
   Send,
   CheckCircle,
+  MessageSquare,
   XCircle,
   Layers,
   Edit,
@@ -108,6 +113,12 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
   const [protectionType, setProtectionType] = useState<"pin" | "password">("pin");
   const [showPin, setShowPin] = useState(false);
   const [selectedAuditProposal, setSelectedAuditProposal] = useState<ProposalSummary | null>(null);
+  const [activity, setActivity] = useState<ProposalActivity | null>(null);
+  const [activityLoading, setActivityLoading] = useState(false);
+  const [activityError, setActivityError] = useState<string | null>(null);
+  const [revoking, setRevoking] = useState(false);
+  const [revokeTargetId, setRevokeTargetId] = useState<string | null>(null);
+  const [revokeReason, setRevokeReason] = useState("");
   const [shareProposal, setShareProposal] = useState<ProposalSummary | null>(null);
   const [sharePassword, setSharePassword] = useState("");
   const [shareCopied, setShareCopied] = useState(false);
@@ -132,37 +143,38 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
     }
   }, [form.markdown]);
 
-  const updateSectionTitle = (id: string, newTitle: string) => {
-    const updated = sections.map((sec) =>
-      sec.id === id ? { ...sec, title: newTitle } : sec
-    );
-    setSections(updated);
+  /**
+   * Single write path for section edits. Stable ids are assigned here so that
+   * component state and the serialized markdown always agree — minting them
+   * only inside the serializer would hand out a new id on every keystroke and
+   * detach any signature already bound to the section.
+   */
+  const applySections = (next: ProposalSection[]) => {
+    const withIds = ensureSectionStableIds(next);
+    setSections(withIds);
     setForm((current) => ({
       ...current,
-      markdown: serializeProposalSections(updated),
+      markdown: serializeProposalSections(withIds),
     }));
+    return withIds;
+  };
+
+  const updateSectionTitle = (id: string, newTitle: string) => {
+    applySections(
+      sections.map((sec) => (sec.id === id ? { ...sec, title: newTitle } : sec)),
+    );
   };
 
   const updateSectionContent = (id: string, newContent: string) => {
-    const updated = sections.map((sec) =>
-      sec.id === id ? { ...sec, content: newContent } : sec
+    applySections(
+      sections.map((sec) => (sec.id === id ? { ...sec, content: newContent } : sec)),
     );
-    setSections(updated);
-    setForm((current) => ({
-      ...current,
-      markdown: serializeProposalSections(updated),
-    }));
   };
 
   const updateSectionSignature = (id: string, hasSignature: boolean) => {
-    const updated = sections.map((sec) =>
-      sec.id === id ? { ...sec, hasSignature } : sec
+    applySections(
+      sections.map((sec) => (sec.id === id ? { ...sec, hasSignature } : sec)),
     );
-    setSections(updated);
-    setForm((current) => ({
-      ...current,
-      markdown: serializeProposalSections(updated),
-    }));
   };
 
   const addNewSection = () => {
@@ -172,13 +184,8 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
       title: `قسم جديد ${sections.length + 1}`,
       content: "## عنوان فرعي\n\nأكتب محتوى هذا القسم هنا...",
     };
-    const updated = [...sections, newSec];
-    setSections(updated);
+    applySections([...sections, newSec]);
     setActiveSectionId(newId);
-    setForm((current) => ({
-      ...current,
-      markdown: serializeProposalSections(updated),
-    }));
   };
 
   const removeSection = (id: string) => {
@@ -186,15 +193,10 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
       setError("يجب أن يحتوي العرض على قسم واحد على الأقل.");
       return;
     }
-    const updated = sections.filter((sec) => sec.id !== id);
-    setSections(updated);
+    const updated = applySections(sections.filter((sec) => sec.id !== id));
     if (activeSectionId === id) {
       setActiveSectionId(updated[0]?.id || "");
     }
-    setForm((current) => ({
-      ...current,
-      markdown: serializeProposalSections(updated),
-    }));
   };
 
   const moveSection = (index: number, direction: "up" | "down") => {
@@ -203,11 +205,7 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
     const copy = [...sections];
     const [moved] = copy.splice(index, 1);
     copy.splice(targetIdx, 0, moved);
-    setSections(copy);
-    setForm((current) => ({
-      ...current,
-      markdown: serializeProposalSections(copy),
-    }));
+    applySections(copy);
   };
 
   const [copiedSectionId, setCopiedSectionId] = useState<string | null>(null);
@@ -227,8 +225,7 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
   };
 
   const copySingleSection = async (sec: ProposalSection) => {
-    const sigMeta = sec.hasSignature ? " | signature: true" : "";
-    const sectionBlock = `<!-- section: ${sec.title || "قسم"}${sigMeta} -->\n${sec.content || ""}`;
+    const sectionBlock = serializeProposalSections([sec]);
     try {
       await navigator.clipboard.writeText(sectionBlock);
       setCopiedSectionContentId(sec.id);
@@ -271,6 +268,66 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
         item.clientName.toLowerCase().includes(query),
     );
   }, [items, searchQuery]);
+
+  // Client signatures and comments live on the server, so the audit modal
+  // fetches them on open rather than reading this browser's storage.
+  useEffect(() => {
+    setRevokeTargetId(null);
+    setRevokeReason("");
+    if (!selectedAuditProposal) {
+      setActivity(null);
+      setActivityError(null);
+      return;
+    }
+    let cancelled = false;
+    setActivityLoading(true);
+    setActivityError(null);
+    getProposalActivityApi(adminKey, selectedAuditProposal.id)
+      .then((res) => {
+        if (!cancelled) setActivity(res);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setActivityError(
+            err instanceof Error ? err.message : "تعذر تحميل نشاط العميل.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setActivityLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedAuditProposal, adminKey]);
+
+  const revokeSignature = async (sectionId: string) => {
+    if (!selectedAuditProposal || revoking) return;
+    setRevoking(true);
+    setError("");
+    try {
+      await revokeProposalSignatureApi(adminKey, selectedAuditProposal.id, {
+        reason: revokeReason.trim() || undefined,
+        sectionId,
+      });
+      const refreshed = await getProposalActivityApi(
+        adminKey,
+        selectedAuditProposal.id,
+      );
+      setActivity(refreshed);
+      setRevokeTargetId(null);
+      setRevokeReason("");
+      setMessage("تم إلغاء التوقيع. يمكن للعميل اتخاذ قرار جديد الآن.");
+      // The list carries signatureStatus, so it must be refetched too.
+      await loadItems();
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? err.message : "تعذر إلغاء التوقيع.",
+      );
+    } finally {
+      setRevoking(false);
+    }
+  };
 
   const loadItems = async (key = adminKey) => {
     const result = await adminRequest<{ proposals: ProposalSummary[] }>(
@@ -709,7 +766,7 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
           </section>
         ) : activeAdminTab === "analytics" ? (
           <section className="proposal-editor">
-            <ProposalAnalytics proposalsCount={items.length} />
+            <ProposalAnalytics items={items} />
           </section>
         ) : (
           <>
@@ -1360,14 +1417,9 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                 <tbody>
                   {filteredItems.map((item) => {
                     const expired = item.expiresAt && new Date(item.expiresAt) <= new Date();
-                    let sigStatus: "SIGNED" | "REJECTED" | null = null;
-                    try {
-                      const rawSig = localStorage.getItem(`ninusoft-documenso-sig:${item.title}`);
-                      if (rawSig) {
-                        const parsed = JSON.parse(rawSig);
-                        sigStatus = parsed.status || "SIGNED";
-                      }
-                    } catch {}
+                    // From the backend, not this browser: a client signs in
+                    // their own browser, so localStorage here was always empty.
+                    const sigStatus = item.signatureStatus;
 
                     return (
                       <tr key={item.id}>
@@ -1481,47 +1533,179 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                 </div>
               </div>
 
-              {/* Section Feedback Audit */}
-              {(() => {
-                let sectionApprovals: Record<string, string> = {};
-                try {
-                  const raw = localStorage.getItem(`ninusoft-section-approvals:${selectedAuditProposal.token}`);
-                  if (raw) sectionApprovals = JSON.parse(raw);
-                } catch {}
-
-                const feedbackEntries = Object.entries(sectionApprovals).filter(([_, v]) => Boolean(v));
-
-                return (
+              {/* Client decision */}
+              <div className="space-y-2">
+                <h4 className="font-bold text-xs text-foreground flex items-center gap-1.5">
+                  <CheckCircle className="w-3.5 h-3.5 text-amber-400" />
+                  <span>قرار العميل</span>
+                </h4>
+                {activityLoading ? (
+                  <p className="text-xs text-muted-foreground italic p-3">جارٍ التحميل...</p>
+                ) : activityError ? (
+                  <p className="text-xs text-destructive p-3 rounded-lg bg-destructive/10 border border-destructive/30">
+                    {activityError}
+                  </p>
+                ) : activity && activity.signatures.length > 0 ? (
                   <div className="space-y-2">
-                    <h4 className="font-bold text-xs text-foreground flex items-center gap-1.5">
-                      <CheckCircle className="w-3.5 h-3.5 text-amber-400" />
-                      <span>تقييم الأقسام من العميل ({feedbackEntries.length})</span>
-                    </h4>
-                    {feedbackEntries.length > 0 ? (
-                      <div className="space-y-1.5">
-                        {feedbackEntries.map(([title, status]) => (
-                          <div key={title} className="p-2.5 rounded-lg border border-border/40 bg-muted/30 flex items-center justify-between text-xs">
-                            <span className="font-bold">{title}</span>
-                            {status === "APPROVED" ? (
-                              <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold flex items-center gap-1">
-                                <CheckCircle className="w-3 h-3" /> موافق على البند
-                              </span>
-                            ) : (
-                              <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold flex items-center gap-1">
-                                <Edit className="w-3 h-3" /> طلب تعديل
-                              </span>
-                            )}
+                    {activity.signatures.map((sig) => (
+                      <div
+                        key={sig.section_id}
+                        className="p-3 rounded-lg border border-border/40 bg-muted/30 space-y-1.5 text-xs"
+                      >
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          {sig.status === "SIGNED" ? (
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold flex items-center gap-1">
+                              <CheckCircle className="w-3 h-3" /> معتمد
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full bg-destructive/20 text-destructive border border-destructive/30 font-bold flex items-center gap-1">
+                              <XCircle className="w-3 h-3" /> طلب تعديل
+                            </span>
+                          )}
+                          <span className="font-mono text-[11px] text-muted-foreground">
+                            {formatDate(sig.signature_date)}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-amber-400 font-bold">
+                          {sig.section_title || "الوثيقة كاملة"}
+                        </p>
+                        <div>
+                          <strong className="text-foreground">{sig.name}</strong>
+                          {sig.title && (
+                            <span className="text-muted-foreground"> — {sig.title}</span>
+                          )}
+                        </div>
+                        {sig.rejection_reason && (
+                          <p className="p-2 rounded bg-background/60 border border-border/40">
+                            {sig.rejection_reason}
+                          </p>
+                        )}
+                        <p className="font-mono text-[10px] text-muted-foreground break-all">
+                          SHA-256: {sig.document_hash}
+                        </p>
+
+                        {revokeTargetId === sig.section_id ? (
+                          <div className="pt-2 space-y-2 border-t border-border/40">
+                            <p className="text-destructive font-bold">
+                              سيُلغى قرار هذا القسم فقط ويستطيع العميل التوقيع عليه من جديد. يُحفظ القرار السابق في السجل.
+                            </p>
+                            <Textarea
+                              value={revokeReason}
+                              onChange={(e) => setRevokeReason(e.target.value)}
+                              placeholder="سبب الإلغاء (اختياري)"
+                              rows={2}
+                              className="text-xs"
+                            />
+                            <div className="flex items-center gap-2">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="destructive"
+                                disabled={revoking}
+                                onClick={() => revokeSignature(sig.section_id)}
+                                className="text-xs"
+                              >
+                                {revoking ? "جارٍ الإلغاء..." : "تأكيد الإلغاء"}
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                disabled={revoking}
+                                onClick={() => {
+                                  setRevokeTargetId(null);
+                                  setRevokeReason("");
+                                }}
+                                className="text-xs"
+                              >
+                                تراجع
+                              </Button>
+                            </div>
                           </div>
-                        ))}
+                        ) : (
+                          <div className="pt-1">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setRevokeTargetId(sig.section_id)}
+                              className="text-xs text-destructive hover:text-destructive"
+                            >
+                              <XCircle className="w-3.5 h-3.5 ml-1" /> إلغاء توقيع هذا القسم
+                            </Button>
+                          </div>
+                        )}
                       </div>
-                    ) : (
-                      <p className="text-xs text-muted-foreground italic p-3 rounded-lg bg-muted/20 border border-border/30">
-                        لم يقم العميل بتقييم أقسام محددة بعد.
-                      </p>
-                    )}
+                    ))}
                   </div>
-                );
-              })()}
+                ) : (
+                  <p className="text-xs text-muted-foreground italic p-3 rounded-lg bg-muted/20 border border-border/30">
+                    لم يتخذ العميل قراراً بعد.
+                  </p>
+                )}
+
+                {activity && activity.signatureHistory.length > 0 && (
+                  <div className="space-y-1.5 pt-1">
+                    <h5 className="text-[11px] font-bold text-muted-foreground">
+                      قرارات ملغاة سابقاً ({activity.signatureHistory.length})
+                    </h5>
+                    {activity.signatureHistory.map((h) => (
+                      <div
+                        key={h.verification_id + h.revoked_at}
+                        className="p-2 rounded-lg border border-border/30 bg-muted/20 text-[11px] text-muted-foreground space-y-0.5"
+                      >
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <span>
+                            <strong className="text-foreground/80">{h.name}</strong>
+                            {" — "}
+                            {h.status === "SIGNED" ? "اعتمد" : "طلب تعديل"}
+                            {" على "}
+                            {h.section_title || "الوثيقة كاملة"}
+                            {" في "}
+                            {formatDate(h.signature_date)}
+                          </span>
+                          <span className="font-mono">أُلغي {formatDate(h.revoked_at)}</span>
+                        </div>
+                        {h.revoked_reason && <p>السبب: {h.revoked_reason}</p>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Client comments */}
+              <div className="space-y-2">
+                <h4 className="font-bold text-xs text-foreground flex items-center gap-1.5">
+                  <MessageSquare className="w-3.5 h-3.5 text-amber-400" />
+                  <span>تعليقات العميل ({activity?.comments.length ?? 0})</span>
+                </h4>
+                {activityLoading ? (
+                  <p className="text-xs text-muted-foreground italic p-3">جارٍ التحميل...</p>
+                ) : activity && activity.comments.length > 0 ? (
+                  <div className="space-y-1.5">
+                    {activity.comments.map((c) => (
+                      <div key={c.id} className="p-2.5 rounded-lg border border-border/40 bg-muted/30 space-y-1 text-xs">
+                        <div className="flex items-center justify-between gap-2">
+                          <strong className="text-foreground">{c.author}</strong>
+                          <span className="font-mono text-[11px] text-muted-foreground">
+                            {formatDate(c.createdAt)}
+                          </span>
+                        </div>
+                        {c.selectedText && (
+                          <div className="p-1.5 rounded bg-amber-500/10 border-r-2 border-amber-500 text-amber-300 font-mono text-[11px] italic">
+                            &ldquo;{c.selectedText}&rdquo;
+                          </div>
+                        )}
+                        <p className="text-foreground/90">{c.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground italic p-3 rounded-lg bg-muted/20 border border-border/30">
+                    لا توجد تعليقات من العميل.
+                  </p>
+                )}
+              </div>
 
               {/* Token Access Info */}
               <div className="p-3 rounded-xl bg-card border border-border/60 space-y-1 text-xs font-mono">
