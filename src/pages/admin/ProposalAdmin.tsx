@@ -4,6 +4,7 @@ import { proposalMarkdownComponents, remarkAlerts } from "@/components/ProposalM
 
 import { playChimeNotification, requestDesktopNotificationPermission, showDesktopNotification } from "@/lib/audio-notifications";
 import { formatProposalDate } from "@/lib/format-date";
+import { jumpToQuotedText } from "@/lib/quote-navigator";
 import { ChangeEvent, SyntheticEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1803,9 +1804,17 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                         </div>
 
                         {c.selectedText && (
-                          <div className="p-2 rounded-lg bg-amber-500/10 border-r-2 border-amber-500 text-amber-300 font-mono text-[11px] italic">
-                            &ldquo;{c.selectedText}&rdquo;
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => jumpToQuotedText(c.selectedText!)}
+                            className="w-full text-right p-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border-r-2 border-amber-500 text-amber-300 font-mono text-[11px] italic transition-all cursor-pointer group flex items-start justify-between gap-2 shadow-sm active:scale-[0.99]"
+                            title="اضغط للانتقال التلقائي لمكان النص المُقتبس وتظليله المؤقت"
+                          >
+                            <span className="flex-1">&ldquo;{c.selectedText}&rdquo;</span>
+                            <span className="text-[10px] font-sans not-italic text-amber-400/80 group-hover:text-amber-300 font-semibold flex items-center gap-1 shrink-0 bg-amber-500/15 px-1.5 py-0.5 rounded border border-amber-500/30">
+                              انتقال للنص ↖
+                            </span>
+                          </button>
                         )}
 
                         {editingAdminCommentId === c.id ? (
