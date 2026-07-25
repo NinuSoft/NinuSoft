@@ -1701,47 +1701,50 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
 
         {/* Engagement Audit Modal */}
         {selectedAuditProposal && (
-          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="w-full max-w-xl p-6 rounded-2xl bg-card border border-border/80 shadow-2xl space-y-4 text-start dir-rtl max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between border-b border-border/40 pb-3">
-                <div className="space-y-0.5">
-                  <h3 className="font-bold text-base text-foreground flex items-center gap-2">
-                    <BarChart className="w-4 h-4 text-amber-400" />
+          <div className="fixed inset-0 z-50 bg-background/85 backdrop-blur-lg flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
+            <div className="w-full max-w-5xl lg:max-w-6xl max-h-[92vh] flex flex-col p-5 sm:p-7 rounded-3xl bg-card/95 border border-amber-500/30 backdrop-blur-2xl shadow-[0_25px_60px_rgba(0,0,0,0.7)] space-y-4 text-start dir-rtl">
+              <div className="flex items-center justify-between border-b border-border/40 pb-3.5 shrink-0">
+                <div className="space-y-1">
+                  <h3 className="font-bold text-lg text-foreground flex items-center gap-2">
+                    <BarChart className="w-5 h-5 text-amber-400" />
                     <span>تقرير تفاعل وتدقيق العرض</span>
                   </h3>
                   <p className="text-xs text-muted-foreground">{selectedAuditProposal.title} ({selectedAuditProposal.clientName})</p>
                 </div>
-                <Button type="button" variant="ghost" size="sm" onClick={() => setSelectedAuditProposal(null)}>
-                  <XCircle className="w-4 h-4" />
+                <Button type="button" variant="ghost" size="sm" onClick={() => setSelectedAuditProposal(null)} className="h-9 w-9 p-0 rounded-full">
+                  <XCircle className="w-5 h-5" />
                 </Button>
               </div>
 
-              {/* Engagement Stats Overview */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-                <div className="p-3 rounded-xl bg-card/80 border border-border/60">
-                  <span className="text-[11px] text-muted-foreground block">مرات الفتح</span>
-                  <strong className="text-lg font-bold text-sky-400">{selectedAuditProposal.openCount}</strong>
+              {/* Engagement Stats Overview Bar */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center shrink-0">
+                <div className="p-3.5 rounded-2xl bg-card/80 border border-sky-500/20 shadow-sm">
+                  <span className="text-[11px] text-muted-foreground block font-bold">مرات الفتح</span>
+                  <strong className="text-xl font-bold text-sky-400">{selectedAuditProposal.openCount}</strong>
                 </div>
-                <div className="p-3 rounded-xl bg-card/80 border border-border/60">
-                  <span className="text-[11px] text-muted-foreground block">القراءة الكاملة</span>
-                  <strong className="text-lg font-bold text-amber-400">{selectedAuditProposal.readCount}</strong>
+                <div className="p-3.5 rounded-2xl bg-card/80 border border-amber-500/20 shadow-sm">
+                  <span className="text-[11px] text-muted-foreground block font-bold">القراءة الكاملة</span>
+                  <strong className="text-xl font-bold text-amber-400">{selectedAuditProposal.readCount}</strong>
                 </div>
-                <div className="p-3 rounded-xl bg-card/80 border border-border/60">
-                  <span className="text-[11px] text-muted-foreground block">أول زيارة</span>
-                  <strong className="text-xs font-mono block text-foreground pt-1">{formatDate(selectedAuditProposal.firstOpenedAt) || "لم يُفتح"}</strong>
+                <div className="p-3.5 rounded-2xl bg-card/80 border border-emerald-500/20 shadow-sm">
+                  <span className="text-[11px] text-muted-foreground block font-bold">أول زيارة</span>
+                  <strong className="text-xs font-mono block text-foreground pt-1.5">{formatDate(selectedAuditProposal.firstOpenedAt) || "لم يُفتح"}</strong>
                 </div>
-                <div className="p-3 rounded-xl bg-card/80 border border-border/60">
-                  <span className="text-[11px] text-muted-foreground block">آخر نشاط</span>
-                  <strong className="text-xs font-mono block text-foreground pt-1">{formatDate(selectedAuditProposal.lastReadAt || selectedAuditProposal.lastOpenedAt) || "لا يوجد"}</strong>
+                <div className="p-3.5 rounded-2xl bg-card/80 border border-purple-500/20 shadow-sm">
+                  <span className="text-[11px] text-muted-foreground block font-bold">آخر نشاط</span>
+                  <strong className="text-xs font-mono block text-foreground pt-1.5">{formatDate(selectedAuditProposal.lastReadAt || selectedAuditProposal.lastOpenedAt) || "لا يوجد"}</strong>
                 </div>
               </div>
 
-              {/* Client decision */}
-              <div className="space-y-2">
-                <h4 className="font-bold text-xs text-foreground flex items-center gap-1.5">
-                  <CheckCircle className="w-3.5 h-3.5 text-amber-400" />
-                  <span>قرار العميل</span>
-                </h4>
+              {/* 2-Column Responsive Workspace Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-y-auto flex-1 min-h-0 pr-1 pl-1 py-1">
+                {/* Right Column: Decisions & Signatures (5 cols) */}
+                <div className="lg:col-span-5 space-y-4">
+                  <div className="space-y-3 p-4.5 rounded-2xl bg-muted/20 border border-border/40">
+                    <h4 className="font-bold text-xs text-foreground flex items-center gap-1.5 border-b border-border/40 pb-2">
+                      <CheckCircle className="w-4 h-4 text-amber-400" />
+                      <span>قرارات الاعتماد والتوقيع ({activity?.signatures.length ?? 0})</span>
+                    </h4>
                 {activityLoading ? (
                   <p className="text-xs text-muted-foreground italic p-3">جارٍ التحميل...</p>
                 ) : activityError ? (
@@ -1874,14 +1877,16 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                     ))}
                   </div>
                 )}
-              </div>
+                </div>
+                </div>
 
-              {/* Client comments */}
-              <div className="space-y-2">
-                <h4 className="font-bold text-xs text-foreground flex items-center gap-1.5">
-                  <MessageSquare className="w-3.5 h-3.5 text-amber-400" />
-                  <span>تعليقات العميل ({activity?.comments.length ?? 0})</span>
-                </h4>
+                {/* Left Column: Comments, AI Assistant & Internal Notes (7 cols) */}
+                <div className="lg:col-span-7 space-y-4">
+                  <div className="space-y-3 p-4.5 rounded-2xl bg-muted/20 border border-border/40">
+                    <h4 className="font-bold text-xs text-foreground flex items-center gap-1.5 border-b border-border/40 pb-2">
+                      <MessageSquare className="w-4 h-4 text-amber-400" />
+                      <span>تعليقات واستفسارات العملاء ({activity?.comments.length ?? 0})</span>
+                    </h4>
                 {activityLoading ? (
                   <p className="text-xs text-muted-foreground italic p-3">جارٍ التحميل...</p>
                 ) : activity && activity.comments.length > 0 ? (
@@ -2165,21 +2170,22 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-muted-foreground italic p-3 rounded-lg bg-muted/20 border border-border/30">
-                    لا توجد تعليقات من العميل.
+                  <p className="text-xs text-muted-foreground italic p-3.5 rounded-xl bg-muted/20 border border-border/30">
+                    لا توجد تعليقات من العميل على هذا العرض بعد.
                   </p>
                 )}
+                  </div>
+                </div>
               </div>
 
-              {/* Token Access Info */}
-              <div className="p-3 rounded-xl bg-card border border-border/60 space-y-1 text-xs font-mono">
-                <span className="text-[11px] text-muted-foreground block font-sans font-bold">رابط التتبع الفريد:</span>
-                <p className="text-amber-300 break-all">{window.location.origin}/proposals/{selectedAuditProposal.token}</p>
-              </div>
-
-              <div className="flex justify-end pt-2">
-                <Button type="button" variant="outline" size="sm" onClick={() => setSelectedAuditProposal(null)}>
-                  إغلاق
+              {/* Token Access Info Footer */}
+              <div className="p-3.5 rounded-2xl bg-card/80 border border-border/60 flex items-center justify-between gap-4 flex-wrap text-xs shrink-0">
+                <div className="flex items-center gap-2 font-mono flex-1 min-w-0">
+                  <span className="text-[11px] text-muted-foreground font-sans font-bold shrink-0">رابط التتبع الفريد:</span>
+                  <p className="text-amber-300 truncate">{window.location.origin}/proposals/{selectedAuditProposal.token}</p>
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={() => setSelectedAuditProposal(null)} className="px-6 font-bold text-xs shrink-0">
+                  إغلاق التقرير
                 </Button>
               </div>
             </div>
