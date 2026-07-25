@@ -95,5 +95,20 @@ export function useProposalComments(
     [token, sessionId, accessToken],
   );
 
-  return { comments, loading, error, submit, edit, remove, reload };
+  const toggleResolve = useCallback(
+    async (commentId: string, resolved: boolean) => {
+      if (!token) throw new Error("لا يمكن تحديث حالة التعليق بدون رابط عرض صالح.");
+      const res = await editProposalCommentApi(
+        token,
+        commentId,
+        { resolved },
+        sessionId,
+        accessToken,
+      );
+      setComments(res.comments || []);
+    },
+    [token, sessionId, accessToken],
+  );
+
+  return { comments, loading, error, submit, edit, remove, toggleResolve, reload };
 }

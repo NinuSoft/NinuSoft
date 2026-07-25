@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Edit, MessageSquare, Plus, Trash2 } from "@/components/Icons";
+import { CheckCircle, Edit, MessageSquare, Plus, Trash2 } from "@/components/Icons";
 import { useToast } from "@/hooks/use-toast";
 import { formatProposalDate } from "@/lib/format-date";
 import type { ProposalComment } from "@/lib/proposals-api";
@@ -172,9 +172,23 @@ export function ProposalComments({
       ) : comments.length > 0 ? (
         <div className="space-y-3">
           {comments.map((c) => (
-            <div key={c.id} className="p-3.5 rounded-xl border border-border/40 bg-card/80 space-y-2 text-xs">
+            <div
+              key={c.id}
+              className={`p-3.5 rounded-xl border space-y-2 text-xs transition-opacity ${
+                c.resolved
+                  ? "border-emerald-500/30 bg-emerald-500/5 opacity-80"
+                  : "border-border/40 bg-card/80"
+              }`}
+            >
               <div className="flex items-center justify-between text-muted-foreground">
-                <strong className="text-foreground text-xs font-bold">{c.author}</strong>
+                <div className="flex items-center gap-2">
+                  <strong className="text-foreground text-xs font-bold">{c.author}</strong>
+                  {c.resolved && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                      <CheckCircle className="w-3 h-3" /> محلول
+                    </span>
+                  )}
+                </div>
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-[11px] opacity-75">
                     {formatProposalDate(c.createdAt)}

@@ -159,6 +159,7 @@ export default function ProposalView() {
     submit: submitComment,
     edit: editComment,
     remove: removeComment,
+    toggleResolve: toggleResolveComment,
     reload: reloadComments,
   } = useProposalComments(
     status === "ready" ? proposal?.token : undefined,

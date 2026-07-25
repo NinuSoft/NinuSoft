@@ -369,6 +369,23 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
     }
   };
 
+  const adminToggleCommentResolve = async (commentId: string, currentResolved?: boolean) => {
+    if (!selectedAuditProposal || !activity) return;
+    const nextState = !currentResolved;
+    try {
+      const res = await adminEditProposalCommentApi(
+        adminKey,
+        selectedAuditProposal.id,
+        commentId,
+        { resolved: nextState },
+      );
+      setActivity({ ...activity, comments: res.comments });
+      setMessage(nextState ? "تم تحديد التعليق كمحلول." : "تمت إعادة فتح التعليق.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "تعذر تحديث حالة التعليق.");
+    }
+  };
+
   const loadItems = async (key = adminKey) => {
     const result = await adminRequest<{ proposals: ProposalSummary[] }>(
       key,
@@ -1726,11 +1743,32 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                     {activity.comments.map((c) => (
                       <div key={c.id} className="p-2.5 rounded-lg border border-border/40 bg-muted/30 space-y-1.5 text-xs">
                         <div className="flex items-center justify-between gap-2">
-                          <strong className="text-foreground">{c.author}</strong>
+                          <div className="flex items-center gap-2">
+                            <strong className="text-foreground">{c.author}</strong>
+                            {c.resolved && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                                <CheckCircle className="w-3 h-3" /> محلول
+                              </span>
+                            )}
+                          </div>
                           <div className="flex items-center gap-2">
                             <span className="font-mono text-[11px] text-muted-foreground">
                               {formatDate(c.createdAt)}
                             </span>
+                            {editingAdminCommentId !== c.id && (
+                              <button
+                                type="button"
+                                onClick={() => adminToggleCommentResolve(c.id, c.resolved)}
+                                className={`p-1 transition-colors ${
+                                  c.resolved
+                                    ? "text-emerald-400 hover:text-emerald-300"
+                                    : "text-muted-foreground hover:text-emerald-400"
+                                }`}
+                                title={c.resolved ? "إعادة فتح التعليق" : "تحديد كمحلول"}
+                              >
+                                <CheckCircle className="w-3.5 h-3.5" />
+                              </button>
+                            )}
                             {editingAdminCommentId !== c.id && (
                               <button
                                 type="button"

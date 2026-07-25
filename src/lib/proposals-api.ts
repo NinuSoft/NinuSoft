@@ -38,6 +38,7 @@ export type ProposalComment = {
   author: string;
   text: string;
   selectedText: string | null;
+  resolved?: boolean;
   createdAt: string;
 };
 
@@ -325,7 +326,7 @@ export function revokeProposalSignatureApi(
 export function editProposalCommentApi(
   token: string,
   commentId: string,
-  data: { text: string; selectedText?: string },
+  data: { text?: string; selectedText?: string; resolved?: boolean },
   sessionId?: string,
   accessToken?: string,
 ) {
@@ -358,7 +359,7 @@ export function adminEditProposalCommentApi(
   adminKey: string,
   proposalId: string,
   commentId: string,
-  data: { text: string; author?: string },
+  data: { text?: string; author?: string; resolved?: boolean },
 ) {
   return adminRequest<{ ok: true; comments: ProposalComment[] }>(
     adminKey,
