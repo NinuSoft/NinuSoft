@@ -3,7 +3,10 @@ import remarkGfm from "remark-gfm";
 import { proposalMarkdownComponents, remarkAlerts } from "@/components/ProposalMarkdown";
 
 import { playChimeNotification, requestDesktopNotificationPermission, showDesktopNotification } from "@/lib/audio-notifications";
+import { ProposalDiscountsManager } from "@/components/ProposalDiscountsManager";
+import { defaultProposalSettings, type ProposalSettings } from "@/lib/proposal-settings";
 import { formatProposalDate } from "@/lib/format-date";
+import { jumpToQuotedText } from "@/lib/quote-navigator";
 import { ChangeEvent, SyntheticEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   adminDeleteProposalCommentApi,
   adminEditProposalCommentApi,
+  adminGenerateAiReplyApi,
   adminRequest,
   ApiError,
   getProposalActivityApi,
@@ -54,6 +58,7 @@ import {
   Plus,
   Search,
   RefreshCw,
+  Clock,
   Copy,
   Link,
   Shield,
@@ -61,6 +66,7 @@ import {
   LogOut,
   Lock,
   Share2,
+  Tag,
 } from "@/components/Icons";
 
 type FormState = {
@@ -73,6 +79,7 @@ type FormState = {
   active: boolean;
   rotateToken: boolean;
   removePassword: boolean;
+  settings?: ProposalSettings;
 };
 
 const emptyForm: FormState = {
@@ -85,6 +92,7 @@ const emptyForm: FormState = {
   active: true,
   rotateToken: false,
   removePassword: false,
+  settings: undefined,
 };
 
 function formatDate(value: string | null | undefined): string {
@@ -130,8 +138,63 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
   const [shareCopied, setShareCopied] = useState(false);
   const [passwordCopied, setPasswordCopied] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [activeAdminTab, setActiveAdminTab] = useState<"editor" | "analytics" | "settings">("editor");
+  const [activeAdminTab, setActiveAdminTab] = useState<"editor" | "analytics" | "discounts" | "settings">("editor");
+  const [selectedDiscountProposalId, setSelectedDiscountProposalId] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "signed" | "rejected" | "read" | "unread" | "has_discount" | "expired">("all");
+  const [auditCommentTab, setAuditCommentTab] = useState<"all" | "pending" | "resolved">("all");
+  const [auditLinkCopied, setAuditLinkCopied] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const statusCounts = useMemo(() => {
+    const counts = {
+      all: items.length,
+      signed: 0,
+      rejected: 0,
+      read: 0,
+      unread: 0,
+      has_discount: 0,
+      expired: 0,
+    };
+    const now = new Date();
+    for (const item of items) {
+      const isExpired = Boolean(item.expiresAt && new Date(item.expiresAt) <= now);
+      if (isExpired) counts.expired++;
+      if (item.signatureStatus === "SIGNED") counts.signed++;
+      else if (item.signatureStatus === "REJECTED" || item.rejectedSections > 0) counts.rejected++;
+      else if (item.readCount > 0) counts.read++;
+      else counts.unread++;
+
+      if (item.promoCode || item.discountValue) counts.has_discount++;
+    }
+    return counts;
+  }, [items]);
+
+  const filteredItems = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    const now = new Date();
+
+    return items.filter((item) => {
+      // 1. Search Query Filter
+      const matchesQuery =
+        !query ||
+        item.title.toLowerCase().includes(query) ||
+        item.clientName.toLowerCase().includes(query) ||
+        (item.promoCode && item.promoCode.toLowerCase().includes(query));
+
+      if (!matchesQuery) return false;
+
+      // 2. Status Filter Tab
+      const isExpired = Boolean(item.expiresAt && new Date(item.expiresAt) <= now);
+      if (statusFilter === "signed") return item.signatureStatus === "SIGNED";
+      if (statusFilter === "rejected") return item.signatureStatus === "REJECTED" || item.rejectedSections > 0;
+      if (statusFilter === "read") return item.readCount > 0 && item.signatureStatus !== "SIGNED" && !item.rejectedSections;
+      if (statusFilter === "unread") return item.openCount === 0 && item.readCount === 0;
+      if (statusFilter === "has_discount") return Boolean(item.promoCode || item.discountValue);
+      if (statusFilter === "expired") return isExpired;
+
+      return true;
+    });
+  }, [items, searchQuery, statusFilter]);
 
   const [sections, setSections] = useState<ProposalSection[]>(() =>
     parseProposalSections(emptyForm.markdown)
@@ -272,16 +335,6 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
     );
   }, [items]);
 
-  const filteredItems = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    if (!query) return items;
-    return items.filter(
-      (item) =>
-        item.title.toLowerCase().includes(query) ||
-        item.clientName.toLowerCase().includes(query),
-    );
-  }, [items, searchQuery]);
-
   // Client signatures and comments live on the server, so the audit modal
   // fetches them on open rather than reading this browser's storage.
   useEffect(() => {
@@ -375,6 +428,28 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
   const [editingAdminCommentId, setEditingAdminCommentId] = useState<string | null>(null);
   const [editingAdminCommentText, setEditingAdminCommentText] = useState("");
   const [replyingCommentId, setReplyingCommentId] = useState<string | null>(null);
+  const [aiGeneratingCommentId, setAiGeneratingCommentId] = useState<string | null>(null);
+
+  const adminGenerateAiReply = async (commentId: string) => {
+    if (!selectedAuditProposal) return;
+    setAiGeneratingCommentId(commentId);
+    try {
+      const res = await adminGenerateAiReplyApi(
+        adminKey,
+        selectedAuditProposal.id,
+        commentId,
+      );
+      if (res.suggestedReply) {
+        setReplyingText(res.suggestedReply);
+        setMessage("تمت صياغة الرد بواسطة الذكاء الاصطناعي بنجاح. يمكنك تعديله قبل الإرسال.");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "تعذر صياغة الرد بالذكاء الاصطناعي.");
+    } finally {
+      setAiGeneratingCommentId(null);
+    }
+  };
+
   const [replyingText, setReplyingText] = useState("");
 
   const adminSaveCommentReply = async (commentId: string, replyText: string, markResolved = true) => {
@@ -577,7 +652,7 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
     setBusy(true);
     setError("");
     try {
-      const result = await adminRequest<{ proposal: ProposalSummary & { markdown: string } }>(
+      const result = await adminRequest<{ proposal: ProposalSummary & { markdown: string; settings?: ProposalSettings } }>(
         adminKey,
         `/proposals/${id}`,
       );
@@ -595,6 +670,7 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
         active: proposal.active,
         rotateToken: false,
         removePassword: false,
+        settings: proposal.settings || defaultProposalSettings,
       });
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch {
@@ -614,6 +690,7 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
         title: form.title,
         clientName: form.clientName,
         markdown: form.markdown,
+        settings: form.settings,
         password: form.removePassword
           ? null
           : form.password || undefined,
@@ -806,14 +883,18 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                 ? "إدارة العروض"
                 : activeAdminTab === "analytics"
                   ? "التحليلات والأداء"
-                  : "إعدادات التجربة"}
+                  : activeAdminTab === "discounts"
+                    ? "الخصومات والكوبونات"
+                    : "إعدادات التجربة"}
             </h1>
             <p>
               {activeAdminTab === "editor"
                 ? "أنشئ عروضاً احترافية وتابع تفاعل العملاء من مكان واحد."
                 : activeAdminTab === "analytics"
                   ? "راقب وصول العملاء وقراءة العروض."
-                  : "خصص تجربة العرض والميزات المتاحة للعملاء."}
+                  : activeAdminTab === "discounts"
+                    ? "إدارة خصومات وكوبونات الشركاء المخصصة لكل عرض."
+                    : "خصص تجربة العرض والميزات المتاحة للعملاء."}
             </p>
           </div>
           <div className="proposal-admin-top-actions">
@@ -852,6 +933,39 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
         ) : activeAdminTab === "analytics" ? (
           <section className="proposal-editor">
             <ProposalAnalytics items={items} />
+          </section>
+        ) : activeAdminTab === "discounts" ? (
+          <section className="proposal-editor p-6 rounded-2xl bg-card border border-primary/30 shadow-xl space-y-4 text-start dir-rtl">
+            <div className="border-b border-border/40 pb-3 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+                <Tag className="w-5 h-5 text-amber-400" />
+                <span>إدارة الخصومات والكوبونات الخاصة للعروض</span>
+              </h2>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-muted-foreground block">
+                اختر العرض المطلوب لإدارة الخصومات والكوبونات الخاصة به:
+              </label>
+              <select
+                value={selectedDiscountProposalId || (items[0]?.id || "")}
+                onChange={(e) => setSelectedDiscountProposalId(e.target.value)}
+                className="w-full text-xs font-bold bg-background border border-input rounded-xl p-3"
+              >
+                {items.map((it) => (
+                  <option key={it.id} value={it.id}>
+                    {it.title} ({it.clientName})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {(selectedDiscountProposalId || items[0]?.id) && (
+              <ProposalDiscountsManager
+                adminKey={adminKey}
+                proposalId={selectedDiscountProposalId || items[0]?.id}
+              />
+            )}
           </section>
         ) : (
           <>
@@ -1412,6 +1526,48 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
             )}
 
             <div className="proposal-form-options">
+              {/* Per-Proposal Custom Settings Card */}
+              <div className="p-4 rounded-xl border border-primary/30 bg-card/60 space-y-3 text-xs dir-rtl text-start col-span-full">
+                <div className="flex items-center justify-between border-b border-border/40 pb-2">
+                  <strong className="text-primary font-bold flex items-center gap-1.5">
+                    <Settings className="w-4 h-4" />
+                    <span>إعدادات وصلاحيات هذا العرض (Per-Proposal Settings)</span>
+                  </strong>
+                  <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded font-mono">تزامن تلقائي عبر الأجهزة</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-1">
+                  {[
+                    { key: "allowDrawSignature", label: "توقيع بالرسم" },
+                    { key: "allowTypeSignature", label: "توقيع بالكتابة" },
+                    { key: "allowUploadSignature", label: "رفع صورة التوقيع" },
+                    { key: "enableInlineComments", label: "تعليقات العميل المباشرة" },
+                    { key: "allowRejection", label: "طلب التعديل / الاعتراض" },
+                    { key: "enablePromoCode", label: "حقل كود الخصم" },
+                    { key: "enableExpiryCountdown", label: "عداد انتهاء الصلاحية" },
+                    { key: "enableReadingTime", label: "تقدير وقت القراءة" },
+                    { key: "enablePrint", label: "زر الطباعة" },
+                    { key: "enablePdfExport", label: "زر حفظ PDF" },
+                  ].map((opt) => {
+                    const currentVal = form.settings?.[opt.key as keyof ProposalSettings] ?? defaultProposalSettings[opt.key as keyof ProposalSettings];
+                    return (
+                      <label key={opt.key} className="flex items-center gap-2 p-2 rounded-lg bg-muted/20 border border-border/40 cursor-pointer hover:bg-muted/40 transition">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(currentVal)}
+                          onChange={(e) => {
+                            const updated = { ...(form.settings || defaultProposalSettings), [opt.key]: e.target.checked };
+                            setForm((current) => ({ ...current, settings: updated }));
+                          }}
+                          className="accent-primary h-3.5 w-3.5"
+                        />
+                        <span className="font-semibold text-foreground">{opt.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
               <label>
                 <input
                   type="checkbox"
@@ -1470,7 +1626,7 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                   type="search"
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="بحث باسم العرض، العميل، أو رمز الرابط..."
+                  placeholder="بحث باسم العرض، العميل، كود الخصم..."
                   aria-label="البحث في العروض"
                 />
               </label>
@@ -1482,17 +1638,112 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
               </Button>
             </div>
           </div>
+
+          {/* Status Filter Tab Bar */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-2.5 pt-1 border-b border-border/40 mb-3">
+            <button
+              type="button"
+              onClick={() => setStatusFilter("all")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
+                statusFilter === "all"
+                  ? "bg-amber-500 text-black shadow-md"
+                  : "bg-card/70 text-muted-foreground hover:bg-card border border-border/40"
+              }`}
+            >
+              <span>الكل</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/20 text-current">{statusCounts.all}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("signed")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
+                statusFilter === "signed"
+                  ? "bg-emerald-500 text-black shadow-md"
+                  : "bg-card/70 text-emerald-400/80 hover:bg-card border border-emerald-500/20"
+              }`}
+            >
+              <CheckCircle className="w-3.5 h-3.5" />
+              <span>معتمد</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/20 text-current">{statusCounts.signed}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("rejected")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
+                statusFilter === "rejected"
+                  ? "bg-destructive text-white shadow-md"
+                  : "bg-card/70 text-destructive/80 hover:bg-card border border-destructive/20"
+              }`}
+            >
+              <XCircle className="w-3.5 h-3.5" />
+              <span>طلب تعديل</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/20 text-current">{statusCounts.rejected}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("read")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
+                statusFilter === "read"
+                  ? "bg-sky-500 text-black shadow-md"
+                  : "bg-card/70 text-sky-400/80 hover:bg-card border border-sky-500/20"
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>تمت القراءة</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/20 text-current">{statusCounts.read}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("unread")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
+                statusFilter === "unread"
+                  ? "bg-purple-500 text-white shadow-md"
+                  : "bg-card/70 text-purple-400/80 hover:bg-card border border-purple-500/20"
+              }`}
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span>جديد / لم يُفتح</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/20 text-current">{statusCounts.unread}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("has_discount")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
+                statusFilter === "has_discount"
+                  ? "bg-amber-400 text-black shadow-md"
+                  : "bg-card/70 text-amber-300/80 hover:bg-card border border-amber-500/20"
+              }`}
+            >
+              <Tag className="w-3.5 h-3.5" />
+              <span>يحتوي خصم</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/20 text-current">{statusCounts.has_discount}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("expired")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
+                statusFilter === "expired"
+                  ? "bg-muted-foreground text-background shadow-md"
+                  : "bg-card/70 text-muted-foreground hover:bg-card border border-border/40"
+              }`}
+            >
+              <Clock className="w-3.5 h-3.5" />
+              <span>منتهي</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/20 text-current">{statusCounts.expired}</span>
+            </button>
+          </div>
+
           {filteredItems.length === 0 ? (
             <div className="proposal-empty">
               <Search className="h-5 w-5" />
-              {items.length === 0 ? "لا توجد عروض بعد. أنشئ العرض الأول من الأعلى." : "لا توجد نتائج مطابقة لبحثك."}
+              {items.length === 0 ? "لا توجد عروض بعد. أنشئ العرض الأول من الأعلى." : "لا توجد نتائج مطابقة لتصنيف البحث."}
             </div>
           ) : (
             <div className="proposal-table-wrap">
               <table>
                 <thead>
                   <tr>
-                    <th>العرض</th>
+                    <th>العرض والخصم</th>
                     <th>الحالة والإجراءات</th>
                     <th>الفتح / القراءة</th>
                     <th>آخر نشاط</th>
@@ -1510,16 +1761,32 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                     return (
                       <tr key={item.id} className={needsAction ? "bg-amber-500/5" : ""}>
                         <td>
-                          <a
-                            href={`/proposals/${item.token}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="font-bold text-foreground hover:text-amber-400 hover:underline flex items-center gap-1.5"
-                          >
-                            <Eye className="w-3.5 h-3.5 text-amber-400" />
-                            <span>{item.title}</span>
-                          </a>
-                          <span className="text-xs text-muted-foreground block">{item.clientName}</span>
+                          <div className="space-y-1">
+                            <a
+                              href={`/proposals/${item.token}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-bold text-foreground hover:text-amber-400 hover:underline flex items-center gap-1.5"
+                            >
+                              <Eye className="w-3.5 h-3.5 text-amber-400" />
+                              <span>{item.title}</span>
+                            </a>
+                            <span className="text-xs text-muted-foreground block">{item.clientName}</span>
+
+                            {item.promoCode || item.discountValue ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                                <Tag className="w-3 h-3 text-amber-400" />
+                                <span>كود الخصم: {item.promoCode || "خصم خاص"}</span>
+                                {item.discountValue && (
+                                  <span className="font-mono text-amber-400">({item.discountValue}{item.discountType === "percentage" ? "%" : "$"})</span>
+                                )}
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium text-muted-foreground/70 bg-muted/30 border border-border/20">
+                                <span>سعر أساسي</span>
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td>
                           <div className="flex flex-col gap-1 items-start">
@@ -1590,47 +1857,99 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
 
         {/* Engagement Audit Modal */}
         {selectedAuditProposal && (
-          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="w-full max-w-xl p-6 rounded-2xl bg-card border border-border/80 shadow-2xl space-y-4 text-start dir-rtl max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between border-b border-border/40 pb-3">
-                <div className="space-y-0.5">
-                  <h3 className="font-bold text-base text-foreground flex items-center gap-2">
-                    <BarChart className="w-4 h-4 text-amber-400" />
-                    <span>تقرير تفاعل وتدقيق العرض</span>
-                  </h3>
+          <div className="fixed inset-0 z-50 bg-background/85 backdrop-blur-lg flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
+            <div className="w-[96vw] max-w-[1440px] h-[90vh] max-h-[900px] flex flex-col p-5 sm:p-7 rounded-3xl bg-card/95 border border-amber-500/30 backdrop-blur-2xl shadow-[0_25px_60px_rgba(0,0,0,0.7)] space-y-4 text-start dir-rtl">
+              {/* Header Bar */}
+              <div className="flex items-center justify-between border-b border-border/40 pb-3.5 shrink-0 gap-4 flex-wrap">
+                <div className="space-y-1 flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-bold text-lg text-foreground flex items-center gap-2">
+                      <BarChart className="w-5 h-5 text-amber-400" />
+                      <span>تقرير تفاعل وتدقيق العرض</span>
+                    </h3>
+                    {selectedAuditProposal.promoCode || selectedAuditProposal.discountValue ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm">
+                        <Tag className="w-3.5 h-3.5 text-amber-400" />
+                        <span>كود الخصم المطبق: {selectedAuditProposal.promoCode || "خصم خاص"}</span>
+                        {selectedAuditProposal.discountValue && (
+                          <span className="font-mono text-amber-400">({selectedAuditProposal.discountValue}{selectedAuditProposal.discountType === "percentage" ? "%" : "$"})</span>
+                        )}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium text-muted-foreground/70 bg-muted/40 border border-border/30">
+                        <span>سعر أساسي (بدون خصم)</span>
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground">{selectedAuditProposal.title} ({selectedAuditProposal.clientName})</p>
                 </div>
-                <Button type="button" variant="ghost" size="sm" onClick={() => setSelectedAuditProposal(null)}>
-                  <XCircle className="w-4 h-4" />
-                </Button>
+
+                {/* Integrated Compact Tracking Link & Copy Button */}
+                <div className="flex items-center gap-2 bg-muted/30 px-3 py-1.5 rounded-xl border border-border/40 shrink-0">
+                  <span className="text-[11px] text-muted-foreground font-bold flex items-center gap-1">
+                    <Link className="w-3.5 h-3.5 text-amber-400" />
+                    رابط التتبع:
+                  </span>
+                  <a
+                    href={`${window.location.origin}/proposals/${selectedAuditProposal.token}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-amber-300 hover:text-amber-200 hover:underline font-mono text-xs max-w-[520px] lg:max-w-[620px] truncate"
+                    title="اضغط لفتح رابط العرض في نافذة جديدة"
+                  >
+                    {window.location.origin}/proposals/{selectedAuditProposal.token}
+                  </a>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const linkUrl = `${window.location.origin}/proposals/${selectedAuditProposal.token}`;
+                      navigator.clipboard.writeText(linkUrl).catch(() => {});
+                      setAuditLinkCopied(true);
+                      setTimeout(() => setAuditLinkCopied(false), 2000);
+                    }}
+                    className="h-7 text-xs px-2.5 font-bold gap-1 text-amber-300 border-amber-500/30 hover:bg-amber-500/10 shrink-0"
+                  >
+                    {auditLinkCopied ? <CheckCircle className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                    <span>{auditLinkCopied ? "تم النسخ!" : "نسخ الرابط"}</span>
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setSelectedAuditProposal(null)} className="h-8 w-8 p-0 rounded-full mr-1">
+                    <XCircle className="w-5 h-5 text-muted-foreground hover:text-foreground" />
+                  </Button>
+                </div>
               </div>
 
-              {/* Engagement Stats Overview */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-                <div className="p-3 rounded-xl bg-card/80 border border-border/60">
-                  <span className="text-[11px] text-muted-foreground block">مرات الفتح</span>
-                  <strong className="text-lg font-bold text-sky-400">{selectedAuditProposal.openCount}</strong>
-                </div>
-                <div className="p-3 rounded-xl bg-card/80 border border-border/60">
-                  <span className="text-[11px] text-muted-foreground block">القراءة الكاملة</span>
-                  <strong className="text-lg font-bold text-amber-400">{selectedAuditProposal.readCount}</strong>
-                </div>
-                <div className="p-3 rounded-xl bg-card/80 border border-border/60">
-                  <span className="text-[11px] text-muted-foreground block">أول زيارة</span>
-                  <strong className="text-xs font-mono block text-foreground pt-1">{formatDate(selectedAuditProposal.firstOpenedAt) || "لم يُفتح"}</strong>
-                </div>
-                <div className="p-3 rounded-xl bg-card/80 border border-border/60">
-                  <span className="text-[11px] text-muted-foreground block">آخر نشاط</span>
-                  <strong className="text-xs font-mono block text-foreground pt-1">{formatDate(selectedAuditProposal.lastReadAt || selectedAuditProposal.lastOpenedAt) || "لا يوجد"}</strong>
-                </div>
-              </div>
+              {/* 2-Column Full Height Workspace Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-0 py-1">
+                {/* Right Column: Stats & Signatures (5 cols) */}
+                <div className="lg:col-span-5 flex flex-col h-full min-h-0 space-y-3">
+                  {/* 2x2 Engagement Stats Grid */}
+                  <div className="grid grid-cols-2 gap-2.5 text-center shrink-0">
+                    <div className="p-3 rounded-2xl bg-card/80 border border-sky-500/20 shadow-sm">
+                      <span className="text-[10px] text-muted-foreground block font-bold">مرات الفتح</span>
+                      <strong className="text-lg font-bold text-sky-400">{selectedAuditProposal.openCount}</strong>
+                    </div>
+                    <div className="p-3 rounded-2xl bg-card/80 border border-amber-500/20 shadow-sm">
+                      <span className="text-[10px] text-muted-foreground block font-bold">القراءة الكاملة</span>
+                      <strong className="text-lg font-bold text-amber-400">{selectedAuditProposal.readCount}</strong>
+                    </div>
+                    <div className="p-3 rounded-2xl bg-card/80 border border-emerald-500/20 shadow-sm">
+                      <span className="text-[10px] text-muted-foreground block font-bold">أول زيارة</span>
+                      <strong className="text-[11px] font-mono block text-foreground pt-1">{formatDate(selectedAuditProposal.firstOpenedAt) || "لم يُفتح"}</strong>
+                    </div>
+                    <div className="p-3 rounded-2xl bg-card/80 border border-purple-500/20 shadow-sm">
+                      <span className="text-[10px] text-muted-foreground block font-bold">آخر نشاط</span>
+                      <strong className="text-[11px] font-mono block text-foreground pt-1">{formatDate(selectedAuditProposal.lastReadAt || selectedAuditProposal.lastOpenedAt) || "لا يوجد"}</strong>
+                    </div>
+                  </div>
 
-              {/* Client decision */}
-              <div className="space-y-2">
-                <h4 className="font-bold text-xs text-foreground flex items-center gap-1.5">
-                  <CheckCircle className="w-3.5 h-3.5 text-amber-400" />
-                  <span>قرار العميل</span>
-                </h4>
+                  {/* Signatures Card */}
+                  <div className="flex-1 flex flex-col space-y-3 p-4.5 rounded-2xl bg-muted/20 border border-border/40 min-h-0 overflow-y-auto">
+                    <h4 className="font-bold text-xs text-foreground flex items-center gap-1.5 border-b border-border/40 pb-2">
+                      <CheckCircle className="w-4 h-4 text-amber-400" />
+                      <span>قرارات الاعتماد والتوقيع ({activity?.signatures.length ?? 0})</span>
+                    </h4>
                 {activityLoading ? (
                   <p className="text-xs text-muted-foreground italic p-3">جارٍ التحميل...</p>
                 ) : activityError ? (
@@ -1763,19 +2082,76 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                     ))}
                   </div>
                 )}
-              </div>
+                </div>
+                </div>
 
-              {/* Client comments */}
-              <div className="space-y-2">
-                <h4 className="font-bold text-xs text-foreground flex items-center gap-1.5">
-                  <MessageSquare className="w-3.5 h-3.5 text-amber-400" />
-                  <span>تعليقات العميل ({activity?.comments.length ?? 0})</span>
-                </h4>
+                {/* Left Column: Comments, AI Assistant & Internal Notes (7 cols) */}
+                <div className="lg:col-span-7 flex flex-col h-full min-h-0">
+                  <div className="flex-1 flex flex-col space-y-3 p-4.5 rounded-2xl bg-muted/20 border border-border/40 min-h-0 overflow-y-auto">
+                    <div className="flex items-center justify-between gap-2 border-b border-border/40 pb-2 flex-wrap">
+                      <h4 className="font-bold text-xs text-foreground flex items-center gap-1.5">
+                        <MessageSquare className="w-4 h-4 text-amber-400" />
+                        <span>تعليقات واستفسارات العملاء ({activity?.comments.length ?? 0})</span>
+                      </h4>
+
+                      {activity && activity.comments.length > 0 && (
+                        <div className="flex items-center gap-1 bg-background/60 p-1 rounded-xl border border-border/40">
+                          <button
+                            type="button"
+                            onClick={() => setAuditCommentTab("all")}
+                            className={`px-2.5 py-0.5 rounded-lg text-[11px] font-bold transition-all ${
+                              auditCommentTab === "all"
+                                ? "bg-amber-500 text-black shadow-sm"
+                                : "text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            الكل ({activity.comments.length})
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAuditCommentTab("pending")}
+                            className={`px-2.5 py-0.5 rounded-lg text-[11px] font-bold transition-all ${
+                              auditCommentTab === "pending"
+                                ? "bg-amber-500/30 text-amber-300 border border-amber-500/40 shadow-sm"
+                                : "text-muted-foreground hover:text-amber-300"
+                            }`}
+                          >
+                            قيد المراجعة ({activity.comments.filter((c) => !c.resolved).length})
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAuditCommentTab("resolved")}
+                            className={`px-2.5 py-0.5 rounded-lg text-[11px] font-bold transition-all ${
+                              auditCommentTab === "resolved"
+                                ? "bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 shadow-sm"
+                                : "text-muted-foreground hover:text-emerald-300"
+                            }`}
+                          >
+                            تم الحل ({activity.comments.filter((c) => c.resolved).length})
+                          </button>
+                        </div>
+                      )}
+                    </div>
                 {activityLoading ? (
                   <p className="text-xs text-muted-foreground italic p-3">جارٍ التحميل...</p>
-                ) : activity && activity.comments.length > 0 ? (
-                  <div className="space-y-1.5">
-                    {activity.comments.map((c) => (
+                ) : activity && activity.comments.length > 0 ? (() => {
+                  const filteredComments = activity.comments.filter((c) => {
+                    if (auditCommentTab === "pending") return !c.resolved;
+                    if (auditCommentTab === "resolved") return Boolean(c.resolved);
+                    return true;
+                  });
+
+                  if (filteredComments.length === 0) {
+                    return (
+                      <p className="text-xs text-muted-foreground italic p-3.5 rounded-xl bg-muted/20 border border-border/30">
+                        لا توجد تعليقات مطابقة لتصنيف التصفية المحدد ({auditCommentTab === "pending" ? "قيد المراجعة" : "تم الحل"}).
+                      </p>
+                    );
+                  }
+
+                  return (
+                    <div className="space-y-1.5">
+                      {filteredComments.map((c) => (
                       <div
                         key={c.id}
                         className={`p-3.5 rounded-xl border text-xs space-y-2.5 transition-all ${
@@ -1803,9 +2179,17 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                         </div>
 
                         {c.selectedText && (
-                          <div className="p-2 rounded-lg bg-amber-500/10 border-r-2 border-amber-500 text-amber-300 font-mono text-[11px] italic">
-                            &ldquo;{c.selectedText}&rdquo;
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => jumpToQuotedText(c.selectedText!)}
+                            className="w-full text-right p-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border-r-2 border-amber-500 text-amber-300 font-mono text-[11px] italic transition-all cursor-pointer group flex items-start justify-between gap-2 shadow-sm active:scale-[0.99]"
+                            title="اضغط للانتقال التلقائي لمكان النص المُقتبس وتظليله المؤقت"
+                          >
+                            <span className="flex-1">&ldquo;{c.selectedText}&rdquo;</span>
+                            <span className="text-[10px] font-sans not-italic text-amber-400/80 group-hover:text-amber-300 font-semibold flex items-center gap-1 shrink-0 bg-amber-500/15 px-1.5 py-0.5 rounded border border-amber-500/30">
+                              انتقال للنص ↖
+                            </span>
+                          </button>
                         )}
 
                         {editingAdminCommentId === c.id ? (
@@ -1914,12 +2298,25 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                         {/* Admin Reply Form */}
                         {replyingCommentId === c.id && (
                           <div className="space-y-2 pt-2 border-t border-border/40 bg-muted/20 p-2.5 rounded-lg">
-                            <label className="text-[11px] font-bold text-amber-400 block">اكتب رّد فريق NinuSoft المباشر للعميل:</label>
+                            <div className="flex items-center justify-between gap-2 flex-wrap text-amber-400">
+                              <label className="text-[11px] font-bold block">اكتب رّد فريق NinuSoft المباشر للعميل:</label>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => adminGenerateAiReply(c.id)}
+                                disabled={aiGeneratingCommentId === c.id}
+                                className="text-[11px] h-6 border-purple-500/40 text-purple-300 hover:bg-purple-500/15 font-bold gap-1 shadow-sm"
+                              >
+                                <span>✨</span>
+                                <span>{aiGeneratingCommentId === c.id ? "جارٍ الصياغة بالذكاء الاصطناعي..." : "صياغة رد بالذكاء الاصطناعي"}</span>
+                              </Button>
+                            </div>
                             <Textarea
                               value={replyingText}
                               onChange={(e) => setReplyingText(e.target.value)}
-                              placeholder="أدخل رّد الفريق الذي سيظهر للعميل كإجابة رسمية..."
-                              rows={2}
+                              placeholder="أدخل رّد الفريق أو استعن بالذكاء الاصطناعي لصياغته..."
+                              rows={3}
                               className="text-xs bg-background"
                               autoFocus
                             />
@@ -2032,23 +2429,14 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                       </div>
                     ))}
                   </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground italic p-3 rounded-lg bg-muted/20 border border-border/30">
-                    لا توجد تعليقات من العميل.
-                  </p>
-                )}
-              </div>
-
-              {/* Token Access Info */}
-              <div className="p-3 rounded-xl bg-card border border-border/60 space-y-1 text-xs font-mono">
-                <span className="text-[11px] text-muted-foreground block font-sans font-bold">رابط التتبع الفريد:</span>
-                <p className="text-amber-300 break-all">{window.location.origin}/proposals/{selectedAuditProposal.token}</p>
-              </div>
-
-              <div className="flex justify-end pt-2">
-                <Button type="button" variant="outline" size="sm" onClick={() => setSelectedAuditProposal(null)}>
-                  إغلاق
-                </Button>
+                );
+              })() : (
+                <p className="text-xs text-muted-foreground italic p-3.5 rounded-xl bg-muted/20 border border-border/30">
+                  لا توجد تعليقات من العميل على هذا العرض بعد.
+                </p>
+              )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -510,6 +510,33 @@ export function ProposalSettingsManager() {
               السماح للعميل بكتابة استفسارات وملاحظات مباشرة أسفل الوثيقة.
             </p>
           </div>
+
+          {/* Promo Code Box */}
+          <div
+            className={`p-5 rounded-xl border transition-all cursor-pointer ${
+              settings.enablePromoCode
+                ? "border-amber-500/40 bg-card/90 shadow-md"
+                : "border-border/40 bg-card/40 opacity-75"
+            }`}
+            onClick={() => toggle("enablePromoCode")}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 text-base font-bold text-foreground">
+                <Tag className="w-5 h-5 text-amber-400" />
+                <span>حقل كود الخصم في نموذج الاعتماد</span>
+              </div>
+              <input
+                type="checkbox"
+                onClick={stopCheckboxPropagation}
+                checked={settings.enablePromoCode}
+                onChange={() => toggle("enablePromoCode")}
+                className="w-4 h-4 accent-amber-500 cursor-pointer"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              إظهار حقل إدخال كود الخصم للعميل في بطاقة اعتماد وتوقيع العرض.
+            </p>
+          </div>
         </div>
       </div>
 

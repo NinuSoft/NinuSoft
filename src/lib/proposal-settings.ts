@@ -26,6 +26,7 @@ export type ProposalSettings = {
   enableCustomBranding: boolean;
   enableAnalyticsDashboard: boolean;
   enablePackageSwitcher: boolean;
+  enablePromoCode: boolean;
   packageTiers: PackageTierSetting[];
 };
 
@@ -47,6 +48,7 @@ export const defaultProposalSettings: ProposalSettings = {
   enableCustomBranding: true,
   enableAnalyticsDashboard: true,
   enablePackageSwitcher: false,
+  enablePromoCode: true,
   packageTiers: [
     {
       id: "standard",

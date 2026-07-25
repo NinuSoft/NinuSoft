@@ -4,6 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle, Edit, MessageSquare, Plus, Shield, Trash2 } from "@/components/Icons";
 import { useToast } from "@/hooks/use-toast";
 import { formatProposalDate } from "@/lib/format-date";
+import { jumpToQuotedText } from "@/lib/quote-navigator";
 import type { ProposalComment } from "@/lib/proposals-api";
 
 export const COMMENT_CATEGORIES = {
@@ -302,7 +303,7 @@ export function ProposalComments({
                   <span className="font-mono text-[11px] opacity-75">
                     {formatProposalDate(c.createdAt)}
                   </span>
-                  {onEdit && editingId !== c.id && (
+                  {onEdit && editingId !== c.id && !c.resolved && !c.replyText && (
                     <button
                       type="button"
                       onClick={() => startEdit(c)}
@@ -312,7 +313,7 @@ export function ProposalComments({
                       <Edit className="w-3.5 h-3.5" />
                     </button>
                   )}
-                  {onDelete && editingId !== c.id && (
+                  {onDelete && editingId !== c.id && !c.resolved && !c.replyText && (
                     <button
                       type="button"
                       onClick={() => handleDelete(c.id)}
@@ -328,9 +329,17 @@ export function ProposalComments({
 
               {/* Selected Text Highlight Quote */}
               {c.selectedText && (
-                <div className="p-2.5 rounded-lg bg-amber-500/10 border-r-4 border-amber-500 text-amber-200 font-mono text-[11px] italic leading-relaxed">
-                  &ldquo;{c.selectedText}&rdquo;
-                </div>
+                <button
+                  type="button"
+                  onClick={() => jumpToQuotedText(c.selectedText!)}
+                  className="w-full text-right p-2.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border-r-4 border-amber-500 text-amber-200 font-mono text-[11px] italic leading-relaxed transition-all cursor-pointer group flex items-start justify-between gap-2 shadow-sm active:scale-[0.99]"
+                  title="اضغط للانتقال التلقائي لمكان النص المُقتبس وتظليله المؤقت"
+                >
+                  <span className="flex-1">&ldquo;{c.selectedText}&rdquo;</span>
+                  <span className="text-[10px] font-sans not-italic text-amber-400/80 group-hover:text-amber-300 font-semibold flex items-center gap-1 shrink-0 bg-amber-500/15 px-1.5 py-0.5 rounded border border-amber-500/30">
+                    انتقال للنص ↖
+                  </span>
+                </button>
               )}
 
               {/* Comment Content / Edit Mode */}

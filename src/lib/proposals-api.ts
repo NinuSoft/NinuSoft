@@ -11,6 +11,7 @@ export type Proposal = {
   title: string;
   clientName: string;
   markdown: string;
+  settings?: ProposalSettings;
   expiresAt: string | null;
   updatedAt: string;
 };
@@ -31,6 +32,9 @@ export type ProposalSummary = Omit<Proposal, "markdown"> & {
   commentCount: number;
   unresolvedCommentCount: number;
   lastCommentAt: string | null;
+  promoCode?: string | null;
+  discountType?: "percentage" | "fixed" | null;
+  discountValue?: number | null;
 };
 
 /** A comment as stored by the backend. `id` and `createdAt` are server-assigned. */
@@ -45,6 +49,16 @@ export type ProposalComment = {
   replyAuthor?: string | null;
   repliedAt?: string | null;
   internalNote?: string | null;
+  createdAt: string;
+};
+
+export type ProposalDiscount = {
+  id: string;
+  proposalId: string;
+  code: string;
+  discountType: "percentage" | "fixed";
+  discountValue: number;
+  active: boolean;
   createdAt: string;
 };
 
@@ -386,6 +400,70 @@ export function adminDeleteProposalCommentApi(
   return adminRequest<{ ok: true; comments: ProposalComment[] }>(
     adminKey,
     `/proposals/${encodeURIComponent(proposalId)}/comments/${encodeURIComponent(commentId)}`,
+    {
+      method: "DELETE",
+    },
+  );
+}
+
+export function adminGenerateAiReplyApi(
+  adminKey: string,
+  proposalId: string,
+  commentId: string,
+) {
+  return adminRequest<{ ok: true; suggestedReply: string }>(
+    adminKey,
+    `/proposals/${encodeURIComponent(proposalId)}/comments/${encodeURIComponent(commentId)}/ai-reply`,
+    {
+      method: "POST",
+    },
+  );
+}
+
+export function getProposalDiscountsApi(
+  token: string,
+  sessionId?: string,
+  accessToken?: string,
+) {
+  return apiRequest<{ discounts: ProposalDiscount[] }>(
+    `/v1/proposals/${encodeURIComponent(token)}/discounts`,
+    { headers: proposalAuthHeaders(sessionId, accessToken) },
+  );
+}
+
+export function listAdminDiscountsApi(
+  adminKey: string,
+  proposalId: string,
+) {
+  return adminRequest<{ discounts: ProposalDiscount[] }>(
+    adminKey,
+    `/proposals/${encodeURIComponent(proposalId)}/discounts`,
+  );
+}
+
+export function createAdminDiscountApi(
+  adminKey: string,
+  proposalId: string,
+  data: { code: string; discountType: "percentage" | "fixed"; discountValue: number },
+) {
+  return adminRequest<{ ok: true; discounts: ProposalDiscount[] }>(
+    adminKey,
+    `/proposals/${encodeURIComponent(proposalId)}/discounts`,
+    {
+      method: "POST",
+      body: JSON.stringify(data),
+    },
+  );
+}
+
+export function deleteAdminDiscountApi(
+  adminKey: string,
+  proposalId: string,
+  discountId: string,
+) {
+  return adminRequest<{ ok: true; discounts: ProposalDiscount[] }>(
+    adminKey,
+    `/proposals/${encodeURIComponent(proposalId)}/discounts/${encodeURIComponent(discountId)}`,
     {
       method: "DELETE",
     },
