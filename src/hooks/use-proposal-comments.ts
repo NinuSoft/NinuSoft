@@ -11,6 +11,7 @@ type SubmitInput = {
   text: string;
   author?: string;
   selectedText?: string;
+  category?: string;
 };
 
 /**

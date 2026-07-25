@@ -2,8 +2,9 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { proposalMarkdownComponents, remarkAlerts } from "@/components/ProposalMarkdown";
 
+import { playChimeNotification, requestDesktopNotificationPermission, showDesktopNotification } from "@/lib/audio-notifications";
 import { formatProposalDate } from "@/lib/format-date";
-import { ChangeEvent, SyntheticEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, SyntheticEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -427,12 +428,32 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
     }
   };
 
+  const prevUnresolvedRef = useRef<number | null>(null);
+
   const loadItems = async (key = adminKey) => {
     const result = await adminRequest<{ proposals: ProposalSummary[] }>(
       key,
       "/proposals",
     );
-    setItems(result.proposals);
+    const newItems = result.proposals;
+    const newUnresolvedCount = newItems.reduce(
+      (sum, item) => sum + (item.unresolvedCommentCount ?? 0),
+      0,
+    );
+
+    if (
+      prevUnresolvedRef.current !== null &&
+      newUnresolvedCount > prevUnresolvedRef.current
+    ) {
+      playChimeNotification();
+      showDesktopNotification(
+        "استفسار جديد من العميل 🔔",
+        `وصل ${newUnresolvedCount - prevUnresolvedRef.current} استفسار جديد يقتضي المراجعة في العروض.`,
+      );
+    }
+    prevUnresolvedRef.current = newUnresolvedCount;
+
+    setItems(newItems);
     try {
       const shortlinksResult = await listShortlinks(key);
       const linksByToken: Record<string, string> = {};
@@ -453,6 +474,7 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
     setAuthenticated(true);
     sessionStorage.setItem("ninusoft-admin-key", key);
     sessionStorage.setItem("ninusoft-proposals-admin-key", key);
+    void requestDesktopNotificationPermission();
   };
 
   useEffect(() => {

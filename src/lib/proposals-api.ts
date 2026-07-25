@@ -39,6 +39,7 @@ export type ProposalComment = {
   author: string;
   text: string;
   selectedText: string | null;
+  category?: "general" | "pricing" | "technical" | "timeline";
   resolved?: boolean;
   replyText?: string | null;
   replyAuthor?: string | null;
@@ -255,7 +256,7 @@ export function getProposalSignaturesApi(
 
 export function submitProposalCommentApi(
   token: string,
-  comment: { text: string; author?: string; selectedText?: string },
+  comment: { text: string; author?: string; selectedText?: string; category?: string },
   sessionId?: string,
   accessToken?: string,
 ) {

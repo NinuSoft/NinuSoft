@@ -6,11 +6,20 @@ import { useToast } from "@/hooks/use-toast";
 import { formatProposalDate } from "@/lib/format-date";
 import type { ProposalComment } from "@/lib/proposals-api";
 
+export const COMMENT_CATEGORIES = {
+  general: { label: "عام", color: "bg-sky-500/15 text-sky-400 border-sky-500/30" },
+  pricing: { label: "التسعير والمدفوعات", color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" },
+  technical: { label: "المواصفات الفنية", color: "bg-purple-500/15 text-purple-400 border-purple-500/30" },
+  timeline: { label: "الجدول الزمني", color: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
+} as const;
+
+type CategoryKey = keyof typeof COMMENT_CATEGORIES;
+
 interface ProposalCommentsProps {
   comments: ProposalComment[];
   loading?: boolean;
   error?: string | null;
-  onSubmit: (input: { text: string; author?: string }) => Promise<void>;
+  onSubmit: (input: { text: string; author?: string; category?: CategoryKey }) => Promise<void>;
   onEdit?: (commentId: string, text: string) => Promise<void>;
   onDelete?: (commentId: string) => Promise<void>;
   onRetry?: () => void;
@@ -28,6 +37,7 @@ export function ProposalComments({
   clientName,
 }: ProposalCommentsProps) {
   const [commentText, setCommentText] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<CategoryKey>("general");
   const [isOpen, setIsOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -53,7 +63,7 @@ export function ProposalComments({
 
     setSubmitting(true);
     try {
-      await onSubmit({ text, author: clientName || "العميل" });
+      await onSubmit({ text, author: clientName || "العميل", category: selectedCategory });
       setCommentText("");
     } catch (err) {
       toast({
@@ -200,6 +210,28 @@ export function ProposalComments({
           onSubmit={handleSubmit}
           className="mb-6 space-y-3 p-4 rounded-xl bg-muted/30 border border-border/50 shadow-inner"
         >
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-muted-foreground block">اختر التصنيف الموضوعي:</label>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {(Object.keys(COMMENT_CATEGORIES) as CategoryKey[]).map((key) => {
+                const cat = COMMENT_CATEGORIES[key];
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setSelectedCategory(key)}
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-semibold border transition-all ${
+                      selectedCategory === key
+                        ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                        : "bg-background/60 text-muted-foreground hover:text-foreground border-border/40"
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
           <Textarea
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
@@ -238,7 +270,9 @@ export function ProposalComments({
         <p className="text-xs text-muted-foreground italic p-4 text-center">جارٍ تحميل التعليقات...</p>
       ) : filteredComments.length > 0 ? (
         <div className="space-y-3.5">
-          {filteredComments.map((c) => (
+          {filteredComments.map((c) => {
+            const catInfo = COMMENT_CATEGORIES[c.category || "general"] || COMMENT_CATEGORIES.general;
+            return (
             <div
               key={c.id}
               className={`p-4 rounded-xl border text-xs transition-all duration-200 space-y-2.5 ${
@@ -249,8 +283,11 @@ export function ProposalComments({
             >
               {/* Card Header */}
               <div className="flex items-center justify-between gap-3 text-muted-foreground flex-wrap">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-bold text-foreground text-xs">{c.author}</span>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${catInfo.color}`}>
+                    {catInfo.label}
+                  </span>
                   {c.resolved ? (
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
                       <CheckCircle className="w-3 h-3" /> تم الحل
@@ -350,7 +387,8 @@ export function ProposalComments({
                 </>
               )}
             </div>
-          ))}
+          );
+        })}
         </div>
       ) : (
         <div className="p-8 text-center rounded-xl bg-muted/20 border border-dashed border-border/50 text-xs text-muted-foreground">
