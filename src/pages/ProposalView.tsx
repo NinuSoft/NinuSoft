@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ProposalAiAssistant } from "@/components/ProposalAiAssistant";
 import { ProposalExecutiveSummary } from "@/components/ProposalExecutiveSummary";
 import { ProposalExpiryCountdown } from "@/components/ProposalExpiryCountdown";
+import { ProposalRoiCalculator } from "@/components/ProposalRoiCalculator";
 import { formatProposalDate } from "@/lib/format-date";
 import { ProposalAttachments } from "@/components/ProposalAttachments";
 import { ProposalIncentiveBanner } from "@/components/ProposalIncentiveBanner";
@@ -1179,6 +1180,8 @@ export default function ProposalView() {
                         })()}
                       </div>
                     )}
+
+                    <ProposalRoiCalculator />
 
                     {settings.enableDigitalSignature && !hasAnySectionSignature && (
                       <ProposalSignature
