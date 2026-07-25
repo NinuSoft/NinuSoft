@@ -10,17 +10,23 @@ import {
   CheckCircle,
   RefreshCw,
   Shield,
-  Edit,
 } from "@/components/Icons";
 
 import {
+  ApiError,
+  getProposalSignatureApi,
   submitProposalSignatureApi,
+  type SignatureInput,
+  type SignatureRecord,
 } from "@/lib/proposals-api";
+import { useToast } from "@/hooks/use-toast";
+import { formatProposalDate } from "@/lib/format-date";
 
 interface ProposalSignatureProps {
-  proposalTitle: string;
   clientName: string;
   proposalToken?: string;
+  sessionId?: string;
+  accessToken?: string;
   allowDraw?: boolean;
   allowType?: boolean;
   allowUpload?: boolean;
@@ -28,48 +34,57 @@ interface ProposalSignatureProps {
   onSigned?: (signatureData: SignatureRecord) => void;
 }
 
-export interface SignatureRecord {
-  status: "SIGNED" | "REJECTED";
-  name: string;
-  title: string;
-  date: string;
-  signatureImage?: string;
-  rejectionReason?: string;
-  verificationId: string;
-  documentHash: string;
-}
+export type { SignatureRecord };
 
-async function calculateSHA256(text: string): Promise<string> {
-  try {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(text);
-    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-  } catch {
-    return Math.random().toString(36).substring(2, 15);
-  }
+/** Reads either the snake_case column name or the camelCase alias. */
+function sigField(
+  record: SignatureRecord | null,
+  snake: keyof SignatureRecord,
+  camel: keyof SignatureRecord,
+): string {
+  if (!record) return "";
+  return String(record[snake] ?? record[camel] ?? "");
 }
 
 export function ProposalSignature({
-  proposalTitle,
   clientName,
   proposalToken,
+  sessionId,
+  accessToken,
   allowDraw = true,
   allowType = true,
   allowUpload = true,
   allowRejection = true,
   onSigned,
 }: ProposalSignatureProps) {
-  const storageKey = `ninusoft-documenso-sig:${proposalTitle}`;
-  const [signedData, setSignedData] = useState<SignatureRecord | null>(() => {
-    try {
-      const raw = localStorage.getItem(storageKey);
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
+  const { toast } = useToast();
+  // The backend is authoritative and enforces one signature per proposal, so
+  // the record is always fetched rather than read from this browser's storage.
+  const [signedData, setSignedData] = useState<SignatureRecord | null>(null);
+  const [loadingSignature, setLoadingSignature] = useState(Boolean(proposalToken));
+
+  useEffect(() => {
+    if (!proposalToken) {
+      setLoadingSignature(false);
+      return;
     }
-  });
+    let cancelled = false;
+    setLoadingSignature(true);
+    getProposalSignatureApi(proposalToken, sessionId, accessToken)
+      .then((res) => {
+        if (!cancelled) setSignedData(res.signature ?? null);
+      })
+      .catch(() => {
+        // A failed read must not present the signing form as "not yet signed";
+        // leave it null but stop blocking, and let the POST surface any 409.
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingSignature(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [proposalToken, sessionId, accessToken]);
 
   const [signerName, setSignerName] = useState(clientName || "");
   const [signerTitle, setSignerTitle] = useState("المدير التنفيذي / ممثل الشركة");
@@ -161,36 +176,15 @@ export function ProposalSignature({
       signatureImage = uploadedImage;
     }
 
-    const dateStr = new Intl.DateTimeFormat("ar-IQ", {
-      dateStyle: "full",
-      timeStyle: "short",
-    }).format(new Date());
-
-    const documentHash = await calculateSHA256(`${proposalTitle}:${signerName}:${dateStr}`);
-    const verificationId = `DOC-SIG-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-
-    const record: SignatureRecord = {
+    // documentHash and verificationId are computed by the server over the
+    // stored markdown. Generating them here produced an audit trail that
+    // attested to nothing.
+    await submitDecision({
       status: "SIGNED",
       name: signerName.trim(),
       title: signerTitle.trim(),
-      date: dateStr,
-      signatureImage,
-      verificationId,
-      documentHash,
-    };
-
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(record));
-      setSignedData(record);
-      if (proposalToken) {
-        await submitProposalSignatureApi(proposalToken, record).catch(() => {});
-      }
-      if (onSigned) onSigned(record);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsSubmitting(false);
-    }
+      signatureImage: signatureImage || null,
+    });
   };
 
   const handleReject = async (e: React.FormEvent) => {
@@ -198,45 +192,76 @@ export function ProposalSignature({
     if (!signerName.trim() || !rejectionReason.trim()) return;
 
     setIsSubmitting(true);
-    const dateStr = new Intl.DateTimeFormat("ar-IQ-u-nu-latn", {
-      dateStyle: "full",
-      timeStyle: "short",
-    }).format(new Date());
+    await submitDecision(
+      {
+        status: "REJECTED",
+        name: signerName.trim(),
+        title: signerTitle.trim(),
+        rejectionReason: rejectionReason.trim(),
+      },
+      () => setShowRejectModal(false),
+    );
+  };
 
-    const documentHash = await calculateSHA256(`${proposalTitle}:REJECTED:${rejectionReason}`);
-    const verificationId = `DOC-REJ-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-
-    const record: SignatureRecord = {
-      status: "REJECTED",
-      name: signerName.trim(),
-      title: signerTitle.trim(),
-      date: dateStr,
-      rejectionReason: rejectionReason.trim(),
-      verificationId,
-      documentHash,
-    };
-
+  /**
+   * Sends the decision and only then shows it as recorded. The old flow set
+   * local state first, so a rejected request still rendered the full
+   * "signed and verified" panel to the client.
+   */
+  const submitDecision = async (
+    input: SignatureInput,
+    onSuccess?: () => void,
+  ) => {
+    if (!proposalToken) {
+      setIsSubmitting(false);
+      toast({
+        variant: "destructive",
+        title: "تعذر حفظ القرار",
+        description: "رابط العرض غير صالح.",
+      });
+      return;
+    }
     try {
-      localStorage.setItem(storageKey, JSON.stringify(record));
-      setSignedData(record);
-      setShowRejectModal(false);
-      if (proposalToken) {
-        await submitProposalSignatureApi(proposalToken, record).catch(() => {});
-      }
-      if (onSigned) onSigned(record);
+      const res = await submitProposalSignatureApi(
+        proposalToken,
+        input,
+        sessionId,
+        accessToken,
+      );
+      setSignedData(res.record);
+      onSuccess?.();
+      if (onSigned) onSigned(res.record);
     } catch (err) {
-      console.error(err);
+      const isFinalized =
+        err instanceof ApiError && err.code === "signature_finalized";
+      toast({
+        variant: "destructive",
+        title: isFinalized ? "تم اتخاذ القرار مسبقاً" : "تعذر حفظ القرار",
+        description:
+          err instanceof Error
+            ? err.message
+            : "حدث خطأ غير متوقع. حاول مجدداً.",
+      });
+      // Someone already decided on this proposal — show the real record.
+      if (isFinalized) {
+        getProposalSignatureApi(proposalToken, sessionId, accessToken)
+          .then((res) => setSignedData(res.signature ?? null))
+          .catch(() => {});
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const resetSignature = () => {
-    localStorage.removeItem(storageKey);
-    setSignedData(null);
-    setHasDrawn(false);
-    setUploadedImage("");
-  };
+  // Without this the signing form flashes before the fetch resolves, inviting a
+  // client to re-sign a proposal the server will reject with 409.
+  if (loadingSignature) {
+    return (
+      <div className="proposal-signature-card mt-12 p-6 md:p-8 rounded-2xl border border-border/60 bg-card/70 backdrop-blur-md shadow-2xl text-start dir-rtl">
+        <p className="text-xs text-muted-foreground italic">جارٍ تحميل حالة الاعتماد...</p>
+      </div>
+    );
+  }
 
   if (signedData) {
     if (signedData.status === "REJECTED") {
@@ -249,11 +274,8 @@ export function ProposalSignature({
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs px-3 py-1 rounded-full bg-destructive/20 text-destructive border border-destructive/40 font-mono font-semibold">
-                {signedData.verificationId}
+                {sigField(signedData, "verification_id", "verificationId")}
               </span>
-              <Button type="button" variant="ghost" size="sm" onClick={resetSignature} className="text-xs text-muted-foreground hover:text-foreground">
-                <Edit className="w-3.5 h-3.5 ml-1" /> تحديث القرار
-              </Button>
             </div>
           </div>
 
@@ -265,12 +287,14 @@ export function ProposalSignature({
             <div>
               <span className="block text-xs text-muted-foreground font-semibold mb-1">الملاحظات والسبب</span>
               <div className="p-3 rounded-xl bg-background/60 border border-border/40 text-foreground font-medium">
-                {signedData.rejectionReason}
+                {sigField(signedData, "rejection_reason", "rejectionReason")}
               </div>
             </div>
             <div>
               <span className="block text-xs text-muted-foreground font-semibold">تاريخ الطلب</span>
-              <span className="text-amber-300 font-mono text-xs">{signedData.date}</span>
+              <span className="text-amber-300 font-mono text-xs">
+                {formatProposalDate(signedData.signature_date, "long")}
+              </span>
             </div>
           </div>
         </div>
@@ -287,11 +311,8 @@ export function ProposalSignature({
           <div className="flex items-center gap-2">
             <span className="text-xs px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono font-semibold flex items-center gap-1">
               <CheckCircle className="w-3.5 h-3.5" />
-              <span>{signedData.verificationId}</span>
+              <span>{sigField(signedData, "verification_id", "verificationId")}</span>
             </span>
-            <Button type="button" variant="ghost" size="sm" onClick={resetSignature} className="text-xs text-muted-foreground hover:text-foreground">
-              <Edit className="w-3.5 h-3.5 ml-1" /> تغيير التوقيع
-            </Button>
           </div>
         </div>
 
@@ -307,16 +328,18 @@ export function ProposalSignature({
             </div>
             <div>
               <span className="block text-xs text-muted-foreground font-semibold">تاريخ التوقيع والاعتماد</span>
-              <span className="text-amber-300 font-mono text-xs">{signedData.date}</span>
+              <span className="text-amber-300 font-mono text-xs">
+                {formatProposalDate(signedData.signature_date, "long")}
+              </span>
             </div>
           </div>
 
           {/* Signature Preview */}
           <div className="p-4 rounded-xl border border-border/60 bg-muted/40 text-center flex flex-col items-center justify-center min-h-[7rem]">
             <span className="text-[11px] text-muted-foreground mb-2 font-mono">التوقيع الرقمي المعتمد</span>
-            {signedData.signatureImage ? (
+            {sigField(signedData, "signature_image", "signatureImage") ? (
               <img
-                src={signedData.signatureImage}
+                src={sigField(signedData, "signature_image", "signatureImage")}
                 alt="التوقيع المعتمد"
                 className="max-h-20 object-contain"
               />
@@ -338,7 +361,9 @@ export function ProposalSignature({
           </div>
           <div className="break-all opacity-90 text-[11px]">
             <span className="text-muted-foreground">SHA-256 Digest: </span>
-            <span className="text-foreground">{signedData.documentHash}</span>
+            <span className="text-foreground">
+              {sigField(signedData, "document_hash", "documentHash")}
+            </span>
           </div>
         </div>
       </div>

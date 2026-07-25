@@ -2,58 +2,53 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { MessageSquare, Plus } from "@/components/Icons";
-import { submitProposalCommentApi } from "@/lib/proposals-api";
+import { useToast } from "@/hooks/use-toast";
+import { formatProposalDate } from "@/lib/format-date";
+import type { ProposalComment } from "@/lib/proposals-api";
 
 interface ProposalCommentsProps {
-  proposalTitle: string;
-  proposalToken?: string;
+  comments: ProposalComment[];
+  loading?: boolean;
+  error?: string | null;
+  onSubmit: (input: { text: string; author?: string }) => Promise<void>;
+  onRetry?: () => void;
   clientName?: string;
 }
 
-export interface CommentItem {
-  id: string;
-  author: string;
-  text: string;
-  date: string;
-  selectedText?: string;
-}
-
-export function ProposalComments({ proposalTitle, proposalToken, clientName }: ProposalCommentsProps) {
-  const storageKey = `ninusoft-comments:${proposalTitle}`;
-  const [comments, setComments] = useState<CommentItem[]>(() => {
-    try {
-      const raw = localStorage.getItem(storageKey);
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
-    }
-  });
-
+export function ProposalComments({
+  comments,
+  loading,
+  error,
+  onSubmit,
+  onRetry,
+  clientName,
+}: ProposalCommentsProps) {
   const [commentText, setCommentText] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!commentText.trim()) return;
+    const text = commentText.trim();
+    if (!text || submitting) return;
 
-    const newComment: CommentItem = {
-      id: Math.random().toString(36).substring(2, 9),
-      author: clientName || "العميل",
-      text: commentText.trim(),
-      date: new Intl.DateTimeFormat("en-GB", { dateStyle: "short", timeStyle: "short" }).format(new Date()),
-    };
-
-    const updated = [newComment, ...comments];
-    setComments(updated);
+    setSubmitting(true);
     try {
-      localStorage.setItem(storageKey, JSON.stringify(updated));
-      if (proposalToken) {
-        await submitProposalCommentApi(proposalToken, newComment).catch(() => {});
-      }
+      await onSubmit({ text, author: clientName || "العميل" });
+      // Only clear once the server has the comment — otherwise a failed send
+      // would silently discard what the client typed.
+      setCommentText("");
     } catch (err) {
-      console.error(err);
+      toast({
+        variant: "destructive",
+        title: "تعذر إرسال التعليق",
+        description:
+          err instanceof Error ? err.message : "حدث خطأ غير متوقع. حاول مجدداً.",
+      });
+    } finally {
+      setSubmitting(false);
     }
-    setCommentText("");
   };
 
   return (
@@ -92,20 +87,40 @@ export function ProposalComments({ proposalTitle, proposalToken, clientName }: P
             autoFocus
           />
           <div className="flex justify-end">
-            <Button type="submit" size="sm" className="font-bold text-xs flex items-center gap-1.5">
-              <MessageSquare className="w-3.5 h-3.5" /> إرسال التعليق
+            <Button
+              type="submit"
+              size="sm"
+              disabled={submitting}
+              className="font-bold text-xs flex items-center gap-1.5"
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              {submitting ? "جارٍ الإرسال..." : "إرسال التعليق"}
             </Button>
           </div>
         </form>
       )}
 
-      {comments.length > 0 ? (
+      {error ? (
+        <div className="p-3.5 rounded-xl border border-destructive/40 bg-destructive/10 text-xs space-y-2">
+          <p className="text-destructive font-bold">تعذر تحميل التعليقات.</p>
+          <p className="text-muted-foreground">{error}</p>
+          {onRetry && (
+            <Button type="button" variant="outline" size="sm" onClick={onRetry} className="text-xs">
+              إعادة المحاولة
+            </Button>
+          )}
+        </div>
+      ) : loading && comments.length === 0 ? (
+        <p className="text-xs text-muted-foreground italic">جارٍ تحميل التعليقات...</p>
+      ) : comments.length > 0 ? (
         <div className="space-y-3">
           {comments.map((c) => (
             <div key={c.id} className="p-3.5 rounded-xl border border-border/40 bg-card/80 space-y-2 text-xs">
               <div className="flex items-center justify-between text-muted-foreground">
                 <strong className="text-foreground text-xs font-bold">{c.author}</strong>
-                <span className="font-mono text-[11px] opacity-75">{c.date}</span>
+                <span className="font-mono text-[11px] opacity-75">
+                  {formatProposalDate(c.createdAt)}
+                </span>
               </div>
               {c.selectedText && (
                 <div className="p-2 rounded-lg bg-amber-500/10 border-r-2 border-amber-500 text-amber-300 font-mono text-[11px] italic">

@@ -1906,6 +1906,19 @@ html {
 }
 
 @media print {
+  /* Set when printing is disabled in admin settings and the print was not
+     initiated by the in-page buttons. Deterrence only — see ProposalView. */
+  html[data-print-blocked="true"] body > * {
+    display: none !important;
+  }
+  html[data-print-blocked="true"] body::after {
+    content: "الطباعة معطّلة لهذا العرض. يرجى التواصل مع NinuSoft.";
+    display: block;
+    padding: 4rem 2rem;
+    text-align: center;
+    font-size: 14pt;
+    color: #000;
+  }
   .mermaid-toolbar {
     display: none !important;
   }

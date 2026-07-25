@@ -10,6 +10,7 @@ import {
   saveProposalSettingsBackendApi,
   getProposalSettingsBackendApi,
 } from "@/lib/proposals-api";
+import { useToast } from "@/hooks/use-toast";
 import {
   Settings,
   PenTool,
@@ -26,22 +27,42 @@ import {
   CheckCircle,
 } from "@/components/Icons";
 
+/** Matches the fallback chain in ProposalAdmin so the settings tab keeps working
+ *  when the operator signed in through the shortlinks portal. */
+function readAdminKey() {
+  return (
+    sessionStorage.getItem("ninusoft-admin-key") ||
+    sessionStorage.getItem("ninusoft-proposals-admin-key") ||
+    sessionStorage.getItem("ninusoft-shortlinks-admin-key") ||
+    ""
+  );
+}
+
 export function ProposalSettingsManager() {
   const [settings, setSettings] = useState<ProposalSettings>(getProposalSettings);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
-    const adminKey = sessionStorage.getItem("ninusoft-proposals-admin-key");
+    const adminKey = readAdminKey();
     if (adminKey) {
       getProposalSettingsBackendApi(adminKey)
         .then((res) => {
           if (res && res.settings && typeof res.settings === "object") {
-            const merged = { ...defaultProposalSettings, ...(res.settings as Partial<ProposalSettings>) };
+            const merged = { ...defaultProposalSettings, ...res.settings };
             setSettings(merged);
             saveProposalSettings(merged);
           }
         })
-        .catch(() => {});
+        .catch((err) => {
+          // Surfaced because saving on top of a failed load would overwrite the
+          // real server settings with locally-cached defaults.
+          setLoadError(
+            err instanceof Error ? err.message : "تعذر تحميل الإعدادات من الخادم.",
+          );
+        });
     }
   }, []);
 
@@ -57,13 +78,35 @@ export function ProposalSettingsManager() {
   };
 
   const handleSave = async () => {
-    saveProposalSettings(settings);
-    const adminKey = sessionStorage.getItem("ninusoft-proposals-admin-key");
-    if (adminKey) {
-      await saveProposalSettingsBackendApi(adminKey, settings).catch(() => {});
+    if (saving) return;
+    const adminKey = readAdminKey();
+    if (!adminKey) {
+      toast({
+        variant: "destructive",
+        title: "تعذر حفظ الإعدادات",
+        description: "انتهت جلسة الإدارة. سجّل الدخول مجدداً.",
+      });
+      return;
     }
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+
+    setSaving(true);
+    try {
+      // Server first: the local copy is only a cache for this admin's browser,
+      // and must not diverge from what clients will actually receive.
+      await saveProposalSettingsBackendApi(adminKey, settings);
+      saveProposalSettings(settings);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "تعذر حفظ الإعدادات",
+        description:
+          err instanceof Error ? err.message : "حدث خطأ غير متوقع. حاول مجدداً.",
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -473,12 +516,17 @@ export function ProposalSettingsManager() {
       {/* Sticky Save Actions Bar */}
       <div className="sticky bottom-4 z-30 mt-8 p-4 rounded-2xl bg-card/95 border border-amber-500/50 backdrop-blur-md shadow-2xl flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
-          <Button type="button" onClick={handleSave} size="lg" className="px-8 font-bold text-xs shadow-xl bg-amber-500 text-black hover:bg-amber-400 border border-amber-300">
-            حفظ جميع الإعدادات
+          <Button type="button" onClick={handleSave} disabled={saving} size="lg" className="px-8 font-bold text-xs shadow-xl bg-amber-500 text-black hover:bg-amber-400 border border-amber-300">
+            {saving ? "جارٍ الحفظ..." : "حفظ جميع الإعدادات"}
           </Button>
           {saved && (
             <span className="text-xs text-emerald-400 font-bold animate-in fade-in flex items-center gap-1">
               <CheckCircle className="w-4 h-4" /> تم حفظ الإعدادات وتطبيقها بنجاح!
+            </span>
+          )}
+          {loadError && (
+            <span className="text-xs text-destructive font-bold flex items-center gap-1">
+              <XCircle className="w-4 h-4" /> {loadError}
             </span>
           )}
         </div>
