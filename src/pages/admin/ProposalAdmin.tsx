@@ -1985,6 +1985,11 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                           {sig.title && (
                             <span className="text-muted-foreground"> — {sig.title}</span>
                           )}
+                          {(sig.national_id || sig.nationalId) && (
+                            <div className="text-[11px] font-mono text-amber-400 font-semibold mt-0.5">
+                              💳 الرقم الوطني: {sig.national_id || sig.nationalId}
+                            </div>
+                          )}
                         </div>
                         {sig.rejection_reason && (
                           <p className="p-2 rounded bg-background/60 border border-border/40">
@@ -2074,6 +2079,9 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                             {h.section_title || "الوثيقة كاملة"}
                             {" في "}
                             {formatDate(h.signature_date)}
+                            {(h.national_id || h.nationalId) && (
+                              <span className="font-mono text-amber-400 font-semibold"> (الرقم الوطني: {h.national_id || h.nationalId})</span>
+                            )}
                           </span>
                           <span className="font-mono">أُلغي {formatDate(h.revoked_at)}</span>
                         </div>

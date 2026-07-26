@@ -73,6 +73,8 @@ export type SignatureRecord = {
   status: "SIGNED" | "REJECTED";
   name: string;
   title: string;
+  national_id?: string | null;
+  nationalId?: string | null;
   signature_date: string;
   signature_image?: string | null;
   signatureImage?: string | null;
@@ -85,12 +87,20 @@ export type SignatureRecord = {
   created_at?: string;
 };
 
-/** What the client sends when signing or rejecting. */
+/**
+ * What the client sends when signing or rejecting.
+ *
+ * Single camelCase spelling on the wire — the server reads `data.nationalId`
+ * only. Sending both spellings here was cargo-culted from the read-side
+ * snake_case/camelCase fallback (still needed for `SignatureRecord` below,
+ * since the DB returns snake_case), but a request body has exactly one shape.
+ */
 export type SignatureInput = {
   sectionId?: string;
   status: "SIGNED" | "REJECTED";
   name: string;
   title: string;
+  nationalId: string;
   signatureImage?: string | null;
   rejectionReason?: string | null;
 };
@@ -102,6 +112,8 @@ export type RevokedSignature = {
   status: "SIGNED" | "REJECTED";
   name: string;
   title: string;
+  national_id?: string | null;
+  nationalId?: string | null;
   signature_date: string;
   rejection_reason: string | null;
   verification_id: string;

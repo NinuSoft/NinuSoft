@@ -41,6 +41,23 @@ interface ProposalSignatureProps {
 
 export type { SignatureRecord };
 
+/**
+ * One copy of the finality notice, shared by the approve checkbox and the
+ * reject modal. Previously each flow had its own wording and they drifted:
+ * the reject modal ended up promising "flexibility and adjustments" while the
+ * backend enforces the exact same 409-on-retry finality as approval.
+ */
+function FinalityNotice({ sectionTitle }: { sectionTitle?: string }) {
+  return (
+    <>
+      <strong className="block mb-0.5">هذا القرار نهائي ولا يمكن التراجع عنه.</strong>
+      بعد الإرسال لا يمكنك تعديل هذا القرار أو إلغاؤه أو تغييره
+      {sectionTitle ? ` بخصوص "${sectionTitle}"` : ""}. للتعديل بعد ذلك يلزم
+      التواصل مع فريق NinuSoft.
+    </>
+  );
+}
+
 /** Reads either the snake_case column name or the camelCase alias. */
 function sigField(
   record: SignatureRecord | null,
@@ -49,6 +66,29 @@ function sigField(
 ): string {
   if (!record) return "";
   return String(record[snake] ?? record[camel] ?? "");
+}
+
+/** Converts Arabic/Eastern digits to 0-9 and strips non-numeric characters. */
+function normalizeDigits(str: string): string {
+  const map: Record<string, string> = {
+    "٠": "0", "١": "1", "٢": "2", "٣": "3", "٤": "4",
+    "٥": "5", "٦": "6", "٧": "7", "٨": "8", "٩": "9",
+    "۰": "0", "۱": "1", "۲": "2", "۳": "3", "۴": "4",
+    "۵": "5", "۶": "6", "۷": "7", "۸": "8", "۹": "9",
+  };
+  return str.replace(/[٠-٩۰-۹]/g, (w) => map[w] || w).replace(/\D/g, "");
+}
+
+/**
+ * Masks all but the last 4 digits for the client-facing panel. Proposals are
+ * frequently unprotected by a password, so anyone holding the link could
+ * otherwise read the signer's full national ID off the page; the admin
+ * dashboard still shows it in full since that's where identity actually needs
+ * verifying.
+ */
+function maskNationalId(id: string): string {
+  if (id.length <= 4) return id;
+  return "•".repeat(id.length - 4) + id.slice(-4);
 }
 
 export function ProposalSignature({
@@ -75,6 +115,10 @@ export function ProposalSignature({
 
   const [signerName, setSignerName] = useState(clientName || "");
   const [signerTitle, setSignerTitle] = useState("المدير التنفيذي / ممثل الشركة");
+  const [nationalId, setNationalId] = useState(
+    sigField(signature, "national_id", "nationalId"),
+  );
+  const [nationalIdError, setNationalIdError] = useState("");
   const initialMode = allowDraw ? "draw" : allowType ? "type" : "upload";
   const [signMode, setSignMode] = useState<"draw" | "type" | "upload">(initialMode);
   const [uploadedImage, setUploadedImage] = useState<string>("");
@@ -170,9 +214,32 @@ export function ProposalSignature({
     reader.readAsDataURL(file);
   };
 
+  const validateNationalId = (): string | null => {
+    const cleaned = normalizeDigits(nationalId);
+    if (cleaned.length === 0) {
+      return "الرقم الوطني مطلوب وإجباري للتوقيع (يتكون من 12 رقم).";
+    }
+    if (cleaned.length !== 12) {
+      return `الرقم الوطني يجب أن يتكون من 12 رقم تماماً (أدخلت ${cleaned.length} رقم).`;
+    }
+    return null;
+  };
+
   const handleSign = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!signerName.trim()) return;
+    if (!signerName.trim() || !acknowledged) return;
+
+    const nidError = validateNationalId();
+    if (nidError) {
+      setNationalIdError(nidError);
+      toast({
+        variant: "destructive",
+        title: "الرقم الوطني مطلوب وإجباري",
+        description: nidError,
+      });
+      return;
+    }
+    setNationalIdError("");
 
     setIsSubmitting(true);
 
@@ -183,20 +250,30 @@ export function ProposalSignature({
       signatureImage = uploadedImage;
     }
 
-    // documentHash and verificationId are computed by the server over the
-    // stored markdown. Generating them here produced an audit trail that
-    // attested to nothing.
     await submitDecision({
       status: "SIGNED",
       name: signerName.trim(),
       title: signerTitle.trim(),
+      nationalId: normalizeDigits(nationalId),
       signatureImage: signatureImage || null,
     });
   };
 
   const handleReject = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!signerName.trim() || !rejectionReason.trim()) return;
+    if (!signerName.trim() || !rejectionReason.trim() || !acknowledged) return;
+
+    const nidError = validateNationalId();
+    if (nidError) {
+      setNationalIdError(nidError);
+      toast({
+        variant: "destructive",
+        title: "الرقم الوطني مطلوب وإجباري",
+        description: nidError,
+      });
+      return;
+    }
+    setNationalIdError("");
 
     setIsSubmitting(true);
     await submitDecision(
@@ -204,6 +281,7 @@ export function ProposalSignature({
         status: "REJECTED",
         name: signerName.trim(),
         title: signerTitle.trim(),
+        nationalId: normalizeDigits(nationalId),
         rejectionReason: rejectionReason.trim(),
       },
       () => setShowRejectModal(false),
@@ -269,6 +347,11 @@ export function ProposalSignature({
             <div>
               <span className="block text-xs text-muted-foreground font-semibold">اسم صاحب الملاحظة</span>
               <strong className="text-foreground text-base">{signedData.name} ({signedData.title})</strong>
+              {sigField(signedData, "national_id", "nationalId") && (
+                <span className="block text-xs font-mono text-amber-400 font-bold mt-1">
+                  💳 الرقم الوطني: {maskNationalId(sigField(signedData, "national_id", "nationalId"))}
+                </span>
+              )}
             </div>
             <div>
               <span className="block text-xs text-muted-foreground font-semibold mb-1">الملاحظات والسبب</span>
@@ -312,6 +395,14 @@ export function ProposalSignature({
               <span className="block text-xs text-muted-foreground font-semibold">الصفة / المسمى</span>
               <span className="text-foreground font-medium text-sm">{signedData.title}</span>
             </div>
+            {sigField(signedData, "national_id", "nationalId") && (
+              <div>
+                <span className="block text-xs text-muted-foreground font-semibold">الرقم الوطني المعتمد</span>
+                <span className="text-amber-400 font-mono text-sm font-bold tracking-widest bg-black/40 px-3 py-1 rounded-lg border border-amber-500/30 inline-block mt-0.5">
+                  💳 {maskNationalId(sigField(signedData, "national_id", "nationalId"))}
+                </span>
+              </div>
+            )}
             <div>
               <span className="block text-xs text-muted-foreground font-semibold">تاريخ التوقيع والاعتماد</span>
               <span className="text-amber-300 font-mono text-xs">
@@ -371,6 +462,10 @@ export function ProposalSignature({
           </div>
           <div>
             <span>الصفة / المسمى الوظيفي</span>
+            <i />
+          </div>
+          <div>
+            <span>الرقم الوطني (12 رقم)</span>
             <i />
           </div>
           <div>
@@ -458,13 +553,13 @@ export function ProposalSignature({
       </div>
 
       <p className="text-xs md:text-sm text-muted-foreground mb-6">
-        قم بالتوقيع باليد/الماوس أو رفع صورة توقيعك لتأكيد موافقتك الرسمية وتوليد شهادة الاعتماد الإلكترونية.
+        قم بإدخال اسمك ورقمك الوطني المكون من 12 رقم والتوقيع باليد/الماوس أو رفع صورة توقيعك لتأكيد الموافقة وتوليد شهادة الاعتماد الإلكترونية.
       </p>
 
       <form onSubmit={handleSign} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <label className="grid gap-1.5 text-xs font-semibold text-foreground">
-            <span>اسم المعتمد الكامل</span>
+            <span>اسم المعتمد الكامل <span className="text-destructive">*</span></span>
             <Input
               value={signerName}
               onChange={(e) => setSignerName(e.target.value)}
@@ -474,7 +569,7 @@ export function ProposalSignature({
           </label>
 
           <label className="grid gap-1.5 text-xs font-semibold text-foreground">
-            <span>المسمى الوظيفي / الصفة</span>
+            <span>المسمى الوظيفي / الصفة <span className="text-destructive">*</span></span>
             <Input
               value={signerTitle}
               onChange={(e) => setSignerTitle(e.target.value)}
@@ -482,7 +577,40 @@ export function ProposalSignature({
               required
             />
           </label>
+
+          <label className="grid gap-1.5 text-xs font-semibold text-foreground">
+            <span className="flex items-center justify-between">
+              <span>الرقم الوطني <span className="text-destructive">* (12 رقم إجباري)</span></span>
+              {nationalId.length > 0 && (
+                <span className={`text-[10px] font-mono ${nationalId.length === 12 ? "text-emerald-400 font-bold" : "text-amber-400"}`}>
+                  {nationalId.length} / 12
+                </span>
+              )}
+            </span>
+            <Input
+              value={nationalId}
+              onChange={(e) => {
+                const val = normalizeDigits(e.target.value).slice(0, 12);
+                setNationalId(val);
+                if (val.length === 12) {
+                  setNationalIdError("");
+                }
+              }}
+              placeholder="أدخل الرقم الوطني (12 رقم)"
+              maxLength={12}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              className={nationalIdError ? "border-destructive focus-visible:ring-destructive font-mono" : "font-mono"}
+              required
+            />
+          </label>
         </div>
+        {nationalIdError && (
+          <p className="text-xs text-destructive font-semibold flex items-center gap-1.5 -mt-3">
+            <XCircle className="w-4 h-4 shrink-0" />
+            <span>{nationalIdError}</span>
+          </p>
+        )}
 
         {/* Signature Pad */}
         {signMode === "draw" && allowDraw ? (
@@ -642,13 +770,8 @@ export function ProposalSignature({
             onChange={(e) => setAcknowledged(e.target.checked)}
             className="mt-0.5 h-4 w-4 shrink-0 accent-amber-500"
           />
-          <span className="text-xs leading-relaxed text-amber-200/90">
-            <strong className="text-amber-300 block mb-0.5">
-              هذا القرار نهائي ولا يمكن التراجع عنه.
-            </strong>
-            بعد الإرسال لا يمكنك تعديل التوقيع أو إلغاؤه أو تغيير قرارك
-            {sectionTitle ? ` بخصوص "${sectionTitle}"` : ""}. للتعديل بعد ذلك يلزم
-            التواصل مع فريق NinuSoft.
+          <span className="text-xs leading-relaxed text-amber-200/90 [&>strong]:text-amber-300">
+            <FinalityNotice sectionTitle={sectionTitle} />
           </span>
         </label>
 
@@ -659,6 +782,8 @@ export function ProposalSignature({
               variant="ghost"
               className="text-xs text-destructive hover:bg-destructive/10 flex items-center gap-1.5"
               onClick={() => setShowRejectModal(true)}
+              disabled={!acknowledged}
+              title={!acknowledged ? "يرجى تأكيد قراءة التنبيه أعلاه أولاً" : undefined}
             >
               <XCircle className="w-4 h-4" /> طلب تعديل / رفض المقترح
             </Button>
@@ -726,16 +851,24 @@ export function ProposalSignature({
                 />
               </label>
 
-              <p className="p-3 rounded-xl border border-amber-500/40 bg-amber-500/10 text-xs leading-relaxed text-amber-200">
-                <strong className="block mb-0.5 text-amber-300">💡 ملاحظة الهامة:</strong>
-                إرسال ملاحظاتك وسيتم إشعار مدير المشروع مباشرة لتوفير المرونة والتعديلات المطلوبة.
+              <p className="p-3 rounded-xl border border-border/40 bg-muted/30 text-xs leading-relaxed text-muted-foreground">
+                <strong className="block mb-0.5 text-foreground">💡 ملاحظة:</strong>
+                سيتم إشعار مدير المشروع بملاحظاتك مباشرة لمراجعتها.
+              </p>
+
+              {/* Same wording as the approve checkbox — the reject decision is
+                  equally final server-side (409 on retry), and this modal is
+                  reachable without ticking that checkbox, so it must repeat
+                  the warning rather than assume the client already saw it. */}
+              <p className="p-3 rounded-xl border border-amber-500/40 bg-amber-500/10 text-xs leading-relaxed text-amber-200 [&>strong]:text-amber-300">
+                <FinalityNotice sectionTitle={sectionTitle} />
               </p>
 
               <div className="flex items-center justify-end gap-2 pt-1">
                 <Button type="button" variant="outline" size="sm" onClick={() => setShowRejectModal(false)}>
                   إلغاء
                 </Button>
-                <Button type="submit" variant="destructive" size="sm" disabled={isSubmitting}>
+                <Button type="submit" variant="destructive" size="sm" disabled={isSubmitting || !acknowledged}>
                   {isSubmitting ? "جارٍ الإرسال..." : "إرسال الملاحظات والطلب"}
                 </Button>
               </div>
