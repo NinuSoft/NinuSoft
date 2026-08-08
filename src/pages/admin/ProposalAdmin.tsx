@@ -18,6 +18,7 @@ import {
   adminRequest,
   ApiError,
   getProposalActivityApi,
+  resetProposalApi,
   revokeProposalSignatureApi,
   type Proposal,
   type ProposalActivity,
@@ -789,6 +790,30 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
       );
     } finally {
       setBusy(false);
+    }
+  };
+
+  const [resetModalProposal, setResetModalProposal] = useState<ProposalSummary | null>(null);
+  const [resetting, setResetting] = useState(false);
+
+  const handleResetProposal = async () => {
+    if (!resetModalProposal) return;
+    setResetting(true);
+    setError("");
+    setMessage("");
+    try {
+      await resetProposalApi(adminKey, resetModalProposal.id);
+      setMessage(`تم تصفير وإعادة تعيين العرض "${resetModalProposal.title}" بنجاح وتوليد رابط جديد.`);
+      setResetModalProposal(null);
+      await loadItems();
+    } catch (requestError) {
+      setError(
+        requestError instanceof ApiError
+          ? requestError.message
+          : "تعذر إعادة تعيين العرض.",
+      );
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -1844,6 +1869,16 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                             <Share2 className="h-3.5 w-3.5" />
                           </Button>
                           <Button size="sm" variant="ghost" onClick={() => void editProposal(item.id)}>تعديل</Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setResetModalProposal(item)}
+                            disabled={busy || resetting}
+                            title="إعادة تعيين وتصفير سجلات وتفاعلات هذا العرض لتهيئته للإرسال النهائي للزبون"
+                            className="flex items-center gap-1 border-amber-500/40 text-amber-300 hover:bg-amber-500/10 hover:text-amber-200"
+                          >
+                            <RefreshCw className={`w-3.5 h-3.5 ${resetting && resetModalProposal?.id === item.id ? "animate-spin" : ""}`} /> تصفير
+                          </Button>
                           <Button size="sm" variant="destructive" onClick={() => void deleteProposal(item.id, item.title)} disabled={busy}>حذف</Button>
                         </td>
                       </tr>
@@ -2525,6 +2560,79 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
             </div>
           );
         })()}
+
+        {/* Reset Confirmation Modal */}
+        {resetModalProposal && (
+          <div className="fixed inset-0 z-50 bg-background/85 backdrop-blur-lg flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="w-full max-w-lg p-6 rounded-3xl bg-card border border-amber-500/40 backdrop-blur-2xl shadow-2xl space-y-5 text-start dir-rtl">
+              <div className="flex items-center justify-between border-b border-border/40 pb-3">
+                <div className="flex items-center gap-2.5 text-amber-400 font-extrabold text-lg">
+                  <RefreshCw className={`w-5 h-5 ${resetting ? "animate-spin" : ""}`} />
+                  <span>تصفير وإعادة تعيين العرض</span>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setResetModalProposal(null)}
+                  disabled={resetting}
+                  className="h-8 w-8 p-0 rounded-full"
+                >
+                  <XCircle className="w-5 h-5 text-muted-foreground hover:text-foreground" />
+                </Button>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-sm text-foreground font-semibold">
+                  هل أنت تأكد من تصفير وإعادة تعيين العرض: <span className="text-amber-300 underline font-bold">{resetModalProposal.title}</span> ({resetModalProposal.clientName})؟
+                </p>
+                <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-3 text-xs text-foreground/90 leading-relaxed">
+                  <div className="space-y-1">
+                    <p className="font-bold text-amber-400 flex items-center gap-1">
+                      <span>🗑️ ما سيتم مسحه وتصفيره:</span>
+                    </p>
+                    <ul className="list-disc list-inside space-y-0.5 text-muted-foreground pr-1 font-medium">
+                      <li>سجلات المشاهدة والقراءة وزمن الاستغراق (تصفير العداد)</li>
+                      <li>التوقيعات الحالية وأرشيف التوقيعات الملغاة</li>
+                      <li>تعليقات وملاحظات العميل</li>
+                      <li>تجديد رابط مشاركة العرض تلقائياً وإبطال الرابط القديم</li>
+                    </ul>
+                  </div>
+                  <div className="space-y-1 pt-1 border-t border-amber-500/20">
+                    <p className="font-bold text-emerald-400 flex items-center gap-1">
+                      <span>🛡️ ما سيتم الحفاظ عليه بالكامل:</span>
+                    </p>
+                    <ul className="list-disc list-inside space-y-0.5 text-muted-foreground pr-1 font-medium">
+                      <li>عنوان العرض، اسم العميل، والمحتوى الفني والمالي كامل (Markdown)</li>
+                      <li>الإعدادات الخاصة، كلمة المرور، وتاريخ الانتهاء والأكواد</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 border-t border-border/40 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setResetModalProposal(null)}
+                  disabled={resetting}
+                >
+                  إلغاء
+                </Button>
+                <Button
+                  type="button"
+                  variant="default"
+                  onClick={() => void handleResetProposal()}
+                  disabled={resetting}
+                  className="bg-amber-500 text-black hover:bg-amber-400 font-extrabold flex items-center gap-2"
+                >
+                  <RefreshCw className={`w-4 h-4 ${resetting ? "animate-spin" : ""}`} />
+                  <span>{resetting ? "جاري إعادة التعيين..." : "تأكيد وتصفير العرض الآن"}</span>
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
         </>
         )}
       </main>

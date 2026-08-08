@@ -332,6 +332,14 @@ export function getProposalActivityApi(adminKey: string, id: string) {
   );
 }
 
+export function resetProposalApi(adminKey: string, id: string) {
+  return adminRequest<{ ok: true; proposal: ProposalSummary; resetAt: string }>(
+    adminKey,
+    `/proposals/${encodeURIComponent(id)}/reset`,
+    { method: "POST" },
+  );
+}
+
 /**
  * Clears the client's decision so they can sign again. The old record is
  * archived server-side rather than deleted — revoking must not erase the fact
