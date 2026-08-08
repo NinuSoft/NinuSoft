@@ -563,7 +563,7 @@ export default function ProposalView() {
         // localStorage: the viewer must reflect what the admin saved on the
         // server, not whatever this browser last saw.
         if (result.settings) {
-          setSettings({ ...getProposalSettings(), ...defaultProposalSettings, ...result.settings });
+          setSettings({ ...defaultProposalSettings, ...getProposalSettings(), ...result.settings });
         }
       }
     } catch (requestError) {
