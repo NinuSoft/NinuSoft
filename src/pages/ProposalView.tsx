@@ -1194,7 +1194,11 @@ export default function ProposalView() {
                       />
                     )}
 
-                    <ProposalRoiCalculator />
+                    {settings.enablePackageSwitcher && (
+                      <ProposalPackageSwitcher tiers={settings.packageTiers} />
+                    )}
+
+                    {settings.enablePricingCalculator && <ProposalRoiCalculator />}
 
                     {settings.enableDigitalSignature && !hasAnySectionSignature && (
                       <ProposalSignature
