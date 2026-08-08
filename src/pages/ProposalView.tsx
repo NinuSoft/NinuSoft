@@ -14,7 +14,7 @@ import {
 } from "@/lib/proposals-api";
 import { parseProposalSections } from "@/lib/proposal-sections";
 import { ProposalSignature } from "@/components/ProposalSignature";
-import { defaultProposalSettings, type ProposalSettings } from "@/lib/proposal-settings";
+import { defaultProposalSettings, getProposalSettings, type ProposalSettings } from "@/lib/proposal-settings";
 import { useProposalComments } from "@/hooks/use-proposal-comments";
 import { useProposalSignatures } from "@/hooks/use-proposal-signatures";
 import { useToast } from "@/hooks/use-toast";
@@ -129,7 +129,7 @@ export default function ProposalView() {
 
   // Server settings arrive with the proposal; until then the page renders a
   // loading state, so these defaults are never shown to a client.
-  const [settings, setSettings] = useState<ProposalSettings>(defaultProposalSettings);
+  const [settings, setSettings] = useState<ProposalSettings>(getProposalSettings);
   const readingProgressRef = useRef<HTMLDivElement>(null);
   const [lang, setLang] = useState<"ar" | "en">("ar");
   const [showMobileNav, setShowMobileNav] = useState(false);
@@ -563,7 +563,7 @@ export default function ProposalView() {
         // localStorage: the viewer must reflect what the admin saved on the
         // server, not whatever this browser last saw.
         if (result.settings) {
-          setSettings({ ...defaultProposalSettings, ...result.settings });
+          setSettings({ ...getProposalSettings(), ...defaultProposalSettings, ...result.settings });
         }
       }
     } catch (requestError) {
