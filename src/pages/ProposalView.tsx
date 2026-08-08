@@ -915,6 +915,7 @@ export default function ProposalView() {
           <ProposalExpiryCountdown />
         )}
 
+        {/* 
         <ProposalIncentiveBanner
           content={proposal.markdown}
           clientName={proposal.clientName}
@@ -926,6 +927,9 @@ export default function ProposalView() {
             if (sigEl) sigEl.scrollIntoView({ behavior: "smooth" });
           }}
         />
+        */}
+
+
 
         <div className="proposal-meta">
           <div>
