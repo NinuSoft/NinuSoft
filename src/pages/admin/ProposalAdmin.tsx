@@ -1,6 +1,4 @@
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { proposalMarkdownComponents, remarkAlerts } from "@/components/ProposalMarkdown";
+import { ProposalMarkdown } from "@/components/ProposalMarkdown";
 
 import { playChimeNotification, requestDesktopNotificationPermission, showDesktopNotification } from "@/lib/audio-notifications";
 import { ProposalDiscountsManager } from "@/components/ProposalDiscountsManager";
@@ -1517,9 +1515,9 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                         <div className="p-4 rounded-xl border border-primary/30 bg-card/80 shadow-lg space-y-2">
                           <span className="text-xs font-bold text-primary">معاينة مباشرة للقسم: {activeSec.title}</span>
                           <article className="proposal-document">
-                            <ReactMarkdown remarkPlugins={[remarkGfm, remarkAlerts]} components={proposalMarkdownComponents}>
+                            <ProposalMarkdown>
                               {activeSec.content || "لا يوجد محتوى لهذا القسم بعد."}
-                            </ReactMarkdown>
+                            </ProposalMarkdown>
                           </article>
                         </div>
                       )}
@@ -1626,11 +1624,11 @@ export default function ProposalAdmin({ onNavigate, onLogout }: ProposalAdminPro
                 <span>معاينة المستند الكلي للعرض ({editorMode === "sections" ? `${sections.length} أقسام` : "سورس كود"})</span>
               </div>
               <article className="proposal-document">
-                <ReactMarkdown remarkPlugins={[remarkGfm, remarkAlerts]} components={proposalMarkdownComponents}>
+                <ProposalMarkdown>
                   {editorMode === "sections"
                     ? sections.map((sec) => `## ${sec.title}\n\n${sec.content}`).join("\n\n---\n\n") || "ستظهر معاينة النص هنا."
                     : form.markdown || "ستظهر معاينة النص هنا."}
-                </ReactMarkdown>
+                </ProposalMarkdown>
               </article>
             </div>
           )}

@@ -1,8 +1,6 @@
 import { SyntheticEvent, useEffect, useMemo, useRef, useState } from "react";
-import { proposalMarkdownComponents, remarkAlerts, slugify } from "@/components/ProposalMarkdown";
+import { ProposalMarkdown, slugify } from "@/components/ProposalMarkdown";
 import { useParams } from "wouter";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -1098,9 +1096,9 @@ export default function ProposalView() {
                               <h2>{sec.title}</h2>
                             </header>
                             {sections.length > 1 && idx > 0 && <hr className="my-8" />}
-                            <ReactMarkdown remarkPlugins={[remarkGfm, remarkAlerts]} components={proposalMarkdownComponents}>
+                            <ProposalMarkdown>
                               {sec.content}
-                            </ReactMarkdown>
+                            </ProposalMarkdown>
 
                             {settings.enableDigitalSignature && sec.hasSignature && (
                               <div className="mt-8">
@@ -1131,9 +1129,9 @@ export default function ProposalView() {
 
                           return (
                             <>
-                              <ReactMarkdown remarkPlugins={[remarkGfm, remarkAlerts]} components={proposalMarkdownComponents}>
+                              <ProposalMarkdown>
                                 {activeSection.content}
-                              </ReactMarkdown>
+                              </ProposalMarkdown>
 
                               {settings.enableDigitalSignature && activeSection.hasSignature && (
                                 <div className="mt-8">

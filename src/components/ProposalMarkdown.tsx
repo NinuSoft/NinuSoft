@@ -1,6 +1,8 @@
 import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
+import rehypeRaw from "rehype-raw";
 import Mermaid from "@/components/Mermaid";
 import { Tag, FileText, CheckCircle, XCircle } from "@/components/Icons";
 
@@ -341,13 +343,17 @@ export const proposalMarkdownComponents = {
   },
 };
 
-export function ProposalMarkdown({ children }: { children: string }) {
+export const proposalRemarkPlugins = [remarkGfm, remarkBreaks, remarkAlerts];
+export const proposalRehypePlugins = [rehypeRaw];
+
+export function ProposalMarkdown({ children }: { children?: string | null }) {
   return (
     <ReactMarkdown
-      remarkPlugins={[remarkGfm, remarkAlerts]}
+      remarkPlugins={proposalRemarkPlugins}
+      rehypePlugins={proposalRehypePlugins}
       components={proposalMarkdownComponents}
     >
-      {children}
+      {children || ""}
     </ReactMarkdown>
   );
 }

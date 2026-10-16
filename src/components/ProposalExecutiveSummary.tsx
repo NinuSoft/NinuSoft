@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+
 import { Button } from "@/components/ui/button";
 import {
   CheckCircle,
@@ -13,7 +12,7 @@ import {
   Target,
   XCircle,
 } from "@/components/Icons";
-import { proposalMarkdownComponents, remarkAlerts } from "@/components/ProposalMarkdown";
+import { ProposalMarkdown } from "@/components/ProposalMarkdown";
 
 interface ProposalExecutiveSummaryProps {
   proposalTitle: string;
@@ -199,9 +198,9 @@ export function ProposalExecutiveSummary({
                 </div>
               </div>
               <div className="executive-summary-overview-content text-sm leading-relaxed text-foreground/90">
-                <ReactMarkdown remarkPlugins={[remarkGfm, remarkAlerts]} components={proposalMarkdownComponents}>
+                <ProposalMarkdown>
                   {overview}
-                </ReactMarkdown>
+                </ProposalMarkdown>
               </div>
             </section>
 

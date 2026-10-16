@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
+import rehypeRaw from "rehype-raw";
 import {
   ArrowLeft,
   CheckCircle,
@@ -361,7 +363,7 @@ export function ProposalAiAssistant({
                           <p className="whitespace-pre-wrap">{message.text}</p>
                         ) : (
                           <div className="prose prose-invert prose-sm max-w-none prose-p:my-1 prose-p:leading-7 prose-strong:text-amber-200 prose-ul:my-2 prose-li:my-1">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.text}</ReactMarkdown>
+                            <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]} rehypePlugins={[rehypeRaw]}>{message.text}</ReactMarkdown>
                           </div>
                         )}
                       </div>
