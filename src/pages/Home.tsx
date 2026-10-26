@@ -47,13 +47,6 @@ export interface Project {
 
 const logoLarge = "/logo.png";
 
-const PROJECT_GROUP_PRIORITY: Record<string, number> = {
-  product: 0,
-  enterprise: 1,
-  experience: 2,
-  opensource: 3,
-};
-
 const NAV_LINKS = [
   { key: "home", href: "#home" },
   { key: "services", href: "#services" },
@@ -95,9 +88,7 @@ export default function Home() {
     return "en";
   });
   const t = translations[lang];
-  const PROJECTS = [...(t.projects as Project[])].sort(
-    (a, b) => (PROJECT_GROUP_PRIORITY[a.group] ?? 99) - (PROJECT_GROUP_PRIORITY[b.group] ?? 99)
-  );
+  const PROJECTS = [...(t.projects as Project[])];
 
   // Intro screen visibility state
   const [showIntro, setShowIntro] = useState(() => {
@@ -236,7 +227,7 @@ export default function Home() {
     }
   };
 
-  const GROUP_ORDER = ["All", "product", "experience", "enterprise", "opensource"] as const;
+  const GROUP_ORDER = ["All", "product"] as const;
   const categories = GROUP_ORDER.filter((g) => g === "All" || PROJECTS.some((p) => p.group === g));
 
   const getCategoryLabel = (cat: string) => {
@@ -553,49 +544,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* 3b. TRUSTED EXPERIENCE */}
-      <section className="w-full bg-background py-16 lg:py-20 border-t border-border/50">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12">
-          <div className="flex flex-col items-center text-center mb-10">
-            <span className="text-primary font-bold tracking-[0.2em] text-sm uppercase mb-4 block">
-              {t.trusted.title}
-            </span>
-            <h2 className="text-2xl md:text-3xl font-extrabold text-white mb-5 max-w-2xl">
-              {t.trusted.subtitle}
-            </h2>
-            <p className="text-muted-foreground text-sm max-w-2xl leading-relaxed">
-              {t.trusted.disclaimer}
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {t.trusted.orgs.map((org: any, i: number) => (
-              <motion.div
-                key={org.name}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ delay: i * 0.08, duration: 0.5 }}
-                className="bg-card border border-border/50 hover:border-primary/40 transition-all duration-300 rounded-xl p-6 flex flex-col text-start"
-              >
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <h3 className="text-white font-bold text-base leading-snug">{org.name}</h3>
-                  <span className="text-[11px] font-mono text-muted-foreground shrink-0 whitespace-nowrap">{org.period}</span>
-                </div>
-                <span className="text-primary text-xs font-bold uppercase tracking-wider mb-3">{org.role}</span>
-                <ul className="space-y-1.5">
-                  {org.highlights.map((h: string) => (
-                    <li key={h} className="flex items-start gap-2 text-sm text-muted-foreground leading-relaxed">
-                      <span className="text-primary mt-1.5 w-1 h-1 rounded-full bg-primary shrink-0" />
-                      {h}
-                    </li>
-                  ))}
-                </ul>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* 4. OUR SERVICES */}
       <section id="services" className="w-full bg-background py-20 lg:py-28 border-t border-border/50">
@@ -712,89 +661,16 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 5b. ABOUT / FOUNDER */}
+      {/* 5b. ABOUT */}
       <section id="about" className="w-full bg-card/30 py-20 lg:py-28 border-t border-border/50">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
-          <div className="flex flex-col items-center text-center mb-14 max-w-3xl mx-auto">
+          <div className="flex flex-col items-center text-center max-w-3xl mx-auto">
             <span className="text-primary font-bold tracking-[0.2em] text-sm uppercase mb-4 block">{t.about.kicker}</span>
             <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-6">{t.about.title}</h2>
             <div className="w-16 h-1 bg-primary rounded-full mb-8"></div>
             <h3 className="text-white font-bold text-lg mb-3">{t.about.storyTitle}</h3>
             <p className="text-muted-foreground leading-relaxed">{t.about.story}</p>
           </div>
-
-          {/* Founder Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6 }}
-            className="w-full bg-card border border-border/50 rounded-2xl p-6 sm:p-10 shadow-xl shadow-black/20"
-          >
-            <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center sm:items-start gap-8">
-              <div className="shrink-0">
-                <img
-                  src="/founder-ahmed-mones.webp"
-                  alt={t.about.founder.name}
-                  loading="lazy"
-                  width={1012}
-                  height={1350}
-                  className="w-48 sm:w-56 aspect-[3/4] rounded-2xl object-cover border-2 border-primary/30 shadow-xl shadow-primary/10 drop-shadow-[0_0_24px_rgba(201,163,58,0.2)]"
-                  onError={(e) => {
-                    const img = e.currentTarget;
-                    img.style.display = "none";
-                    const fallback = img.nextElementSibling as HTMLElement | null;
-                    if (fallback) fallback.style.display = "flex";
-                  }}
-                />
-                <div
-                  className="w-48 sm:w-56 aspect-[3/4] rounded-2xl border-2 border-primary/30 bg-primary/10 items-center justify-center text-primary font-extrabold text-3xl font-mono shadow-xl shadow-primary/10"
-                  style={{ display: "none" }}
-                >
-                  AM
-                </div>
-              </div>
-              <div className="text-center sm:text-start flex-1">
-                <h3 className="text-white font-extrabold text-2xl mb-1">{t.about.founder.name}</h3>
-                <span className="text-primary text-sm font-bold uppercase tracking-wider block mb-4">{t.about.founder.role}</span>
-                <p className="text-muted-foreground text-sm sm:text-base leading-relaxed mb-6">{t.about.founder.bio}</p>
-                <div className="flex items-center justify-center sm:justify-start gap-4">
-                <a
-                  href={t.about.founder.linkedin}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="LinkedIn"
-                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  <Linkedin className="w-4 h-4" />
-                  LinkedIn
-                </a>
-                <a
-                  href={t.about.founder.github}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="GitHub"
-                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  <Github className="w-4 h-4" />
-                  GitHub
-                </a>
-                {t.about.founder.instagram && (
-                  <a
-                    href={t.about.founder.instagram}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="Instagram"
-                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    <Instagram className="w-4 h-4" />
-                    Instagram
-                  </a>
-                )}
-                </div>
-              </div>
-            </div>
-          </motion.div>
         </div>
       </section>
 
@@ -828,6 +704,8 @@ export default function Home() {
         </div>
       </section>
 
+
+
       {/* 6. OUR PROJECTS */}
       <section id="projects" className="w-full bg-background py-20 lg:py-28 border-t border-border/50">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
@@ -844,22 +722,24 @@ export default function Home() {
           </div>
 
           {/* Category Filter */}
-          <div className="flex flex-wrap items-center justify-center gap-2 mb-10">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => {
-                  setSelectedCategory(cat);
-                }}
-                className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300 border ${selectedCategory === cat
-                  ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20 scale-105"
-                  : "bg-card text-muted-foreground border-border/50 hover:border-primary/50 hover:text-white"
-                  }`}
-              >
-                {getCategoryLabel(cat)}
-              </button>
-            ))}
-          </div>
+          {categories.length > 2 && (
+            <div className="flex flex-wrap items-center justify-center gap-2 mb-10">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => {
+                    setSelectedCategory(cat);
+                  }}
+                  className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300 border ${selectedCategory === cat
+                    ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20 scale-105"
+                    : "bg-card text-muted-foreground border-border/50 hover:border-primary/50 hover:text-white"
+                    }`}
+                >
+                  {getCategoryLabel(cat)}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Embla Carousel Viewport */}
           <div className="relative w-full">
@@ -1262,6 +1142,7 @@ export default function Home() {
           )}
         </DialogContent>
       </Dialog>
+
 
       {/* Project Details Dialog (code-split: only loads once a project card is opened) */}
       {projectDialogMounted && (
