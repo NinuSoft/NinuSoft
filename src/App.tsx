@@ -10,6 +10,7 @@ import IntroScreen from "@/components/IntroScreen";
 
 const Admin = lazy(() => import("@/pages/admin/Admin"));
 const ProposalView = lazy(() => import("@/pages/ProposalView"));
+const JobFair = lazy(() => import("@/pages/JobFair"));
 
 const queryClient = new QueryClient();
 
@@ -18,6 +19,9 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/admin" component={Admin} />
+      <Route path="/job-fair" component={JobFair} />
+      <Route path="/swd" component={JobFair} />
+      <Route path="/baghdad-job-fair" component={JobFair} />
       <Route path="/proposals/:token" component={ProposalView} />
       <Route component={NotFound} />
     </Switch>

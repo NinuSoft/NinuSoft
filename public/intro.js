@@ -13,10 +13,16 @@
   'use strict';
 
   var intro = document.getElementById('ns-intro');
-  var isAdminRoute = window.location.pathname.replace(/\/+$/, '') === '/admin';
+  var cleanPath = window.location.pathname.replace(/\/+$/, '');
+  var isInstantRoute =
+    cleanPath === '/admin' ||
+    cleanPath === '/job-fair' ||
+    cleanPath === '/swd' ||
+    cleanPath === '/baghdad-job-fair' ||
+    cleanPath.indexOf('/proposals/') === 0;
 
-  // Internal tools should open immediately; the public brand intro is only for the website.
-  if (isAdminRoute) {
+  // Internal tools and standalone event pages should open immediately; the public brand intro is only for the main homepage.
+  if (isInstantRoute) {
     if (intro && intro.parentNode) intro.parentNode.removeChild(intro);
     document.body.classList.remove('ns-loading');
     document.body.removeAttribute('style');
