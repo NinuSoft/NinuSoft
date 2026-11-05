@@ -11,6 +11,41 @@ export interface CategoryItem {
   icon: string;
 }
 
+export interface TipItem {
+  title: string;
+  desc: string;
+  icon: string;
+}
+
+export interface PartnerItem {
+  name: string;
+  shortCode: string;
+  role: string;
+  icon: string;
+}
+
+export interface AgendaSession {
+  from: string;
+  to: string;
+  title: string;
+  details: string[];
+}
+
+export interface AgendaDay {
+  id: string;
+  label: string;
+  dateLabel: string;
+  title: string;
+  sessions: AgendaSession[];
+}
+
+export interface SponsorItem {
+  tier: "diamond" | "gold" | "silver";
+  nameAr: string;
+  nameEn: string;
+  logoUrl: string;
+}
+
 export interface JobFairState {
   siteTitle: string;
   siteSubtitle: string;
@@ -27,6 +62,8 @@ export interface JobFairState {
   locAddressDesc: string;
   registerUrl: string;
   registerBtnText: string;
+  officialSiteUrl: string;
+  officialSiteBtnText: string;
   announcementText: string;
   announcementBadge: string;
   showAnnouncement: boolean;
@@ -43,28 +80,295 @@ export interface JobFairState {
   stats: StatItem[];
   sectors: string[];
   categories: CategoryItem[];
+  tips: TipItem[];
   partners: string[];
 }
 
-const STORAGE_KEY = "ninusoft_baghdad_fair_state_v1";
+const STORAGE_KEY = "ninusoft_baghdad_fair_state_v3";
+
+const OFFICIAL_PARTNER_CARDS: PartnerItem[] = [
+  {
+    name: "وزارة الشباب والرياضة العراقية",
+    shortCode: "MoY&S",
+    role: "الجهة الحكومية المنظمة والمستضيفة",
+    icon: "ministry",
+  },
+  {
+    name: "الوزارة الاتحادية الألمانية للتعاون الاقتصادي والتنمية BMZ",
+    shortCode: "BMZ",
+    role: "الجهة الممولة والداعمة دولياً",
+    icon: "bmz",
+  },
+  {
+    name: "الوكالة الألمانية للتعاون الدولي GIZ",
+    shortCode: "GIZ",
+    role: "الجهة المنفذة لبرامج التنمية والتأهيل",
+    icon: "giz",
+  },
+  {
+    name: "مشروع تعزيز التحول الاقتصادي في العراق SET",
+    shortCode: "SET Iraq",
+    role: "الشريك الاستراتيجي لتمكين الشباب",
+    icon: "set",
+  },
+];
+
+const OFFICIAL_AGENDA: AgendaDay[] = [
+  {
+    id: "day-1",
+    label: "اليوم الأول",
+    dateLabel: "الثلاثاء | 17/11/2026 | 9:00 ص – 12:00 ظ",
+    title: "حفل الافتتاح الرسمي وجولة أجنحة الشركات",
+    sessions: [
+      {
+        from: "10:00",
+        to: "10:05",
+        title: "الافتتاح الرسمي والنشيد الوطني",
+        details: ["تلاوة آيات من القرآن الكريم وقراءة سورة الفاتحة على أرواح شهداء العراق ثم النشيد الوطني."],
+      },
+      {
+        from: "10:05",
+        to: "10:15",
+        title: "كلمة معالي وزير الشباب والرياضة والوكالة الألمانية",
+        details: [
+          "كلمة معالي وزير الشباب والرياضة الدكتور صفاء الكناني.",
+          "كلمة مديرة الشرق الأوسط للوكالة الألمانية للتعاون الدولي السيدة أنيا جوم.",
+        ],
+      },
+      {
+        from: "10:15",
+        to: "10:40",
+        title: "عرض مشروع SET وقصص النجاح",
+        details: [
+          "عرض تقديمي حول تعاون وزارة الشباب والرياضة مع GIZ – مشروع SET يقدمه د. أحمد سعد عليوي.",
+          "فيديو قصص نجاح لباحثين عن عمل حصلوا على وظائف عبر النسخة السابقة من المعرض.",
+        ],
+      },
+      {
+        from: "10:40",
+        to: "12:00",
+        title: "جولة الوفود وافتتاح أجنحة التوظيف المباشر",
+        details: ["جولة الضيوف في أجنحة الشركات المشاركة وبدء استقبال السير الذاتية والمقابلات."],
+      },
+    ],
+  },
+  {
+    id: "day-2",
+    label: "اليوم الثاني",
+    dateLabel: "الأربعاء | 18/11/2026 | 9:30 ص – 11:30 ص",
+    title: "يوم المرأة والاقتصاد وتمكين الكفاءات",
+    sessions: [
+      {
+        from: "09:36",
+        to: "09:55",
+        title: "الكلمة الافتتاحية وفيلم «لن أنحني»",
+        details: [
+          "كلمة د. فاطمة الزهراء نفعت – مدير قسم شؤون المرأة في وزارة الشباب والرياضة.",
+          "عرض فيلم قصير عن دور المرأة في الاقتصاد العراقي.",
+        ],
+      },
+      {
+        from: "09:55",
+        to: "10:05",
+        title: "عرض قصص نجاح المبدعات",
+        details: ["استعراض تجارب مهنية ملهمة لرائدات أعمال وشابات في سوق العمل (حنان باقر، نورا مهدي)."],
+      },
+      {
+        from: "10:05",
+        to: "10:45",
+        title: "الجلسة الحوارية: المرأة والاقتصاد في سوق العمل العراقي",
+        details: [
+          "بمشاركة مؤسِّسات ومسؤولات من شركة Master Minds للتوظيف، شركة Green Gold، منصة The Mind للتدريب، والجامعة المستنصرية.",
+        ],
+      },
+      {
+        from: "10:45",
+        to: "11:30",
+        title: "تكريم المشاركات وجولة أجنحة الشركات",
+        details: ["توزيع الشهادات واستمرار التقديم المباشر في أجنحة الشركات طيلة اليوم."],
+      },
+    ],
+  },
+  {
+    id: "day-3",
+    label: "اليوم الثالث",
+    dateLabel: "الخميس | 19/11/2026 | 10:30 ص – 3:00 م",
+    title: "يوم الشركات الكبرى والبرامج التدريبية",
+    sessions: [
+      {
+        from: "10:30",
+        to: "11:00",
+        title: "عرض شركة كوكا كولا (Coca-Cola)",
+        details: ["عرض تقديمي حول الشركة وأنشطتها وبرامج استقطاب المواهب الشابة."],
+      },
+      {
+        from: "11:00",
+        to: "11:30",
+        title: "عرض مؤسسة أسوار للتدريب والتطوير (Aswar Academy)",
+        details: ["عرض تقديمي حول برامج التدريب المهني وتطوير المهارات المطلوبة في السوق."],
+      },
+      {
+        from: "11:30",
+        to: "12:00",
+        title: "عرض شركة زين العراق (Zain Iraq)",
+        details: ["عرض تدريبي حول نشاطات الشركة والبرامج التدريبية وفرص العمل المتاحة للخريجين."],
+      },
+      {
+        from: "14:00",
+        to: "15:00",
+        title: "جلسة دائرة الرعاية العلمية الحوارية",
+        details: ["جلسة حوارية مشتركة لبناء الجسور بين القطاعين العام والخاص."],
+      },
+    ],
+  },
+  {
+    id: "day-4",
+    label: "اليوم الرابع",
+    dateLabel: "الجمعة | 20/11/2026 | 4:00 م – 6:00 م",
+    title: "يوم المعماريين وريادة الأعمال وأسرار المقابلات",
+    sessions: [
+      {
+        from: "16:10",
+        to: "16:50",
+        title: "المحور الأول: قصص نجاح ملهمة وتجارب ريادية واعدة",
+        details: [
+          "عرض تجربة شركة شناوة كروب في ريادة الأعمال وبناء المشاريع الناشئة.",
+          "عرض تجربة مكتب ماس للعمارة في الابتكار والتصميم المعماري.",
+        ],
+      },
+      {
+        from: "16:50",
+        to: "17:30",
+        title: "جلسة حوارية: إدارة وتطوير الأعمال وتمويل الشركات الناشئة",
+        details: [
+          "مناقشة تحديات التأسيس وخطوات الانطلاق بمشاركة د. ماجد الساعدي، م. حسين صباح، وم. زهراء شناوة.",
+        ],
+      },
+      {
+        from: "17:30",
+        to: "18:00",
+        title: "الجلسة المفتوحة: أسرار التوظيف وتقنيات المقابلة المهنية",
+        details: [
+          "جلسة تفاعلية مع شركة Master Minds حول معايير التوظيف واجتياز المقابلات وإبراز القيمة المضافة مع استشارات مباشرة للحضور.",
+        ],
+      },
+    ],
+  },
+];
+
+const OFFICIAL_SPONSORS: SponsorItem[] = [
+  {
+    tier: "diamond",
+    nameAr: "زين العراق",
+    nameEn: "Zain Iraq",
+    logoUrl: "https://www.baghdadjobfair.net/assets/sponsors-2026/diamond-03.png",
+  },
+  {
+    tier: "diamond",
+    nameAr: "شركة الجزيرة لخدمات الإنترنت والاتصالات",
+    nameEn: "Jazeera Telecom",
+    logoUrl: "https://www.baghdadjobfair.net/assets/sponsors-2026/diamond-01.png",
+  },
+  {
+    tier: "diamond",
+    nameAr: "مؤسسة أسوار للتدريب والتطوير",
+    nameEn: "Aswar Academy",
+    logoUrl: "https://www.baghdadjobfair.net/assets/sponsors-2026/diamond-02.jpg",
+  },
+  {
+    tier: "diamond",
+    nameAr: "شركة السليمانية لإنتاج الألبان والمواد الغذائية",
+    nameEn: "Al-Sulaymanyia Co",
+    logoUrl: "https://www.baghdadjobfair.net/assets/sponsors-2026/diamond-04.jpg",
+  },
+  {
+    tier: "gold",
+    nameAr: "مصرف أبو ظبي الإسلامي - العراق",
+    nameEn: "Abu Dhabi Islamic Bank",
+    logoUrl: "https://www.baghdadjobfair.net/assets/sponsors-2026/17iPDlp6sweUyMI-MtiU63OnHRzlha8IJ.jpg",
+  },
+  {
+    tier: "gold",
+    nameAr: "معهد غوته الألماني",
+    nameEn: "GOETHE INSTITUT",
+    logoUrl: "https://www.baghdadjobfair.net/assets/sponsors-2026/1O0dVE75xikXZDfM7QKNI3w8lEdtaWSFl.jpg",
+  },
+  {
+    tier: "gold",
+    nameAr: "شركة ارلَ للتجارة العامة (Arla)",
+    nameEn: "Arla Foods Company",
+    logoUrl: "https://www.baghdadjobfair.net/assets/sponsors-2026/gold-05.png",
+  },
+  {
+    tier: "gold",
+    nameAr: "الأكاديمية البريطانية للأعمال",
+    nameEn: "British Business Academy",
+    logoUrl: "https://www.baghdadjobfair.net/assets/sponsors-2026/gold-07.png",
+  },
+  {
+    tier: "gold",
+    nameAr: "معهد CIS",
+    nameEn: "CIS College",
+    logoUrl: "https://www.baghdadjobfair.net/assets/sponsors-2026/1Hn31z3-4Kr3KXmYuyJouuFBFYE0iYPM-.jpg",
+  },
+  {
+    tier: "gold",
+    nameAr: "شركة الخط الرمادي لإدارة علاقات العمل",
+    nameEn: "Greyline Company",
+    logoUrl: "https://www.baghdadjobfair.net/assets/sponsors-2026/gold-06.png",
+  },
+  {
+    tier: "silver",
+    nameAr: "كوركس لحلول الأعمال والذكاء الاصطناعي",
+    nameEn: "CoreX AI Solutions",
+    logoUrl: "https://www.baghdadjobfair.net/assets/sponsors-2026/silver-20.png",
+  },
+  {
+    tier: "silver",
+    nameAr: "شركة الأموال لخدمات الصيرفة الإلكترونية",
+    nameEn: "AMWAL FinTech",
+    logoUrl: "https://www.baghdadjobfair.net/assets/sponsors-2026/silver-18.png",
+  },
+  {
+    tier: "silver",
+    nameAr: "شركة رواد الحلول لتكنولوجيا المعلومات",
+    nameEn: "Rowad AlHelool IT",
+    logoUrl: "https://www.baghdadjobfair.net/assets/sponsors-2026/silver-24.jpg",
+  },
+  {
+    tier: "silver",
+    nameAr: "المحور لحلول الموارد البشرية",
+    nameEn: "Axis HR Solutions",
+    logoUrl: "https://www.baghdadjobfair.net/assets/sponsors-2026/silver-15.png",
+  },
+];
+
+const IMPACT_2025 = [
+  { val: "3,500", lbl: "فرصة عمل شاغرة أُعلن عنها في النسخة السابقة" },
+  { val: "1,800+", lbl: "باحث عن عمل أجروا مقابلات مباشرة" },
+  { val: "1,000+", lbl: "شاب وشابة حصلوا على وظائف فعلية" },
+  { val: "+100", lbl: "فرصة تدريب عملي (Internships) في 2026" },
+];
 
 const DEFAULT_STATE: JobFairState = {
   siteTitle: "معرض بغداد للتوظيف 2026",
   siteSubtitle: "وزارة الشباب والرياضة",
   heroTitle: "معرض بغداد للتوظيف",
   heroYear: "2026",
-  heroSubtitle: "الشباب أولاً",
+  heroSubtitle: "من البحث عن فرصة إلى صناعة الفرصة",
   heroBadge: "فرصتك تبدأ بخطوة",
   heroDate: "17 - 20 تشرين الثاني 2026",
   heroLocation: "مقر وزارة الشباب والرياضة - بغداد",
   heroLocationUrl: "https://maps.app.goo.gl/cfdPqkMUqFTqPRNFA?g_st=aw",
   heroDesc:
-    "تعلن وزارة الشباب والرياضة عن إقامة معرض بغداد للتوظيف 2026، بمشاركة أكثر من 90 شركة، وبما يوفر أكثر من 2000 فرصة عمل بالتعاون وبالشراكة مع مشروع تعزيز التحول الاقتصادي في العراق (SET)، المموّل من قبل BMZ والمنفّذ من قبل GIZ.",
+    "تعلن وزارة الشباب والرياضة عن إقامة معرض بغداد للتوظيف 2026، بمشاركة أكثر من 90 شركة، وبما يوفر أكثر من 2000 فرصة عمل و100 فرصة تدريب عملي بالتعاون وبالشراكة مع مشروع تعزيز التحول الاقتصادي في العراق (SET)، المموّل من قبل BMZ والمنفّذ من قبل GIZ.",
   locDateDesc: "من 17 إلى 20 تشرين الثاني 2026 (على مدى أربعة أيام)",
-  locTimeDesc: "من 10 صباحاً وحتى 5 مساءً يومياً",
-  locAddressDesc: "بغداد - مقر وزارة الشباب والرياضة / دائرة شؤون الأقاليم والمحافظات",
+  locTimeDesc: "من 10 صباحاً وحتى 5 مساءً يومياً (بتوقيت بغداد)",
+  locAddressDesc: "بغداد - زيونة - مقر وزارة الشباب والرياضة / دائرة شؤون الأقاليم والمحافظات",
   registerUrl: "https://forms.gle/k7EBYEjJF9tkR5aT6",
   registerBtnText: "سجّل الآن",
+  officialSiteUrl: "https://www.baghdadjobfair.net/",
+  officialSiteBtnText: "الموقع الرسمي للمعرض",
   announcementText:
     "تجهيز وطباعة السيرة الذاتية (CV) متوفرة مجاناً طيلة أيام المعرض برعاية دائرة الرعاية العلمية",
   announcementBadge: "هام جداً",
@@ -86,13 +390,15 @@ const DEFAULT_STATE: JobFairState = {
     { val: "CV", lbl: "طباعة وتجهيز مجاني" },
   ],
   sectors: [
-    "التقنية",
-    "المصرفية",
-    "الصحية",
-    "الإعلامية",
-    "الصناعية",
-    "الهندسية",
-    "التجارية",
+    "التقنية والاتصالات",
+    "المصرفية والمالية",
+    "الصحية والطبية",
+    "الإعلامية والتسويق",
+    "الصناعية والإنتاج",
+    "الهندسية والمقاولات",
+    "التجارية والتجزئة",
+    "التعليم والتدريب",
+    "الخدمات اللوجستية",
   ],
   categories: [
     {
@@ -102,13 +408,35 @@ const DEFAULT_STATE: JobFairState = {
     },
     {
       title: "ورش وجلسات حوارية",
-      desc: "لقاءات مباشرة وجلسات تطوير مهارات يقدمها نخبة من الخبراء والاستشاريين لتأهيل الشباب سوق العمل.",
+      desc: "لقاءات مباشرة وجلسات تطوير مهارات يقدمها نخبة من الخبراء والاستشاريين لتأهيل الشباب لسوق العمل، مع إتاحة 100 فرصة تدريب عملي (Internship).",
       icon: "users",
     },
     {
       title: "البازارات والبيع المباشر",
       desc: "عروض متميزة للمشاريع الشبابية الناشئة والأعمال الريادية مع إمكانية الشراء المباشر لدعم الطاقة المحلية.",
       icon: "shopping-bag",
+    },
+  ],
+  tips: [
+    {
+      title: "البحث المسبق عن الشركات المشاركة",
+      desc: "البحث عن الشركات المشاركة بشكل مفصل ومعرفة مجالات عملها وطبيعة الشواغر لديها مسبقاً، ليتسنى لك إعطاء انطباع احترافي قوي وإبراز كيف تتوافق مهاراتك مع احتياجاتهم.",
+      icon: "search",
+    },
+    {
+      title: "تجهيز وتخصيص السيرة الذاتية (CV)",
+      desc: "احرص على تجهيز نسخ واضحة ومحدثة من سيرتك الذاتية تبرز مهاراتك العملية ومشاريعك، واستفد من خدمة المراجعة والطباعة المجانية المتوفرة طيلة أيام المعرض.",
+      icon: "file-text",
+    },
+    {
+      title: "تحضير تعريف مهني موجز (Elevator Pitch)",
+      desc: "جهّز نبذة سريعة وواثقة خلال 60 ثانية تعرّف فيها عن تخصصك، خبراتك، والقيمة التي يمكنك إضافتها للشركة عند التحدث المباشر مع مسؤولي الموارد البشرية.",
+      icon: "sparkles",
+    },
+    {
+      title: "الاستفادة من الورش وبناء العلاقات",
+      desc: "شارك بفعالية في الجلسات الحوارية وورش تطوير المهارات، واحرص على طرح أسئلة ذكية وتوثيق قنوات التواصل المهني (مثل LinkedIn) مع ممثلي الشركات.",
+      icon: "briefcase",
     },
   ],
   partners: [
@@ -124,6 +452,7 @@ type AdminTab =
   | "announcement"
   | "sectors"
   | "categories"
+  | "tips"
   | "stats"
   | "partners"
   | "styles"
@@ -143,6 +472,13 @@ function DynamicIcon({ name, className = "w-6 h-6" }: { name: string; className?
   };
 
   switch (key) {
+    case "search":
+      return (
+        <svg {...baseProps}>
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
+      );
     case "file-text":
       return (
         <svg {...baseProps}>
@@ -199,6 +535,14 @@ function DynamicIcon({ name, className = "w-6 h-6" }: { name: string; className?
           <path d="M10 18h4" />
         </svg>
       );
+    case "globe":
+      return (
+        <svg {...baseProps}>
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+          <path d="M2 12h20" />
+        </svg>
+      );
     default:
       return (
         <svg {...baseProps}>
@@ -208,13 +552,145 @@ function DynamicIcon({ name, className = "w-6 h-6" }: { name: string; className?
   }
 }
 
+function PartnerEmblem({
+  partnerName,
+  idx,
+  colorGold,
+}: {
+  partnerName: string;
+  idx: number;
+  colorGold: string;
+}) {
+  const lower = partnerName.toLowerCase();
+
+  // 1. Ministry of Youth & Sports Iraq Emblem
+  if (lower.includes("الشباب") || idx === 0) {
+    return (
+      <div
+        className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border shadow-inner"
+        style={{
+          background: `radial-gradient(circle at 30% 20%, ${colorGold}35, rgba(12,16,23,0.9))`,
+          borderColor: `${colorGold}55`,
+          color: colorGold,
+        }}
+      >
+        <svg viewBox="0 0 64 64" className="w-9 h-9" fill="none">
+          {/* Dome & Arch of Iraqi Ministry + Youth Torch */}
+          <path
+            d="M12 52H52M16 52V32C16 22 23 15 32 12C41 15 48 22 48 32V52"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M24 52V36C24 31.5 27.5 28 32 28C36.5 28 40 31.5 40 36V52"
+            fill="currentColor"
+            fillOpacity="0.22"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          />
+          <circle cx="32" cy="20" r="3" fill="currentColor" />
+          <path
+            d="M8 28C8 20 12 13 18 9M56 28C56 20 52 13 46 9"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeDasharray="3 3"
+          />
+        </svg>
+      </div>
+    );
+  }
+
+  // 2. BMZ — German Federal Ministry
+  if (lower.includes("bmz") || lower.includes("الاتحادية") || idx === 1) {
+    return (
+      <div
+        className="w-14 h-14 rounded-2xl flex flex-col items-center justify-center shrink-0 border relative overflow-hidden"
+        style={{
+          backgroundColor: "#141b29",
+          borderColor: "rgba(255,255,255,0.18)",
+        }}
+      >
+        {/* German Colors Top Bar */}
+        <div className="absolute top-0 inset-x-0 h-1.5 flex">
+          <span className="flex-1 bg-black" />
+          <span className="flex-1 bg-[#e63926]" />
+          <span className="flex-1 bg-[#f59e0b]" />
+        </div>
+        <svg viewBox="0 0 24 24" className="w-6 h-6 text-[#d9a520] mb-0.5" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M12 2 4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3Z" />
+          <path d="M9 12h6" />
+          <path d="M12 9v6" />
+        </svg>
+        <span className="text-[10px] font-black tracking-widest text-white font-mono leading-none">
+          BMZ
+        </span>
+      </div>
+    );
+  }
+
+  // 3. GIZ — German International Cooperation
+  if (lower.includes("giz") || lower.includes("الوكالة") || idx === 2) {
+    return (
+      <div
+        className="w-14 h-14 rounded-2xl flex flex-col items-center justify-center shrink-0 border relative overflow-hidden"
+        style={{
+          background: "linear-gradient(135deg, rgba(230,57,38,0.2), rgba(18,23,34,0.95))",
+          borderColor: "rgba(230,57,38,0.45)",
+        }}
+      >
+        <svg viewBox="0 0 24 24" className="w-6 h-6 text-[#f87171] mb-0.5" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M3.6 9h16.8" />
+          <path d="M3.6 15h16.8" />
+          <path d="M11.5 3a17 17 0 0 0 0 18" />
+          <path d="M12.5 3a17 17 0 0 1 0 18" />
+        </svg>
+        <span className="text-[11px] font-black tracking-wider text-white font-mono leading-none">
+          giz
+        </span>
+      </div>
+    );
+  }
+
+  // 4. SET Project — Strengthening Economic Transformation in Iraq
+  return (
+    <div
+      className="w-14 h-14 rounded-2xl flex flex-col items-center justify-center shrink-0 border"
+      style={{
+        background: `linear-gradient(135deg, rgba(37,99,235,0.22), ${colorGold}18)`,
+        borderColor: `${colorGold}50`,
+      }}
+    >
+      <svg viewBox="0 0 24 24" className="w-6 h-6 text-[#60a5fa] mb-0.5" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M3 3v18h18" />
+        <path d="m19 9-5 5-4-4-3 3" />
+        <path d="M15 9h4v4" />
+      </svg>
+      <span
+        className="text-[10px] font-black tracking-widest font-mono leading-none"
+        style={{ color: colorGold }}
+      >
+        SET
+      </span>
+    </div>
+  );
+}
+
 export default function JobFair() {
   const [state, setState] = useState<JobFairState>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         try {
-          return { ...DEFAULT_STATE, ...JSON.parse(saved) };
+          const parsed = JSON.parse(saved);
+          return {
+            ...DEFAULT_STATE,
+            ...parsed,
+            tips: parsed.tips?.length ? parsed.tips : DEFAULT_STATE.tips,
+          };
         } catch {
           // ignore invalid JSON
         }
@@ -228,6 +704,21 @@ export default function JobFair() {
   const [activeTab, setActiveTab] = useState<AdminTab>("general");
   const [jsonText, setJsonText] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // NinuSoft subtle hint: secret modal unlocked after 5 clicks on the NinuSoft mark
+  const [ninuClicks, setNinuClicks] = useState(0);
+  const [showNinuModal, setShowNinuModal] = useState(false);
+  const handleNinuMarkClick = () => {
+    setNinuClicks((c) => {
+      const next = c + 1;
+      if (next >= 5) {
+        setShowNinuModal(true);
+        return 0;
+      }
+      return next;
+    });
+  };
+  const [activeAgendaDay, setActiveAgendaDay] = useState(0);
+  const [sponsorFilter, setSponsorFilter] = useState<"all" | "diamond" | "gold" | "silver">("all");
 
   const [countdown, setCountdown] = useState({
     days: "00",
@@ -253,24 +744,31 @@ export default function JobFair() {
     };
   }, [state.siteTitle]);
 
-  // Open admin modal on #admin or Ctrl+Shift+A
+  // Open admin modal on #admin or Ctrl+Shift+A / Cmd+Shift+A
   useEffect(() => {
-    if (window.location.hash === "#admin") {
-      setDraftState(state);
-      setJsonText(JSON.stringify(state, null, 2));
-      setIsAdminOpen(true);
-    }
+    const checkHash = () => {
+      if (window.location.hash === "#admin") {
+        setDraftState(state);
+        setJsonText(JSON.stringify(state, null, 2));
+        setIsAdminOpen(true);
+      }
+    };
+    checkHash();
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.shiftKey && (e.key === "A" || e.key === "a")) {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "A" || e.key === "a")) {
         e.preventDefault();
         setDraftState(state);
         setJsonText(JSON.stringify(state, null, 2));
         setIsAdminOpen(true);
       }
     };
+    window.addEventListener("hashchange", checkHash);
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("hashchange", checkHash);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, [state]);
 
   // Live Countdown Timer
@@ -300,12 +798,6 @@ export default function JobFair() {
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
   }, [state.countdownTargetDate]);
-
-  const openAdmin = () => {
-    setDraftState(JSON.parse(JSON.stringify(state)));
-    setJsonText(JSON.stringify(state, null, 2));
-    setIsAdminOpen(true);
-  };
 
   const saveAdminChanges = () => {
     setState(draftState);
@@ -367,25 +859,26 @@ export default function JobFair() {
     }
   };
 
+  const filteredSponsors =
+    sponsorFilter === "all"
+      ? OFFICIAL_SPONSORS
+      : OFFICIAL_SPONSORS.filter((s) => s.tier === sponsorFilter);
+
   return (
     <div
       dir="rtl"
       style={{
         fontFamily: "'Cairo', 'Inter', sans-serif",
         backgroundColor: state.bgDark || "#0c1017",
-        ["--jf-gold" as string]: state.colorGold || "#d9a520",
-        ["--jf-blue" as string]: state.colorBlue || "#2563eb",
-        ["--jf-red" as string]: state.colorRed || "#e63926",
-        ["--jf-navy" as string]: state.colorNavy || "#162032",
-        ["--jf-card" as string]: state.cardDark || "#121722",
       }}
-      className="min-h-screen flex flex-col text-slate-100 relative overflow-x-hidden selection:bg-[#d9a520]/30"
+      className="min-h-screen flex flex-col text-slate-100 relative overflow-x-clip selection:bg-[#d9a520]/30"
     >
       {/* NinuSoft Luxury Ambient Background Grid & Glow Orbs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:32px_32px]" />
+
         <div
-          className="absolute top-1/4 right-1/4 w-[480px] h-[480px] rounded-full blur-[140px] opacity-20"
+          className="absolute top-1/4 right-1/4 w-[500px] h-[500px] rounded-full blur-[150px] opacity-20"
           style={{ backgroundColor: state.colorGold }}
         />
         <div
@@ -399,7 +892,7 @@ export default function JobFair() {
         <div
           className="relative z-40 py-2.5 px-4 border-b"
           style={{
-            background: `linear-gradient(90deg, ${state.colorNavy}, #1a1508, ${state.colorNavy})`,
+            background: `linear-gradient(90deg, ${state.colorNavy}, #1c1608, ${state.colorNavy})`,
             borderColor: `${state.colorGold}40`,
           }}
         >
@@ -420,17 +913,16 @@ export default function JobFair() {
 
       {/* 2. Header Navigation */}
       <header
-        className="sticky top-0 z-40 backdrop-blur-xl border-b transition-colors"
+        className="sticky top-0 z-40 backdrop-blur-xl backdrop-saturate-150 border-b transition-colors"
         style={{
-          backgroundColor: `${state.bgDark}e6`,
+          backgroundColor: `${state.bgDark}99`,
           borderColor: "rgba(255,255,255,0.08)",
         }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
           {/* Logos: Baghdad Job Fair + NinuSoft */}
           <div className="flex items-center gap-3 sm:gap-4">
-            {/* Baghdad Job Fair Geometric Arch Logo */}
-            <div className="w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center shrink-0 rounded-xl bg-white/[0.03] border border-white/10 p-1.5 shadow-inner">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center shrink-0 rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/15 p-1.5 shadow-lg">
               <svg viewBox="0 0 100 120" className="w-full h-full drop-shadow">
                 <path
                   d="M 10 120 V 50 A 40 40 0 0 1 90 50 V 120 H 70 V 50 A 20 20 0 0 0 30 50 V 120 Z"
@@ -454,11 +946,11 @@ export default function JobFair() {
 
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="font-black text-base sm:text-xl text-white leading-tight">
+                <h1 className="font-black text-base sm:text-xl text-white leading-tight whitespace-nowrap">
                   {state.siteTitle}
                 </h1>
               </div>
-              <div className="flex items-center gap-2 mt-0.5">
+              <div className="flex items-center gap-2 mt-0.5 whitespace-nowrap">
                 <p className="text-xs font-bold" style={{ color: state.colorGold }}>
                   {state.siteSubtitle}
                 </p>
@@ -467,9 +959,13 @@ export default function JobFair() {
                     <span className="text-white/20">•</span>
                     <a
                       href="/"
-                      className="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-300 hover:text-white transition bg-white/5 hover:bg-white/10 px-2 py-0.5 rounded-full border border-white/10"
-                      title="NinuSoft — نينوسوفت"
+                      className="group relative inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-300 hover:text-white transition bg-white/5 hover:bg-white/10 px-2.5 py-0.5 rounded-full border border-white/10"
+                      aria-label="اكتشف المزيد عن نينوسوفت"
                     >
+                      {/* NinuSoft subtle hint: hover tooltip */}
+                      <span className="pointer-events-none absolute top-full right-0 mt-2 w-max max-w-[220px] rounded-lg border px-3 py-1.5 text-[11px] font-bold opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition z-50 shadow-xl" style={{ backgroundColor: state.cardDark, borderColor: `${state.colorGold}40`, color: state.colorGold }}>
+                        اكتشف المزيد عن نينوسوفت ←
+                      </span>
                       <img src="/logo.png" alt="NinuSoft" className="w-3.5 h-3.5 object-contain" />
                       <span>
                         نينو<span style={{ color: state.colorGold }}>سوفت</span>
@@ -482,29 +978,40 @@ export default function JobFair() {
           </div>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-6 lg:gap-8 font-bold text-slate-300 text-sm lg:text-base">
+          <nav className="hidden xl:flex items-center gap-5 2xl:gap-7 font-bold text-slate-300 text-sm whitespace-nowrap">
             <a href="#about" className="hover:text-[#d9a520] transition">
               عن المعرض
             </a>
-            <a href="#stats" className="hover:text-[#d9a520] transition">
-              الأرقام
-            </a>
-            <a href="#sectors" className="hover:text-[#d9a520] transition">
-              القطاعات
+            <a href="#location" className="hover:text-[#d9a520] transition">
+              تفاصيل الحضور
             </a>
             <a href="#features" className="hover:text-[#d9a520] transition">
-              الفعاليات
+              فعاليات المعرض
             </a>
-            <a href="#location" className="hover:text-[#d9a520] transition">
-              التوقيت والموقع
+            <a href="#tips" className="hover:text-[#d9a520] transition">
+              نصائح نينوسوفت
             </a>
-            <a href="#partners" className="hover:text-[#d9a520] transition">
-              الشركاء
+            <a href="#agenda" className="hover:text-[#d9a520] transition">
+              الأجندة
+            </a>
+            <a href="#sectors" className="hover:text-[#d9a520] transition">
+              الشركات والشركاء
             </a>
           </nav>
 
           {/* CTA & Mobile Menu Button */}
           <div className="flex items-center gap-2.5">
+            <a
+              href={state.officialSiteUrl || "https://www.baghdadjobfair.net/"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 2xl:px-4 py-2 rounded-full text-xs font-bold text-slate-200 hover:text-[#d9a520] bg-white/5 hover:bg-white/10 border border-white/15 transition whitespace-nowrap"
+              title="زيارة الموقع الرسمي لمعرض بغداد للتوظيف"
+            >
+              <DynamicIcon name="globe" className="w-3.5 h-3.5 text-[#d9a520]" />
+              <span className="sm:inline xl:hidden 2xl:inline">{state.officialSiteBtnText || "الموقع الرسمي"}</span>
+            </a>
+
             <a
               href={state.registerUrl}
               target="_blank"
@@ -513,7 +1020,7 @@ export default function JobFair() {
                 backgroundColor: state.colorGold,
                 color: "#0c1017",
               }}
-              className="px-4 sm:px-5 py-2.5 font-black rounded-xl shadow-lg shadow-[#d9a520]/20 hover:brightness-110 transition flex items-center gap-2 text-xs sm:text-sm"
+              className="px-5 py-2.5 font-black rounded-full shadow-lg shadow-[#d9a520]/20 hover:brightness-110 transition flex items-center gap-2 text-xs sm:text-sm whitespace-nowrap shrink-0"
             >
               <span>{state.registerBtnText}</span>
               <svg
@@ -533,7 +1040,7 @@ export default function JobFair() {
 
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-xl bg-white/5 border border-white/10 text-slate-200 hover:bg-white/10 transition"
+              className="xl:hidden p-2 rounded-xl bg-white/5 border border-white/10 text-slate-200 hover:bg-white/10 transition"
               aria-label="القائمة"
             >
               <svg
@@ -566,7 +1073,7 @@ export default function JobFair() {
         {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
           <div
-            className="md:hidden border-t px-4 py-4 space-y-2"
+            className="xl:hidden border-t px-4 py-4 space-y-2"
             style={{
               backgroundColor: state.cardDark,
               borderColor: "rgba(255,255,255,0.08)",
@@ -574,11 +1081,11 @@ export default function JobFair() {
           >
             {[
               { label: "عن المعرض", href: "#about" },
-              { label: "الأرقام والإحصائيات", href: "#stats" },
-              { label: "القطاعات المشمولة", href: "#sectors" },
-              { label: "أقسام وفعاليات المعرض", href: "#features" },
               { label: "تفاصيل الحضور والتوقيت", href: "#location" },
-              { label: "الشركاء والجهات المنظمة", href: "#partners" },
+              { label: "أقسام وفعاليات المعرض", href: "#features" },
+              { label: "نصائح تيم نينوسوفت", href: "#tips" },
+              { label: "أجندة الأيام الأربعة", href: "#agenda" },
+              { label: "الشركات والجهات الشريكة", href: "#sectors" },
             ].map((item) => (
               <a
                 key={item.href}
@@ -589,108 +1096,166 @@ export default function JobFair() {
                 {item.label}
               </a>
             ))}
+            <a
+              href={state.officialSiteUrl || "https://www.baghdadjobfair.net/"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 py-2.5 px-3 rounded-lg font-bold text-sm text-[#d9a520] bg-white/5 border border-[#d9a520]/30"
+            >
+              <DynamicIcon name="globe" className="w-4 h-4" />
+              <span>زيارة الموقع الرسمي للمعرض (baghdadjobfair.net)</span>
+            </a>
           </div>
         )}
       </header>
 
-      {/* 3. Top Geometric Banner Strip */}
-      {state.showShapes && (
-        <div
-          className="relative z-10 w-full py-3 border-b overflow-hidden"
-          style={{
-            backgroundColor: `${state.cardDark}99`,
-            borderColor: "rgba(255,255,255,0.07)",
-          }}
-        >
-          <div className="max-w-7xl mx-auto px-4 flex justify-between items-center opacity-90 h-9 sm:h-10 gap-2">
-            <svg viewBox="0 0 800 60" className="w-full h-full">
-              <circle
-                cx="30"
-                cy="30"
-                r="22"
-                fill="none"
-                stroke={state.colorGold}
-                strokeWidth="12"
-              />
-              <path d="M 80 30 A 20 20 0 0 1 120 30 Z" fill={state.colorBlue} />
-              <path d="M 80 35 A 20 20 0 0 0 120 35 Z" fill={state.colorGold} />
-              <rect x="145" y="10" width="30" height="40" rx="15" fill="#1e293b" />
-              <rect x="153" y="18" width="14" height="24" rx="7" fill={state.colorGold} />
-              <rect x="190" y="10" width="30" height="40" rx="15" fill={state.colorBlue} />
-              <rect x="198" y="18" width="14" height="24" rx="7" fill={state.colorGold} />
-              <circle cx="250" cy="30" r="18" fill={state.colorGold} />
-              <path d="M 285 45 V 25 A 15 15 0 0 1 315 25 V 45 Z" fill={state.colorRed} />
-              <circle
-                cx="360"
-                cy="30"
-                r="22"
-                fill="none"
-                stroke={state.colorBlue}
-                strokeWidth="12"
-              />
-              <path d="M 410 30 A 20 20 0 0 1 450 30 Z" fill={state.colorGold} />
-              <rect x="475" y="10" width="30" height="40" rx="15" fill={state.colorGold} />
-              <rect x="483" y="18" width="14" height="24" rx="7" fill="#0c1017" />
-              <rect x="520" y="10" width="30" height="40" rx="15" fill="#1e293b" />
-              <rect x="528" y="18" width="14" height="24" rx="7" fill={state.colorRed} />
-              <circle cx="580" cy="30" r="18" fill={state.colorRed} />
-              <path d="M 615 45 V 25 A 15 15 0 0 1 645 25 V 45 Z" fill={state.colorBlue} />
-              <circle
-                cx="690"
-                cy="30"
-                r="22"
-                fill="none"
-                stroke={state.colorGold}
-                strokeWidth="12"
-              />
-              <path d="M 740 30 A 20 20 0 0 1 780 30 Z" fill={state.colorBlue} />
-            </svg>
-          </div>
-        </div>
-      )}
-
       {/* Main Content */}
       <main className="flex-grow relative z-10">
-        {/* 4. Hero Section */}
+        {/* 3. Hero Section — NinuSoft Executive Bento Layout */}
         <section
           id="about"
-          className="relative py-12 lg:py-20 overflow-hidden border-b"
+          className="relative py-14 lg:py-24 overflow-hidden border-b"
           style={{ borderColor: "rgba(255,255,255,0.08)" }}
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid lg:grid-cols-12 gap-12 items-center">
-              {/* Right Column: Hero Text & Actions */}
-              <div className="lg:col-span-7 space-y-6 text-right">
+            <div className="grid lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+              {/* Right Column: Hero Content */}
+              <div className="lg:col-span-7 space-y-7 text-right">
                 <div
-                  className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold border"
+                  className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold border bg-white/[0.03] backdrop-blur-md"
                   style={{
-                    backgroundColor: `${state.colorGold}15`,
-                    borderColor: `${state.colorGold}40`,
+                    borderColor: `${state.colorGold}45`,
                     color: state.colorGold,
                   }}
                 >
-                  <DynamicIcon name="sparkles" className="w-4 h-4" />
+                  <span
+                    className="w-2 h-2 rounded-full animate-pulse"
+                    style={{ backgroundColor: state.colorGold }}
+                  />
                   <span>{state.heroBadge}</span>
+                  <span className="text-white/25">|</span>
+                  <span className="text-slate-300">{state.heroSubtitle}</span>
                 </div>
 
-                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-tight">
-                  {state.heroTitle}{" "}
-                  <span style={{ color: state.colorGold }}>{state.heroYear}</span>
-                </h1>
+                <div className="space-y-3">
+                  <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-[1.2] tracking-tight">
+                    {state.heroTitle}{" "}
+                    <span
+                      className="inline-block px-3 py-0.5 rounded-2xl border"
+                      style={{
+                        color: state.colorGold,
+                        backgroundColor: `${state.colorGold}12`,
+                        borderColor: `${state.colorGold}35`,
+                      }}
+                    >
+                      {state.heroYear}
+                    </span>
+                  </h1>
+                </div>
 
-                <h2
-                  className="text-2xl sm:text-3xl font-bold"
-                  style={{ color: state.colorGold }}
+                <p
+                  className="text-base sm:text-lg lg:text-xl text-slate-300 leading-relaxed font-medium border-r-4 pr-4"
+                  style={{ borderColor: state.colorGold }}
                 >
-                  {state.heroSubtitle}
-                </h2>
-
-                <p className="text-base sm:text-xl text-slate-300 leading-relaxed font-medium">
                   {state.heroDesc}
                 </p>
 
-                <div className="pt-2 flex flex-wrap gap-4 items-center">
-                  {/* Primary Register CTA */}
+                {/* Unified Glass Info Bar for Date & Location */}
+                <div
+                  className="grid sm:grid-cols-2 gap-3 p-3 rounded-2xl border backdrop-blur-md"
+                  style={{
+                    backgroundColor: "rgba(18, 23, 34, 0.8)",
+                    borderColor: "rgba(255,255,255,0.1)",
+                  }}
+                >
+                  {/* Date Item */}
+                  <div className="flex items-center gap-3.5 p-2.5 rounded-xl bg-white/[0.02] border border-white/5">
+                    <div
+                      className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                      style={{
+                        backgroundColor: `${state.colorGold}20`,
+                        color: state.colorGold,
+                      }}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="w-5 h-5"
+                      >
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" />
+                        <line x1="8" y1="2" x2="8" y2="6" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="text-[11px] text-slate-400 font-bold">موعد الانعقاد</div>
+                      <div className="text-xs sm:text-sm font-black text-white mt-0.5">
+                        {state.heroDate}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Location Item */}
+                  <a
+                    href={state.heroLocationUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3.5 p-2.5 rounded-xl bg-white/[0.02] border border-white/5 hover:border-[#d9a520]/50 transition group"
+                  >
+                    <div
+                      className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition"
+                      style={{
+                        backgroundColor: `${state.colorBlue}25`,
+                        color: "#60a5fa",
+                      }}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="w-5 h-5"
+                      >
+                        <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
+                        <circle cx="12" cy="10" r="3" />
+                      </svg>
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[11px] text-slate-400 font-bold flex items-center gap-1">
+                        <span>المكان على الخريطة</span>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-3 h-3 text-[#d9a520]"
+                        >
+                          <path d="M15 3h6v6" />
+                          <path d="M10 14 21 3" />
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                        </svg>
+                      </div>
+                      <div className="text-xs sm:text-sm font-black text-white group-hover:text-[#d9a520] transition truncate">
+                        {state.heroLocation}
+                      </div>
+                    </div>
+                  </a>
+                </div>
+
+                {/* CTA Buttons Row */}
+                <div className="pt-1 flex flex-wrap gap-3.5 items-center">
                   <a
                     href={state.registerUrl}
                     target="_blank"
@@ -699,7 +1264,7 @@ export default function JobFair() {
                       backgroundColor: state.colorGold,
                       color: "#0c1017",
                     }}
-                    className="px-8 py-3.5 font-black text-lg rounded-2xl shadow-xl shadow-[#d9a520]/25 hover:brightness-110 hover:-translate-y-0.5 transition flex items-center gap-3"
+                    className="px-8 py-4 font-black text-base sm:text-lg rounded-full shadow-xl shadow-[#d9a520]/25 hover:brightness-110 hover:-translate-y-0.5 transition flex items-center gap-3"
                   >
                     <span>{state.registerBtnText}</span>
                     <svg
@@ -717,187 +1282,142 @@ export default function JobFair() {
                     </svg>
                   </a>
 
-                  {/* Date Card */}
-                  <div
-                    className="flex items-center gap-3 p-3 rounded-xl border shadow-sm"
-                    style={{
-                      backgroundColor: state.cardDark,
-                      borderColor: "rgba(255,255,255,0.1)",
-                    }}
-                  >
-                    <div
-                      className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                      style={{
-                        backgroundColor: `${state.colorGold}20`,
-                        color: state.colorGold,
-                      }}
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-4 h-4"
-                      >
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                        <line x1="16" y1="2" x2="16" y2="6" />
-                        <line x1="8" y1="2" x2="8" y2="6" />
-                        <line x1="3" y1="10" x2="21" y2="10" />
-                      </svg>
-                    </div>
-                    <div className="text-xs">
-                      <div className="text-slate-400 font-semibold">التاريخ</div>
-                      <div className="font-bold text-white">{state.heroDate}</div>
-                    </div>
-                  </div>
-
-                  {/* Location with Google Maps Link */}
                   <a
-                    href={state.heroLocationUrl}
+                    href={state.officialSiteUrl || "https://www.baghdadjobfair.net/"}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{
-                      backgroundColor: state.cardDark,
-                      borderColor: "rgba(255,255,255,0.1)",
-                    }}
-                    className="flex items-center gap-3 p-3 rounded-xl border shadow-sm hover:border-[#d9a520]/60 transition group"
+                    className="px-6 py-4 rounded-full font-bold text-sm sm:text-base text-white bg-white/[0.06] border border-[#d9a520]/45 hover:bg-[#d9a520]/15 transition flex items-center gap-2.5"
                   >
-                    <div
-                      className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition"
-                      style={{
-                        backgroundColor: `${state.colorBlue}25`,
-                        color: "#60a5fa",
-                      }}
+                    <DynamicIcon name="globe" className="w-4 h-4 text-[#d9a520]" />
+                    <span>للاطلاع على المزيد — الموقع الرسمي للمعرض</span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="w-4 h-4 text-[#d9a520]"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-4 h-4"
-                      >
-                        <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
-                        <circle cx="12" cy="10" r="3" />
-                      </svg>
-                    </div>
-                    <div className="text-xs">
-                      <div className="text-slate-400 font-semibold flex items-center gap-1">
-                        <span>المكان</span>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="w-3 h-3 text-[#d9a520]"
-                        >
-                          <path d="M15 3h6v6" />
-                          <path d="M10 14 21 3" />
-                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                        </svg>
-                      </div>
-                      <div className="font-bold text-white group-hover:text-[#d9a520] transition">
-                        {state.heroLocation}
-                      </div>
-                    </div>
+                      <path d="M15 3h6v6" />
+                      <path d="M10 14 21 3" />
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                    </svg>
+                  </a>
+
+                  <a
+                    href="#agenda"
+                    className="px-5 py-4 rounded-full font-bold text-sm text-slate-200 border border-white/15 hover:bg-white/10 transition"
+                  >
+                    أجندة الأيام الأربعة
                   </a>
                 </div>
               </div>
 
-              {/* Left Column: Visual Composition Card */}
+              {/* Left Column: NinuSoft Architectural Visual Card */}
               <div className="lg:col-span-5 flex justify-center">
                 <div
-                  className="relative w-full max-w-sm aspect-[4/5] rounded-3xl shadow-2xl p-8 overflow-hidden flex flex-col justify-between border"
+                  className="relative w-full max-w-md rounded-3xl p-7 sm:p-8 overflow-hidden flex flex-col justify-between border"
                   style={{
-                    backgroundColor: state.cardDark,
-                    borderColor: `${state.colorGold}35`,
-                    boxShadow: `0 25px 60px -15px rgba(0,0,0,0.7), 0 0 40px ${state.colorGold}12`,
+                    background: `radial-gradient(circle at 50% 0%, ${state.colorGold}18, ${state.cardDark} 70%)`,
+                    borderColor: `${state.colorGold}40`,
+                    boxShadow: `0 25px 60px -15px rgba(0,0,0,0.75), 0 0 50px ${state.colorGold}12`,
                   }}
                 >
-                  {/* Ambient top glow inside card */}
-                  <div
-                    className="absolute -top-20 -right-20 w-48 h-48 rounded-full blur-3xl opacity-25 pointer-events-none"
-                    style={{ backgroundColor: state.colorGold }}
-                  />
-
-                  {/* Top NinuSoft + Job Fair Header inside card */}
-                  {state.showNinusoftBadge && (
-                    <div className="relative z-10 flex items-center justify-between border-b border-white/10 pb-3">
-                      <div className="flex items-center gap-2">
-                        <img
-                          src="/logo.png"
-                          alt="NinuSoft"
-                          className="w-6 h-6 object-contain drop-shadow-[0_0_8px_rgba(217,165,32,0.4)]"
-                        />
-                        <span className="text-xs font-extrabold tracking-tight text-white">
-                          Ninu<span style={{ color: state.colorGold }}>Soft</span>
-                        </span>
-                      </div>
-                      <span
-                        className="text-[11px] font-bold px-2.5 py-0.5 rounded-full border"
-                        style={{
-                          backgroundColor: `${state.colorGold}15`,
-                          borderColor: `${state.colorGold}35`,
-                          color: state.colorGold,
-                        }}
-                      >
-                        بغداد 2026
+                  {/* Top Card Header */}
+                  <div className="relative z-10 flex items-center justify-between border-b border-white/10 pb-4">
+                    <div
+                      className="flex items-center gap-2.5 cursor-pointer select-none"
+                      onClick={handleNinuMarkClick}
+                      title="هناك شيء مخفي هنا..."
+                    >
+                      <img
+                        src="/logo.png"
+                        alt="NinuSoft"
+                        className="w-7 h-7 object-contain drop-shadow-[0_0_10px_rgba(217,165,32,0.5)]"
+                      />
+                      <span className="text-sm font-extrabold tracking-tight text-white">
+                        Ninu<span style={{ color: state.colorGold }}>Soft</span>
                       </span>
                     </div>
-                  )}
+                    <span
+                      className="text-xs font-bold px-3 py-1 rounded-full border"
+                      style={{
+                        backgroundColor: `${state.colorGold}15`,
+                        borderColor: `${state.colorGold}40`,
+                        color: state.colorGold,
+                      }}
+                    >
+                      بغداد • {state.heroYear}
+                    </span>
+                  </div>
 
+                  {/* Center Arch Artwork */}
                   {state.showShapes && (
-                    <div className="relative z-10 my-auto flex flex-col items-center justify-center gap-4 py-2">
-                      <svg viewBox="0 0 200 240" className="w-44 h-56 drop-shadow-xl">
-                        <path
-                          d="M 20 240 V 100 A 80 80 0 0 1 180 100 V 240 H 145 V 100 A 45 45 0 0 0 55 100 V 240 Z"
-                          fill={state.colorGold}
-                        />
-                        <path
-                          d="M 55 240 V 110 A 45 45 0 0 1 145 110 V 240 H 115 V 110 A 15 15 0 0 0 85 110 V 240 Z"
-                          fill="#1e293b"
-                        />
-                        <path
-                          d="M 75 240 V 155 A 25 25 0 0 1 125 155 V 240 Z"
-                          fill={state.colorBlue}
-                        />
-                        <path
-                          d="M 90 240 V 170 A 10 10 0 0 1 110 170 V 240 Z"
-                          fill={state.cardDark}
-                        />
-                        <path
-                          d="M 120 240 V 195 A 18 18 0 0 1 156 195 V 240 Z"
-                          fill={state.colorRed}
-                        />
-                        <path
-                          d="M 140 240 V 210 A 10 10 0 0 1 160 210 V 240 Z"
-                          fill="#f8fafc"
-                        />
-                      </svg>
-                      <div className="text-center font-black text-white text-lg tracking-wider">
-                        JOB FAIR <span style={{ color: state.colorGold }}>{state.heroYear}</span>
+                    <div className="relative z-10 my-6 flex flex-col items-center justify-center gap-4">
+                      <div className="relative p-4 rounded-3xl bg-black/25 border border-white/5">
+                        <svg viewBox="0 0 200 240" className="w-40 h-52 drop-shadow-2xl">
+                          <path
+                            d="M 20 240 V 100 A 80 80 0 0 1 180 100 V 240 H 145 V 100 A 45 45 0 0 0 55 100 V 240 Z"
+                            fill={state.colorGold}
+                          />
+                          <path
+                            d="M 55 240 V 110 A 45 45 0 0 1 145 110 V 240 H 115 V 110 A 15 15 0 0 0 85 110 V 240 Z"
+                            fill="#1e293b"
+                          />
+                          <path
+                            d="M 75 240 V 155 A 25 25 0 0 1 125 155 V 240 Z"
+                            fill={state.colorBlue}
+                          />
+                          <path
+                            d="M 90 240 V 170 A 10 10 0 0 1 110 170 V 240 Z"
+                            fill={state.cardDark}
+                          />
+                          <path
+                            d="M 120 240 V 195 A 18 18 0 0 1 156 195 V 240 Z"
+                            fill={state.colorRed}
+                          />
+                          <path
+                            d="M 140 240 V 210 A 10 10 0 0 1 160 210 V 240 Z"
+                            fill="#f8fafc"
+                          />
+                        </svg>
+                      </div>
+
+                      <div className="text-center">
+                        <div className="font-black text-white text-xl tracking-wider">
+                          BAGHDAD JOB FAIR{" "}
+                          <span style={{ color: state.colorGold }}>{state.heroYear}</span>
+                        </div>
+                        <p className="text-xs text-slate-400 font-semibold mt-1">
+                          {state.siteSubtitle}
+                        </p>
                       </div>
                     </div>
                   )}
 
-                  <div
-                    className="relative z-10 text-center p-3 rounded-2xl border"
-                    style={{
-                      backgroundColor: "rgba(255,255,255,0.03)",
-                      borderColor: "rgba(255,255,255,0.08)",
-                    }}
-                  >
-                    <p className="font-black text-sm" style={{ color: state.colorGold }}>
-                      فرصتك تبدأ بخطوة .. بغداد 2026
-                    </p>
+                  {/* Bottom Mini Highlights inside Hero Card */}
+                  <div className="relative z-10 grid grid-cols-2 gap-2.5 pt-2 border-t border-white/10">
+                    <div className="bg-white/[0.03] p-3 rounded-2xl border border-white/5 text-center">
+                      <span
+                        className="block text-lg font-black"
+                        style={{ color: state.colorGold }}
+                      >
+                        {state.stats[0]?.val || "+90"}
+                      </span>
+                      <span className="text-[11px] text-slate-300 font-bold">
+                        {state.stats[0]?.lbl || "شركة مشاركة"}
+                      </span>
+                    </div>
+                    <div className="bg-white/[0.03] p-3 rounded-2xl border border-white/5 text-center">
+                      <span className="block text-lg font-black text-white">
+                        {state.stats[1]?.val || "+2000"}
+                      </span>
+                      <span className="text-[11px] text-slate-300 font-bold">
+                        {state.stats[1]?.lbl || "فرصة عمل"}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -905,201 +1425,189 @@ export default function JobFair() {
           </div>
         </section>
 
-        {/* 5. Countdown Timer Section */}
-        {state.showCountdown && (
-          <section
-            className="py-10 border-b relative overflow-hidden"
-            style={{
-              background: `linear-gradient(180deg, ${state.colorNavy}80, ${state.cardDark})`,
-              borderColor: "rgba(255,255,255,0.08)",
-            }}
-          >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-              <h3
-                className="text-xl sm:text-2xl font-black mb-6 flex items-center justify-center gap-2"
-                style={{ color: state.colorGold }}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="w-6 h-6"
-                >
-                  <line x1="10" x2="14" y1="2" y2="2" />
-                  <line x1="12" x2="15" y1="14" y2="11" />
-                  <circle cx="12" cy="14" r="8" />
-                </svg>
-                <span>الوقت المتبقي لانطلاق المعرض</span>
-              </h3>
-
+        {/* 4. Countdown & Stats + 2025 Impact Section */}
+        <section
+          id="stats"
+          className="py-14 border-b relative overflow-hidden"
+          style={{
+            background: `linear-gradient(180deg, ${state.colorNavy}60, transparent)`,
+            borderColor: "rgba(255,255,255,0.08)",
+          }}
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+            {/* Countdown Box */}
+            {state.showCountdown && (
               <div
-                className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-2xl mx-auto"
-                dir="rtl"
+                className="p-6 sm:p-8 rounded-3xl border backdrop-blur-md"
+                style={{
+                  backgroundColor: `${state.cardDark}cc`,
+                  borderColor: `${state.colorGold}35`,
+                }}
               >
-                {[
-                  { val: countdown.days, label: "يوم", highlight: false },
-                  { val: countdown.hours, label: "ساعة", highlight: false },
-                  { val: countdown.minutes, label: "دقيقة", highlight: false },
-                  { val: countdown.seconds, label: "ثانية", highlight: true },
-                ].map((item) => (
+                <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+                  <div className="text-center lg:text-right">
+                    <div
+                      className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider mb-1"
+                      style={{ color: state.colorGold }}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="w-4 h-4"
+                      >
+                        <line x1="10" x2="14" y1="2" y2="2" />
+                        <line x1="12" x2="15" y1="14" y2="11" />
+                        <circle cx="12" cy="14" r="8" />
+                      </svg>
+                      <span>العد التنازلي الرسمي</span>
+                    </div>
+                    <h3 className="text-xl sm:text-2xl font-black text-white">
+                      الوقت المتبقي لانطلاق المعرض
+                    </h3>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-3 sm:gap-4 w-full lg:w-auto max-w-xl">
+                    {[
+                      { val: countdown.days, label: "يوم", highlight: false },
+                      { val: countdown.hours, label: "ساعة", highlight: false },
+                      { val: countdown.minutes, label: "دقيقة", highlight: false },
+                      { val: countdown.seconds, label: "ثانية", highlight: true },
+                    ].map((item) => (
+                      <div
+                        key={item.label}
+                        className="px-4 sm:px-6 py-3.5 rounded-2xl border text-center"
+                        style={{
+                          backgroundColor: "#0c1017",
+                          borderColor: item.highlight
+                            ? `${state.colorGold}70`
+                            : "rgba(255,255,255,0.1)",
+                        }}
+                      >
+                        <span
+                          className="block text-2xl sm:text-4xl font-black font-mono"
+                          style={{ color: item.highlight ? state.colorGold : "#ffffff" }}
+                        >
+                          {item.val}
+                        </span>
+                        <span className="text-xs font-bold text-slate-400 mt-1 block">
+                          {item.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 4 Main Stats Cards (2026 Targets) */}
+            <div>
+              <div className="flex items-center justify-between flex-wrap gap-2 mb-5">
+                <h3 className="text-lg sm:text-xl font-black text-white flex items-center gap-2">
+                  <span
+                    className="w-2.5 h-2.5 rounded-full"
+                    style={{ backgroundColor: state.colorGold }}
+                  />
+                  <span>أهداف وأرقام نسخة 2026</span>
+                </h3>
+                <span className="text-xs text-slate-400 font-bold">
+                  مقابلات مباشرة مع مسؤولي التوظيف طوال أيام المعرض
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
+                {state.stats.map((stat, idx) => {
+                  const accentColors = [
+                    state.colorGold,
+                    "#ffffff",
+                    state.colorGold,
+                    "#60a5fa",
+                  ];
+                  return (
+                    <div
+                      key={idx}
+                      className="relative p-6 sm:p-7 rounded-3xl text-center border overflow-hidden transition hover:-translate-y-1"
+                      style={{
+                        backgroundColor: state.cardDark,
+                        borderColor: "rgba(255,255,255,0.08)",
+                      }}
+                    >
+                      <div
+                        className="absolute inset-x-0 top-0 h-1"
+                        style={{
+                          backgroundColor:
+                            idx % 2 === 0 ? state.colorGold : state.colorBlue,
+                        }}
+                      />
+                      <div
+                        className="text-3xl sm:text-5xl font-black mb-2 tracking-tight"
+                        style={{ color: accentColors[idx % accentColors.length] }}
+                      >
+                        {stat.val}
+                      </div>
+                      <div className="text-sm sm:text-base font-bold text-slate-300">
+                        {stat.lbl}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Official 2025 Impact Strip (Adopted from baghdadjobfair.net) */}
+            <div
+              className="p-6 sm:p-8 rounded-3xl border"
+              style={{
+                backgroundColor: "rgba(18, 23, 34, 0.7)",
+                borderColor: "rgba(255,255,255,0.08)",
+              }}
+            >
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 border-b border-white/10 pb-4">
+                <div>
+                  <span
+                    className="text-xs font-bold uppercase tracking-wider"
+                    style={{ color: state.colorGold }}
+                  >
+                    منصة عملية للتوظيف المباشر
+                  </span>
+                  <h3 className="text-xl sm:text-2xl font-black text-white mt-0.5">
+                    أثر صنعناه في 2025 وما نبني عليه في 2026
+                  </h3>
+                </div>
+                <p className="text-xs sm:text-sm text-slate-400 max-w-md">
+                  أثبت معرض بغداد للوظائف أنه حلقة وصل حقيقية تربط الشركات مباشرة بآلاف الشباب العراقيين بنتائج ملموسة:
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {IMPACT_2025.map((item, idx) => (
                   <div
-                    key={item.label}
-                    className="backdrop-blur-md p-4 rounded-2xl border shadow-inner"
-                    style={{
-                      backgroundColor: "rgba(255,255,255,0.04)",
-                      borderColor: item.highlight
-                        ? `${state.colorGold}60`
-                        : "rgba(255,255,255,0.1)",
-                    }}
+                    key={idx}
+                    className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col justify-center"
                   >
                     <span
-                      className="block text-3xl sm:text-4xl font-black font-mono"
-                      style={{ color: item.highlight ? state.colorGold : "#ffffff" }}
+                      className="text-2xl sm:text-3xl font-black font-mono"
+                      style={{ color: idx % 2 === 0 ? state.colorGold : "#93c5fd" }}
+                      dir="ltr"
                     >
                       {item.val}
                     </span>
-                    <label className="text-xs sm:text-sm font-bold text-slate-400 mt-1 block">
-                      {item.label}
-                    </label>
+                    <span className="text-xs sm:text-sm font-bold text-slate-300 mt-1">
+                      {item.lbl}
+                    </span>
                   </div>
                 ))}
               </div>
             </div>
-          </section>
-        )}
-
-        {/* 6. Stats Counter Section */}
-        <section
-          id="stats"
-          className="py-12 border-b"
-          style={{ borderColor: "rgba(255,255,255,0.08)" }}
-        >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {state.stats.map((stat, idx) => {
-                const colors = [
-                  state.colorGold,
-                  "#f8fafc",
-                  state.colorGold,
-                  "#60a5fa",
-                ];
-                return (
-                  <div
-                    key={idx}
-                    className="p-6 rounded-2xl text-center border transition hover:-translate-y-0.5"
-                    style={{
-                      backgroundColor: state.cardDark,
-                      borderColor: "rgba(255,255,255,0.08)",
-                    }}
-                  >
-                    <div
-                      className="text-3xl sm:text-4xl font-black mb-1.5"
-                      style={{ color: colors[idx % colors.length] }}
-                    >
-                      {stat.val}
-                    </div>
-                    <div className="text-sm font-bold text-slate-300">{stat.lbl}</div>
-                  </div>
-                );
-              })}
-            </div>
           </div>
         </section>
 
-        {/* 7. Sectors Section */}
-        <section
-          id="sectors"
-          className="py-16 border-b"
-          style={{ borderColor: "rgba(255,255,255,0.08)" }}
-        >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div className="max-w-3xl mx-auto mb-10">
-              <h2 className="text-3xl font-black text-white mb-3">
-                القطاعات المشمولة بالتوظيف
-              </h2>
-              <p className="text-slate-400 font-medium">
-                يغطي المعرض العديد من التخصصات والقطاعات الحيوية لتلبية تطلعات الكفاءات والشباب:
-              </p>
-            </div>
-
-            <div className="flex flex-wrap justify-center gap-4">
-              {state.sectors.map((sec, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    backgroundColor: state.cardDark,
-                    borderColor: "rgba(255,255,255,0.1)",
-                  }}
-                  className="px-6 py-3.5 rounded-2xl border shadow-sm font-bold text-white flex items-center gap-2.5 hover:border-[#d9a520]/50 transition"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke={state.colorGold}
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="w-4 h-4 shrink-0"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="m9 12 2 2 4-4" />
-                  </svg>
-                  <span>{sec}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* 8. Dynamic Sections & Categories Section */}
-        <section id="features" className="py-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-3xl mx-auto mb-12">
-              <h2 className="text-3xl font-black text-white mb-3">أقسام وفعاليات المعرض</h2>
-              <p className="text-slate-400 font-medium">
-                مجموعة متنوعة من الخدمات والفعاليات المصممة لدعم الشباب والباحثين عن عمل.
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-8">
-              {state.categories.map((cat, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    backgroundColor: state.cardDark,
-                    borderColor: "rgba(255,255,255,0.08)",
-                  }}
-                  className="p-8 rounded-3xl border hover:border-[#d9a520]/40 transition text-right flex flex-col"
-                >
-                  <div
-                    className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 border"
-                    style={{
-                      backgroundColor: `${state.colorGold}15`,
-                      borderColor: `${state.colorGold}30`,
-                      color: state.colorGold,
-                    }}
-                  >
-                    <DynamicIcon name={cat.icon} className="w-7 h-7" />
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-3">{cat.title}</h3>
-                  <p className="text-slate-300 leading-relaxed text-sm">{cat.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* 9. Location & Details Section */}
-        <section
-          id="location"
-          className="py-16 border-t"
-          style={{ borderColor: "rgba(255,255,255,0.08)" }}
-        >
+        {/* 10. Location & Details Section */}
+        <section id="location" className="py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div
               className="rounded-3xl p-8 sm:p-12 relative overflow-hidden shadow-2xl border"
@@ -1227,6 +1735,45 @@ export default function JobFair() {
                         </a>
                       </div>
                     </li>
+
+                    {/* Official Website Link Item */}
+                    <li className="flex items-start gap-4">
+                      <div
+                        className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border"
+                        style={{
+                          backgroundColor: `${state.colorGold}15`,
+                          borderColor: `${state.colorGold}30`,
+                          color: state.colorGold,
+                        }}
+                      >
+                        <DynamicIcon name="globe" className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-lg text-white">الموقع الرسمي للمعرض</h4>
+                        <a
+                          href={state.officialSiteUrl || "https://www.baghdadjobfair.net/"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[#d9a520] hover:underline font-bold flex items-center gap-1.5 transition mt-0.5 text-sm sm:text-base"
+                        >
+                          <span dir="ltr">www.baghdadjobfair.net</span>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="w-4 h-4 shrink-0"
+                          >
+                            <path d="M15 3h6v6" />
+                            <path d="M10 14 21 3" />
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                          </svg>
+                        </a>
+                      </div>
+                    </li>
                   </ul>
                 </div>
 
@@ -1243,7 +1790,7 @@ export default function JobFair() {
                   </div>
                   <h3 className="text-xl font-bold text-white">أهلاً وسهلاً بالجميع</h3>
                   <p className="text-sm text-slate-300 leading-relaxed">
-                    المعرض مفتوح لكافة الشباب والباحثين عن عمل للتواصل المباشر مع أصحاب الشركات.
+                    المعرض مفتوح لكافة الشباب والباحثين عن عمل للتواصل المباشر مع أصحاب الشركات، ويمكنك الاطلاع على المزيد من التفاصيل عبر المنصة الرسمية للمعرض.
                   </p>
 
                   <div className="pt-2 flex flex-wrap justify-center gap-3">
@@ -1255,7 +1802,7 @@ export default function JobFair() {
                         backgroundColor: state.colorGold,
                         color: "#0c1017",
                       }}
-                      className="inline-flex items-center gap-2 px-6 py-3 font-black text-sm rounded-xl transition shadow-lg hover:brightness-110"
+                      className="inline-flex items-center gap-2 px-6 py-3 font-black text-sm rounded-full transition shadow-lg hover:brightness-110"
                     >
                       <span>{state.registerBtnText}</span>
                       <svg
@@ -1273,10 +1820,19 @@ export default function JobFair() {
                       </svg>
                     </a>
                     <a
+                      href={state.officialSiteUrl || "https://www.baghdadjobfair.net/"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/15 text-white font-bold text-sm rounded-full transition border border-[#d9a520]/40"
+                    >
+                      <DynamicIcon name="globe" className="w-4 h-4 text-[#d9a520]" />
+                      <span>زيارة الموقع الرسمي</span>
+                    </a>
+                    <a
                       href={state.heroLocationUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/15 text-white font-bold text-sm rounded-xl transition border border-white/20"
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 text-white font-bold text-sm rounded-full transition border border-white/15"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -1300,93 +1856,655 @@ export default function JobFair() {
           </div>
         </section>
 
-        {/* 10. Partners Section */}
+        {/* 8. Dynamic Sections & Categories Section */}
         <section
-          id="partners"
-          className="py-12 border-t"
+          id="features"
+          className="py-16 border-b"
           style={{ borderColor: "rgba(255,255,255,0.08)" }}
         >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <p
-              className="text-xs font-bold uppercase tracking-widest mb-6"
-              style={{ color: state.colorGold }}
-            >
-              الشركاء والجهات المنظمة
-            </p>
-            <div className="flex flex-wrap justify-center items-center gap-4 md:gap-6 font-black text-white text-sm md:text-base">
-              {state.partners.map((p, idx) => (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-3xl mx-auto mb-12">
+              <span
+                className="text-xs font-bold uppercase tracking-widest block mb-2"
+                style={{ color: state.colorGold }}
+              >
+                خدمات المعرض
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">
+                أقسام وفعاليات المعرض
+              </h2>
+              <p className="text-slate-400 font-medium">
+                مجموعة متنوعة من الخدمات والفعاليات المصممة لدعم الشباب والباحثين عن عمل.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-7">
+              {state.categories.map((cat, idx) => (
                 <div
                   key={idx}
                   style={{
                     backgroundColor: state.cardDark,
-                    borderColor: "rgba(255,255,255,0.1)",
+                    borderColor: "rgba(255,255,255,0.09)",
                   }}
-                  className="px-5 py-3 rounded-xl border shadow-sm font-bold text-slate-100 hover:border-[#d9a520]/40 transition"
+                  className="p-8 rounded-3xl border hover:border-[#d9a520]/45 hover:-translate-y-1 transition text-right flex flex-col relative overflow-hidden group"
                 >
-                  {p}
+                  <div
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 border"
+                    style={{
+                      backgroundColor: `${state.colorGold}15`,
+                      borderColor: `${state.colorGold}35`,
+                      color: state.colorGold,
+                    }}
+                  >
+                    <DynamicIcon name={cat.icon} className="w-7 h-7" />
+                  </div>
+                  <h3 className="text-xl font-black text-white mb-3">{cat.title}</h3>
+                  <p className="text-slate-300 leading-relaxed text-sm">{cat.desc}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
+
+        {/* 9. Recommendations & Tips for Job Seekers (#tips) */}
+        <section
+          id="tips"
+          className="py-16 border-b relative overflow-hidden"
+          style={{
+            background: `radial-gradient(ellipse at 50% 0%, ${state.colorGold}10, transparent 70%)`,
+            borderColor: "rgba(255,255,255,0.08)",
+          }}
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-3xl mx-auto mb-12">
+              <div
+                className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-bold border mb-3"
+                style={{
+                  backgroundColor: `${state.colorGold}15`,
+                  borderColor: `${state.colorGold}35`,
+                  color: state.colorGold,
+                }}
+              >
+                <DynamicIcon name="sparkles" className="w-3.5 h-3.5" />
+                <span>دليلك للنجاح في المعرض</span>
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">
+                نصائح تيم نينوسوفت
+              </h2>
+              <p className="text-slate-400 font-medium">
+                خطوات عملية نوصي بها لتحقيق أقصى استفادة من مشاركتك في معرض بغداد للتوظيف وترك انطباع مميز لدى الشركات:
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              {state.tips.map((tip, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    backgroundColor: state.cardDark,
+                    borderColor:
+                      idx === 0 ? `${state.colorGold}50` : "rgba(255,255,255,0.09)",
+                  }}
+                  className="p-6 sm:p-7 rounded-3xl border hover:border-[#d9a520]/50 transition flex items-start gap-5 relative overflow-hidden"
+                >
+                  <div
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border"
+                    style={{
+                      backgroundColor: `${state.colorGold}18`,
+                      borderColor: `${state.colorGold}35`,
+                      color: state.colorGold,
+                    }}
+                  >
+                    <DynamicIcon name={tip.icon} className="w-6 h-6" />
+                  </div>
+                  <div className="space-y-2 text-right">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="text-xs font-black px-2 py-0.5 rounded-md"
+                        style={{
+                          backgroundColor: `${state.colorGold}20`,
+                          color: state.colorGold,
+                        }}
+                      >
+                        توصية {idx + 1}
+                      </span>
+                      <h3 className="text-lg font-black text-white">{tip.title}</h3>
+                    </div>
+                    <p className="text-slate-300 text-sm leading-relaxed">{tip.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* NinuSoft subtle hint: soft credit under the tips */}
+            <p className="mt-8 text-center text-xs text-slate-500">
+              هذه النصائح مستوحاة من خبرة فريق نينوسوفت في بناء المنتجات الرقمية والعمل اليومي مع فرق التقنية.{" "}
+              <a href="/" className="font-bold hover:underline" style={{ color: `${state.colorGold}cc` }}>
+                تعرّف على الفريق
+              </a>
+            </p>
+          </div>
+        </section>
+
+        {/* 5. NEW ADOPTED SECTION: Official 4-Day Agenda (#agenda) */}
+        <section
+          id="agenda"
+          className="py-16 border-b relative overflow-hidden"
+          style={{ borderColor: "rgba(255,255,255,0.08)" }}
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-3xl mx-auto mb-10">
+              <span
+                className="text-xs font-bold uppercase tracking-widest block mb-2"
+                style={{ color: state.colorGold }}
+              >
+                البرنامج الرسمي الكامل
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">
+                أجندة المعرض — الأيام الأربعة
+              </h2>
+              <p className="text-slate-400 font-medium text-sm sm:text-base">
+                تعرّف على جدول الجلسات الحوارية، عروض الشركات، وورش التدريب اليومية من 17 إلى 20 تشرين الثاني 2026:
+              </p>
+            </div>
+
+            {/* Day Selector Tabs */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+              {OFFICIAL_AGENDA.map((day, idx) => {
+                const isActive = activeAgendaDay === idx;
+                return (
+                  <button
+                    key={day.id}
+                    onClick={() => setActiveAgendaDay(idx)}
+                    style={{
+                      backgroundColor: isActive ? `${state.colorGold}18` : state.cardDark,
+                      borderColor: isActive
+                        ? state.colorGold
+                        : "rgba(255,255,255,0.08)",
+                    }}
+                    className="p-4 rounded-2xl border text-right transition hover:border-[#d9a520]/50 flex flex-col justify-between"
+                  >
+                    <div className="flex items-center justify-between w-full mb-1">
+                      <span
+                        className="text-xs font-black px-2.5 py-0.5 rounded-full"
+                        style={{
+                          backgroundColor: isActive ? state.colorGold : "rgba(255,255,255,0.06)",
+                          color: isActive ? "#0c1017" : "#cbd5e1",
+                        }}
+                      >
+                        {day.label}
+                      </span>
+                      <span className="text-[11px] font-mono text-slate-400" dir="ltr">
+                        {17 + idx}/11
+                      </span>
+                    </div>
+                    <div className="font-black text-sm sm:text-base text-white mt-1 line-clamp-1">
+                      {day.title}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Active Day Schedule Card */}
+            {OFFICIAL_AGENDA[activeAgendaDay] && (
+              <div
+                className="rounded-3xl p-6 sm:p-8 border"
+                style={{
+                  backgroundColor: state.cardDark,
+                  borderColor: `${state.colorGold}35`,
+                }}
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-6 mb-6 border-b border-white/10">
+                  <div>
+                    <span
+                      className="text-xs font-bold block mb-1"
+                      style={{ color: state.colorGold }}
+                    >
+                      {OFFICIAL_AGENDA[activeAgendaDay].dateLabel}
+                    </span>
+                    <h3 className="text-xl sm:text-2xl font-black text-white">
+                      {OFFICIAL_AGENDA[activeAgendaDay].title}
+                    </h3>
+                  </div>
+                  <a
+                    href={`${(state.officialSiteUrl || "https://www.baghdadjobfair.net").replace(/\/$/, "")}/agenda`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-[#d9a520] border border-[#d9a520]/30 transition self-start sm:self-auto"
+                  >
+                    <span>عرض الأجندة التفصيلية في الموقع الرسمي</span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      className="w-3.5 h-3.5"
+                    >
+                      <path d="M15 3h6v6" />
+                      <path d="M10 14 21 3" />
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                    </svg>
+                  </a>
+                </div>
+
+                <div className="space-y-4">
+                  {OFFICIAL_AGENDA[activeAgendaDay].sessions.map((session, sIdx) => (
+                    <div
+                      key={sIdx}
+                      className="p-4 sm:p-5 rounded-2xl bg-[#0c1017]/80 border border-white/5 hover:border-white/15 transition flex flex-col sm:flex-row sm:items-start gap-4"
+                    >
+                      <div
+                        className="px-3.5 py-2 rounded-xl text-xs font-black font-mono shrink-0 text-center border self-start"
+                        style={{
+                          backgroundColor: `${state.colorGold}15`,
+                          borderColor: `${state.colorGold}35`,
+                          color: state.colorGold,
+                        }}
+                        dir="ltr"
+                      >
+                        {session.from} – {session.to}
+                      </div>
+                      <div className="space-y-1.5 text-right flex-grow">
+                        <h4 className="text-base sm:text-lg font-black text-white">
+                          {session.title}
+                        </h4>
+                        {session.details.map((line, lIdx) => (
+                          <p key={lIdx} className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                            {line}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* 6. Sectors Section */}
+        <section
+          id="sectors"
+          className="py-16 border-b"
+          style={{ borderColor: "rgba(255,255,255,0.08)" }}
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-3xl mx-auto mb-12">
+              <span
+                className="text-xs font-bold uppercase tracking-widest block mb-2"
+                style={{ color: state.colorGold }}
+              >
+                مجالات التوظيف
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">
+                القطاعات المشمولة بالتوظيف
+              </h2>
+              <p className="text-slate-400 font-medium">
+                يغطي المعرض العديد من التخصصات والقطاعات الحيوية لتلبية تطلعات الكفاءات والشباب:
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4">
+              {state.sectors.map((sec, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    backgroundColor: state.cardDark,
+                    borderColor: "rgba(255,255,255,0.09)",
+                  }}
+                  className="p-4 sm:p-5 rounded-2xl border shadow-sm font-bold text-white flex items-center justify-between gap-3 hover:border-[#d9a520]/50 hover:-translate-y-0.5 transition group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-xs font-black"
+                      style={{
+                        backgroundColor: `${state.colorGold}18`,
+                        color: state.colorGold,
+                      }}
+                    >
+                      {String(idx + 1).padStart(2, "0")}
+                    </div>
+                    <span className="text-sm sm:text-base">القطاع {sec}</span>
+                  </div>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke={state.colorGold}
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="w-4 h-4 shrink-0 opacity-75 group-hover:opacity-100"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="m9 12 2 2 4-4" />
+                  </svg>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 7. NEW ADOPTED SECTION: Participating Companies & Sponsors (#sponsors) */}
+        <section
+          id="sponsors"
+          className="py-16 border-b"
+          style={{ borderColor: "rgba(255,255,255,0.08)" }}
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-3xl mx-auto mb-10">
+              <span
+                className="text-xs font-bold uppercase tracking-widest block mb-2"
+                style={{ color: state.colorGold }}
+              >
+                +90 شركة ومؤسسة مشاركة
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">
+                أبرز الشركات المشاركة والرعاة
+              </h2>
+              <p className="text-slate-400 font-medium text-sm sm:text-base">
+                تعرّف مسبقاً على نخبة من الشركات والمؤسسات الرائدة المشاركة في المعرض لتجهيز سيرتك الذاتية بما يتناسب مع شواغرها:
+              </p>
+
+              {/* Tier Filter Pills */}
+              <div className="flex flex-wrap justify-center gap-2 mt-6">
+                {[
+                  { id: "all", label: "جميع الفئات" },
+                  { id: "diamond", label: "الرعاة الماسيون (Diamond)" },
+                  { id: "gold", label: "الرعاة الذهبيون (Gold)" },
+                  { id: "silver", label: "الرعاة الفضيون (Silver)" },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() =>
+                      setSponsorFilter(tab.id as "all" | "diamond" | "gold" | "silver")
+                    }
+                    style={{
+                      backgroundColor:
+                        sponsorFilter === tab.id ? state.colorGold : "rgba(255,255,255,0.04)",
+                      color: sponsorFilter === tab.id ? "#0c1017" : "#e2e8f0",
+                      borderColor:
+                        sponsorFilter === tab.id ? state.colorGold : "rgba(255,255,255,0.1)",
+                    }}
+                    className="px-4 py-1.5 rounded-full text-xs font-black border transition"
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {filteredSponsors.map((sp, idx) => {
+                const tierBadge =
+                  sp.tier === "diamond"
+                    ? { label: "راعي ماسي", color: "#38bdf8" }
+                    : sp.tier === "gold"
+                    ? { label: "راعي ذهبي", color: state.colorGold }
+                    : { label: "راعي فضي", color: "#94a3b8" };
+
+                return (
+                  <div
+                    key={idx}
+                    style={{
+                      backgroundColor: state.cardDark,
+                      borderColor: "rgba(255,255,255,0.09)",
+                    }}
+                    className="p-4 sm:p-5 rounded-2xl border hover:border-[#d9a520]/45 transition flex flex-col items-center text-center justify-between gap-3 group"
+                  >
+                    <div className="w-full flex justify-between items-center">
+                      <span
+                        className="text-[10px] font-black px-2.5 py-0.5 rounded-full border"
+                        style={{
+                          color: tierBadge.color,
+                          borderColor: `${tierBadge.color}40`,
+                          backgroundColor: `${tierBadge.color}12`,
+                        }}
+                      >
+                        {tierBadge.label}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono truncate max-w-[110px]">
+                        {sp.nameEn}
+                      </span>
+                    </div>
+
+                    <div className="w-full h-20 rounded-xl bg-white p-2.5 flex items-center justify-center overflow-hidden shadow-inner">
+                      <img
+                        src={sp.logoUrl}
+                        alt={sp.nameAr}
+                        loading="lazy"
+                        className="max-h-full max-w-full object-contain group-hover:scale-105 transition duration-300"
+                      />
+                    </div>
+
+                    <h4 className="text-xs sm:text-sm font-bold text-white line-clamp-2 leading-snug">
+                      {sp.nameAr}
+                    </h4>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-8 text-center">
+              <a
+                href={state.officialSiteUrl || "https://www.baghdadjobfair.net/"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-xs sm:text-sm font-bold text-[#d9a520] bg-white/[0.03] hover:bg-white/[0.08] border border-[#d9a520]/35 transition"
+              >
+                <DynamicIcon name="globe" className="w-4 h-4" />
+                <span>استعرض القائمة الكاملة للشركات والجهات في الموقع الرسمي للمعرض</span>
+              </a>
+            </div>
+          </div>
+        </section>
+
+        {/* 11. Partners Section WITH Official Icons & Approved Logos Strip (#partners) */}
+        <section
+          id="partners"
+          className="py-16 border-t"
+          style={{ borderColor: "rgba(255,255,255,0.08)" }}
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-3xl mx-auto mb-10">
+              <p
+                className="text-xs font-bold uppercase tracking-widest mb-2"
+                style={{ color: state.colorGold }}
+              >
+                تنظيم مشترك وشراكة دولية
+              </p>
+              <h2 className="text-2xl sm:text-3xl font-black text-white">
+                الشركاء والجهات المنظمة
+              </h2>
+            </div>
+
+            {/* Partner Cards with Dedicated Icons/Emblems */}
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
+              {state.partners.map((p, idx) => {
+                const meta = OFFICIAL_PARTNER_CARDS[idx];
+                return (
+                  <div
+                    key={idx}
+                    style={{
+                      backgroundColor: state.cardDark,
+                      borderColor: "rgba(255,255,255,0.1)",
+                    }}
+                    className="p-5 rounded-3xl border shadow-lg hover:border-[#d9a520]/50 hover:-translate-y-1 transition flex flex-col items-center text-center gap-3.5 group"
+                  >
+                    <PartnerEmblem
+                      partnerName={p}
+                      idx={idx}
+                      colorGold={state.colorGold}
+                    />
+                    {meta?.shortCode && (
+                      <span
+                        className="text-[11px] font-black font-mono px-2.5 py-0.5 rounded-full border"
+                        style={{
+                          backgroundColor: `${state.colorGold}15`,
+                          borderColor: `${state.colorGold}35`,
+                          color: state.colorGold,
+                        }}
+                      >
+                        {meta.shortCode}
+                      </span>
+                    )}
+                    <h3 className="font-black text-sm sm:text-base text-white leading-snug">
+                      {p}
+                    </h3>
+                    {meta?.role && (
+                      <p className="text-xs text-slate-400 font-medium">{meta.role}</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Official Organizers Vector Logos Strip from baghdadjobfair.net */}
+            <div className="max-w-4xl mx-auto">
+              <div className="rounded-3xl bg-white p-4 sm:p-6 shadow-xl border border-[#d9a520]/40 flex flex-col items-center gap-3">
+                <span className="text-[11px] font-bold text-slate-500">
+                  الشعارات الرسمية للجهات المنظمة والشريكة
+                </span>
+                <img
+                  src="https://www.baghdadjobfair.net/assets/organizers-approved-strip.svg"
+                  alt="الشركاء والجهات المنظمة لمعرض بغداد للتوظيف 2026"
+                  className="w-full max-h-24 object-contain"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
       </main>
 
-      {/* 11. Footer */}
+      {/* 12. Footer */}
       <footer
-        className="relative z-10 py-8 border-t"
+        className="relative z-10 py-10 border-t"
         style={{
           backgroundColor: "#080b10",
           borderColor: "rgba(255,255,255,0.08)",
         }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-400">
-          <div className="flex items-center gap-3">
-            <span>© {state.heroYear} {state.siteTitle} - جميع الحقوق محفوظة</span>
-          </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-400">
+            <div className="flex items-center gap-3">
+              <span>© {state.heroYear} نينوسوفت. جميع الحقوق محفوظة.</span>
+            </div>
 
-          {state.showNinusoftBadge && (
-            <div className="flex items-center gap-2 text-xs text-slate-300 bg-white/[0.03] px-3.5 py-1.5 rounded-full border border-white/10">
-              <span>تصميم وتطوير</span>
+            {state.showNinusoftBadge && (
+              <div className="flex items-center gap-2 text-xs text-slate-300 bg-white/[0.03] px-3.5 py-1.5 rounded-full border border-white/10">
+                <span>تصميم وتطوير</span>
+                <a
+                  href="/"
+                  className="inline-flex items-center gap-1.5 font-extrabold text-white hover:opacity-90 transition"
+                >
+                  <img src="/logo.png" alt="NinuSoft" className="w-4 h-4 object-contain" />
+                  <span>
+                    Ninu<span style={{ color: state.colorGold }}>Soft</span>
+                  </span>
+                </a>
+              </div>
+            )}
+
+            {/* Official Website + Social Links */}
+            <div className="flex flex-wrap items-center justify-center gap-3">
               <a
-                href="/"
-                className="inline-flex items-center gap-1.5 font-extrabold text-white hover:opacity-90 transition"
+                href={state.officialSiteUrl || "https://www.baghdadjobfair.net/"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-[#d9a520] border border-[#d9a520]/30 transition"
               >
-                <img src="/logo.png" alt="NinuSoft" className="w-4 h-4 object-contain" />
-                <span>
-                  Ninu<span style={{ color: state.colorGold }}>Soft</span>
-                </span>
+                <DynamicIcon name="globe" className="w-3.5 h-3.5" />
+                <span>الموقع الرسمي للمعرض</span>
+              </a>
+              <a
+                href="https://instagram.com/ninusoft"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-bold text-slate-400 hover:text-white transition"
+              >
+                Instagram
+              </a>
+              <span className="text-white/15">•</span>
+              <a
+                href="https://facebook.com/ninusoft"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-bold text-slate-400 hover:text-white transition"
+              >
+                Facebook
+              </a>
+              <span className="text-white/15">•</span>
+              <a
+                href="https://linkedin.com/company/ninusoft"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-bold text-slate-400 hover:text-white transition"
+              >
+                LinkedIn
               </a>
             </div>
-          )}
+          </div>
 
-          <div className="flex items-center gap-3">
-            <span className="font-bold" style={{ color: state.colorGold }}>
-              {state.heroBadge}
-            </span>
-            <button
-              onClick={openAdmin}
-              title="لوحة التحكم (Ctrl+Shift+A)"
-              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/5 transition"
+          {/* NinuSoft subtle hint: faint curiosity line */}
+          <div className="text-center">
+            <a
+              href="/"
+              className="text-[11px] text-slate-600 hover:text-[#d9a520] transition"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="w-4 h-4"
-              >
-                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-            </button>
+              هل لاحظت التفاصيل؟ كل بكسل هنا صُنع بعناية في نينوسوفت ←
+            </a>
           </div>
         </div>
       </footer>
 
-      {/* 12. ADMIN DASHBOARD (#admin or Ctrl+Shift+A) */}
+      {/* NinuSoft subtle hint: secret modal (5 clicks on the NinuSoft mark in the hero card) */}
+      {showNinuModal && (
+        <div
+          className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setShowNinuModal(false)}
+        >
+          <div
+            className="relative w-full max-w-md rounded-3xl border p-8 text-center shadow-2xl"
+            style={{
+              background: `radial-gradient(circle at 50% 0%, ${state.colorGold}22, ${state.cardDark} 70%)`,
+              borderColor: `${state.colorGold}50`,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowNinuModal(false)}
+              className="absolute top-4 left-4 text-slate-400 hover:text-white text-xl leading-none"
+              aria-label="إغلاق"
+            >
+              ×
+            </button>
+            <img src="/logo.png" alt="NinuSoft" className="w-16 h-16 mx-auto mb-4 object-contain drop-shadow-[0_0_14px_rgba(217,165,32,0.55)]" />
+            <p className="text-xs font-bold mb-2" style={{ color: state.colorGold }}>
+              🎉 وجدت الشيء المخفي!
+            </p>
+            <h3 className="text-2xl font-black text-white mb-3">
+              مرحباً من فريق نينو<span style={{ color: state.colorGold }}>سوفت</span>
+            </h3>
+            <p className="text-slate-300 text-sm leading-relaxed mb-6">
+              الفضول هو أول مهارة نبحث عنها. نحن فريق عراقي يصمم ويبني تطبيقات ومواقع ومنتجات رقمية بمعايير عالمية —
+              وهذا الموقع واحد من أعمالنا.
+            </p>
+            <a
+              href="/"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-black text-sm hover:brightness-110 transition"
+              style={{ backgroundColor: state.colorGold, color: "#0c1017" }}
+            >
+              تعرّف على نينوسوفت
+            </a>
+          </div>
+        </div>
+      )}
+
+      {/* 13. HIDDEN ADMIN DASHBOARD (#admin or Ctrl+Shift+A) */}
       {isAdminOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div
@@ -1403,31 +2521,12 @@ export default function JobFair() {
                   className="w-10 h-10 rounded-xl flex items-center justify-center font-bold"
                   style={{ backgroundColor: state.colorGold, color: "#0c1017" }}
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="w-5 h-5"
-                  >
-                    <line x1="4" x2="4" y1="21" y2="14" />
-                    <line x1="4" x2="4" y1="10" y2="3" />
-                    <line x1="12" x2="12" y1="21" y2="12" />
-                    <line x1="12" x2="12" y1="8" y2="3" />
-                    <line x1="20" x2="20" y1="21" y2="16" />
-                    <line x1="20" x2="20" y1="12" y2="3" />
-                    <line x1="2" x2="6" y1="14" y2="14" />
-                    <line x1="10" x2="14" y1="8" y2="8" />
-                    <line x1="18" x2="22" y1="16" y2="16" />
-                  </svg>
+                  <DynamicIcon name="sparkles" className="w-5 h-5" />
                 </div>
                 <div>
                   <h2 className="text-xl font-black">لوحة التحكم الاحترافية الشاملة — NinuSoft</h2>
                   <p className="text-xs text-slate-400">
-                    تعديل الإعلانات، العداد التنازلي، خرائط جوجل، التسجيل والـ JSON
+                    تعديل الإعلانات، العداد التنازلي، التوصيات، التسجيل والـ JSON
                   </p>
                 </div>
               </div>
@@ -1435,19 +2534,7 @@ export default function JobFair() {
                 onClick={() => setIsAdminOpen(false)}
                 className="p-2 hover:bg-white/10 rounded-xl text-slate-400 hover:text-white transition"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="w-6 h-6"
-                >
-                  <path d="M18 6 6 18" />
-                  <path d="m6 6 12 12" />
-                </svg>
+                ✕
               </button>
             </div>
 
@@ -1459,6 +2546,7 @@ export default function JobFair() {
                   { id: "announcement", label: "شريط الإعلان والعداد" },
                   { id: "sectors", label: "القطاعات المشمولة" },
                   { id: "categories", label: "الأقسام والفعاليات" },
+                  { id: "tips", label: "التوصيات والنصائح" },
                   { id: "stats", label: "الإحصائيات والأرقام" },
                   { id: "partners", label: "الشركاء" },
                   { id: "styles", label: "الأشكال والألوان" },
@@ -1484,7 +2572,7 @@ export default function JobFair() {
               {activeTab === "general" && (
                 <div className="space-y-4">
                   <h3 className="font-bold text-lg text-[#d9a520] border-b border-white/10 pb-2">
-                    النصوص وروابط الخريطة والتسجيل
+                    النصوص وروابط الخريطة والتسجيل والموقع الرسمي
                   </h3>
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
@@ -1511,6 +2599,20 @@ export default function JobFair() {
                         value={draftState.registerUrl}
                         onChange={(e) =>
                           setDraftState({ ...draftState, registerUrl: e.target.value })
+                        }
+                        className="w-full p-2.5 border border-white/15 rounded-xl text-sm bg-[#0c1017] text-white font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1">
+                        رابط الموقع الرسمي للمعرض
+                      </label>
+                      <input
+                        type="text"
+                        dir="ltr"
+                        value={draftState.officialSiteUrl}
+                        onChange={(e) =>
+                          setDraftState({ ...draftState, officialSiteUrl: e.target.value })
                         }
                         className="w-full p-2.5 border border-white/15 rounded-xl text-sm bg-[#0c1017] text-white font-mono"
                       />
@@ -1838,7 +2940,7 @@ export default function JobFair() {
                           </div>
                           <div>
                             <label className="block text-xs font-bold text-slate-400 mb-1">
-                              رمز الأيقونة (file-text, users, shopping-bag, sparkles)
+                              رمز الأيقونة (file-text, users, shopping-bag, sparkles, search)
                             </label>
                             <input
                               type="text"
@@ -1862,6 +2964,106 @@ export default function JobFair() {
                                 const next = [...draftState.categories];
                                 next[idx] = { ...next[idx], desc: e.target.value };
                                 setDraftState({ ...draftState, categories: next });
+                              }}
+                              className="w-full p-2 border border-white/15 rounded-lg text-xs bg-[#141b29] text-white"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "tips" && (
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center border-b border-white/10 pb-2">
+                    <h3 className="font-bold text-lg text-[#d9a520]">
+                      إدارة توصيات ونصائح الباحثين عن عمل
+                    </h3>
+                    <button
+                      onClick={() =>
+                        setDraftState({
+                          ...draftState,
+                          tips: [
+                            ...draftState.tips,
+                            {
+                              title: "عنوان توصية جديدة",
+                              desc: "تفاصيل النصيحة هنا...",
+                              icon: "sparkles",
+                            },
+                          ],
+                        })
+                      }
+                      className="px-3 py-1.5 bg-[#d9a520] text-[#0c1017] text-xs font-black rounded-lg hover:brightness-110 transition"
+                    >
+                      + إضافة توصية جديدة
+                    </button>
+                  </div>
+                  <div className="space-y-4">
+                    {draftState.tips.map((tip, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-[#0c1017] p-4 rounded-xl border border-white/10 flex flex-col gap-3"
+                      >
+                        <div className="flex justify-between items-center border-b border-white/10 pb-2">
+                          <span className="font-bold text-xs text-[#d9a520]">
+                            توصية رقم {idx + 1}
+                          </span>
+                          <button
+                            onClick={() =>
+                              setDraftState({
+                                ...draftState,
+                                tips: draftState.tips.filter((_, i) => i !== idx),
+                              })
+                            }
+                            className="text-red-400 hover:text-red-300 text-xs font-bold"
+                          >
+                            حذف
+                          </button>
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-bold text-slate-400 mb-1">
+                              عنوان التوصية
+                            </label>
+                            <input
+                              type="text"
+                              value={tip.title}
+                              onChange={(e) => {
+                                const next = [...draftState.tips];
+                                next[idx] = { ...next[idx], title: e.target.value };
+                                setDraftState({ ...draftState, tips: next });
+                              }}
+                              className="w-full p-2 border border-white/15 rounded-lg text-xs bg-[#141b29] text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-slate-400 mb-1">
+                              رمز الأيقونة (search, file-text, sparkles, briefcase, users)
+                            </label>
+                            <input
+                              type="text"
+                              value={tip.icon}
+                              onChange={(e) => {
+                                const next = [...draftState.tips];
+                                next[idx] = { ...next[idx], icon: e.target.value };
+                                setDraftState({ ...draftState, tips: next });
+                              }}
+                              className="w-full p-2 border border-white/15 rounded-lg text-xs bg-[#141b29] text-white font-mono"
+                            />
+                          </div>
+                          <div className="md:col-span-2">
+                            <label className="block text-xs font-bold text-slate-400 mb-1">
+                              نص التوصية التفصيلي
+                            </label>
+                            <textarea
+                              rows={2}
+                              value={tip.desc}
+                              onChange={(e) => {
+                                const next = [...draftState.tips];
+                                next[idx] = { ...next[idx], desc: e.target.value };
+                                setDraftState({ ...draftState, tips: next });
                               }}
                               className="w-full p-2 border border-white/15 rounded-lg text-xs bg-[#141b29] text-white"
                             />

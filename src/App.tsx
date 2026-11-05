@@ -19,9 +19,13 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/admin" component={Admin} />
+      <Route path="/admin/" component={Admin} />
       <Route path="/job-fair" component={JobFair} />
+      <Route path="/job-fair/" component={JobFair} />
       <Route path="/swd" component={JobFair} />
+      <Route path="/swd/" component={JobFair} />
       <Route path="/baghdad-job-fair" component={JobFair} />
+      <Route path="/baghdad-job-fair/" component={JobFair} />
       <Route path="/proposals/:token" component={ProposalView} />
       <Route component={NotFound} />
     </Switch>

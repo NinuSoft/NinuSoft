@@ -49,6 +49,8 @@ for (const route of routes) {
   const routeDir = path.join(distDir, route);
   fs.mkdirSync(routeDir, { recursive: true });
   fs.writeFileSync(path.join(routeDir, "index.html"), html, "utf-8");
+  fs.writeFileSync(path.join(distDir, `${route}.html`), html, "utf-8");
 }
 
 console.log("Generated static route HTML for:", routes.join(", "));
+
