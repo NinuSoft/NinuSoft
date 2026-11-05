@@ -1005,37 +1005,15 @@ export default function JobFair() {
               href={state.officialSiteUrl || "https://www.baghdadjobfair.net/"}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 2xl:px-4 py-2 rounded-full text-xs font-bold text-slate-200 hover:text-[#d9a520] bg-white/5 hover:bg-white/10 border border-white/15 transition whitespace-nowrap"
-              title="زيارة الموقع الرسمي لمعرض بغداد للتوظيف"
-            >
-              <DynamicIcon name="globe" className="w-3.5 h-3.5 text-[#d9a520]" />
-              <span className="sm:inline xl:hidden 2xl:inline">{state.officialSiteBtnText || "الموقع الرسمي"}</span>
-            </a>
-
-            <a
-              href={state.registerUrl}
-              target="_blank"
-              rel="noopener noreferrer"
               style={{
                 backgroundColor: state.colorGold,
                 color: "#0c1017",
               }}
-              className="px-5 py-2.5 font-black rounded-full shadow-lg shadow-[#d9a520]/20 hover:brightness-110 transition flex items-center gap-2 text-xs sm:text-sm whitespace-nowrap shrink-0"
+              className="px-4 py-2 sm:px-5 sm:py-2.5 font-black rounded-full shadow-lg shadow-[#d9a520]/20 hover:brightness-110 transition flex items-center gap-2 text-xs sm:text-sm whitespace-nowrap shrink-0"
+              title="زيارة الموقع الرسمي لمعرض بغداد للتوظيف"
             >
-              <span>{state.registerBtnText}</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="w-4 h-4"
-              >
-                <path d="m12 19-7-7 7-7" />
-                <path d="M19 12H5" />
-              </svg>
+              <DynamicIcon name="globe" className="w-4 h-4 text-[#0c1017]" />
+              <span>{state.officialSiteBtnText || "الموقع الرسمي"}</span>
             </a>
 
             <button
@@ -1257,16 +1235,17 @@ export default function JobFair() {
                 {/* CTA Buttons Row */}
                 <div className="pt-1 flex flex-wrap gap-3.5 items-center">
                   <a
-                    href={state.registerUrl}
+                    href={state.officialSiteUrl || "https://www.baghdadjobfair.net/"}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
                       backgroundColor: state.colorGold,
                       color: "#0c1017",
                     }}
-                    className="px-8 py-4 font-black text-base sm:text-lg rounded-full shadow-xl shadow-[#d9a520]/25 hover:brightness-110 hover:-translate-y-0.5 transition flex items-center gap-3"
+                    className="px-7 py-4 font-black text-base sm:text-lg rounded-full shadow-xl shadow-[#d9a520]/25 hover:brightness-110 hover:-translate-y-0.5 transition flex items-center gap-3"
                   >
-                    <span>{state.registerBtnText}</span>
+                    <DynamicIcon name="globe" className="w-5 h-5 text-[#0c1017]" />
+                    <span>للاطلاع على المزيد — الموقع الرسمي للمعرض</span>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 24 24"
@@ -1275,30 +1254,7 @@ export default function JobFair() {
                       strokeWidth="2.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="w-5 h-5"
-                    >
-                      <path d="m12 19-7-7 7-7" />
-                      <path d="M19 12H5" />
-                    </svg>
-                  </a>
-
-                  <a
-                    href={state.officialSiteUrl || "https://www.baghdadjobfair.net/"}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-6 py-4 rounded-full font-bold text-sm sm:text-base text-white bg-white/[0.06] border border-[#d9a520]/45 hover:bg-[#d9a520]/15 transition flex items-center gap-2.5"
-                  >
-                    <DynamicIcon name="globe" className="w-4 h-4 text-[#d9a520]" />
-                    <span>للاطلاع على المزيد — الموقع الرسمي للمعرض</span>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="w-4 h-4 text-[#d9a520]"
+                      className="w-4 h-4 text-[#0c1017]"
                     >
                       <path d="M15 3h6v6" />
                       <path d="M10 14 21 3" />
@@ -1308,7 +1264,7 @@ export default function JobFair() {
 
                   <a
                     href="#agenda"
-                    className="px-5 py-4 rounded-full font-bold text-sm text-slate-200 border border-white/15 hover:bg-white/10 transition"
+                    className="px-6 py-4 rounded-full font-bold text-sm sm:text-base text-slate-200 border border-white/15 hover:bg-white/10 transition"
                   >
                     أجندة الأيام الأربعة
                   </a>
@@ -1795,7 +1751,7 @@ export default function JobFair() {
 
                   <div className="pt-2 flex flex-wrap justify-center gap-3">
                     <a
-                      href={state.registerUrl}
+                      href={state.officialSiteUrl || "https://www.baghdadjobfair.net/"}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{
@@ -1804,29 +1760,8 @@ export default function JobFair() {
                       }}
                       className="inline-flex items-center gap-2 px-6 py-3 font-black text-sm rounded-full transition shadow-lg hover:brightness-110"
                     >
-                      <span>{state.registerBtnText}</span>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-4 h-4"
-                      >
-                        <path d="m12 19-7-7 7-7" />
-                        <path d="M19 12H5" />
-                      </svg>
-                    </a>
-                    <a
-                      href={state.officialSiteUrl || "https://www.baghdadjobfair.net/"}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/15 text-white font-bold text-sm rounded-full transition border border-[#d9a520]/40"
-                    >
-                      <DynamicIcon name="globe" className="w-4 h-4 text-[#d9a520]" />
-                      <span>زيارة الموقع الرسمي</span>
+                      <DynamicIcon name="globe" className="w-4 h-4 text-[#0c1017]" />
+                      <span>زيارة الموقع الرسمي للمعرض</span>
                     </a>
                     <a
                       href={state.heroLocationUrl}
